@@ -5,7 +5,7 @@ class Environments
     public static function read($path = null): array
 {
     if (!$path) {
-        $path = __DIR__ . '/../../../config.env';
+        $path = __DIR__ . '/../../../.env';
     }
 
     $result = [];
@@ -24,6 +24,7 @@ class Environments
         $result[$key] = $value;
     }
 
+    
     return $result;
 }
 
