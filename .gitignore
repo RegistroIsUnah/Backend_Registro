@@ -1,0 +1,7 @@
+# Ignorar el archivo de variables de entorno
+*.env
+config.env
+
+# Ignorar archivos de log
+*.log
+
