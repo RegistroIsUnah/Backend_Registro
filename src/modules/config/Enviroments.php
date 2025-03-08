@@ -24,6 +24,7 @@ class Environments
         $result[$key] = $value;
     }
 
+    
     return $result;
 }
 
