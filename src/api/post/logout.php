@@ -1,4 +1,5 @@
 <?php
+
 // Archivo: src/api/post/logout.php
 
 header('Content-Type: application/json');
