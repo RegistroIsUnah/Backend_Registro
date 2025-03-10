@@ -104,7 +104,7 @@
  $certificado_url      = isset($input['certificado_url']) ? trim($input['certificado_url']) : null;
  
  // Preparar la llamada al procedimiento almacenado
- $stmt = $conn->prepare("CALL insertarAspirante(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+ $stmt = $conn->prepare("CALL SP_insertarAspirante(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
  $stmt->bind_param(
      "ssssssiiis", 
      $nombre,

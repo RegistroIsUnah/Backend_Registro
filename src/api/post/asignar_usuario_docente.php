@@ -10,7 +10,7 @@
  * - username (obligatorio): Nombre de usuario a asignar.
  * - password (obligatorio): Contraseña en texto plano (se recomienda hashearla en producción).
  *
- * El procedimiento almacenado 'asignarUsuarioDocente' se encarga de:
+ * El procedimiento almacenado 'SP_asignarUsuarioDocente' se encarga de:
  * 1. Verificar que el docente no tenga ya un usuario asignado.
  * 2. Obtener el rol "docente" desde la tabla Rol y crear un registro en la tabla Usuario.
  * 3. Actualizar el registro del docente asignándole el usuario_id recién generado.
@@ -27,6 +27,20 @@
  * - 405 Method Not Allowed: Método HTTP no permitido.
  * - 500 Internal Server Error: Error en la ejecución del procedimiento almacenado.
  *
+ * Ejemplo de envio
+ * 
+ * {
+ * "docente_id": 3,
+ * "username": "docente3",
+ * "password": "docente789"
+ * }
+ * 
+ * Ejemplo de respuesta
+ * 
+ * {
+ * "message": "Credenciales asignadas exitosamente"
+ * "docente_id" "3"
+ * }
  */
 
 header('Content-Type: application/json');
@@ -82,13 +96,13 @@ $username   = trim($input['username']);
 $password   = trim($input['password']);
 
 /**
- * Llama al procedimiento almacenado 'asignarUsuarioDocente' para asignar las credenciales al docente.
+ * Llama al procedimiento almacenado 'SP_asignarUsuarioDocente' para asignar las credenciales al docente.
  *
  * @param int $docente_id ID del docente.
  * @param string $username Nombre de usuario.
  * @param string $password Contraseña.
  */
-$stmt = $conn->prepare("CALL asignarUsuarioDocente(?, ?, ?)");
+$stmt = $conn->prepare("CALL SP_asignarUsuarioDocente(?, ?, ?)");
 if (!$stmt) {
     http_response_code(500);
     echo json_encode(['error' => 'Error preparando la consulta: ' . $conn->error]);
