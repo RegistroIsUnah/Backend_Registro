@@ -1,0 +1,180 @@
+
+Use sistemaregistro;
+
+DELIMITER //
+
+CREATE PROCEDURE SP_insertarAspirante(
+    IN p_nombre VARCHAR(100),
+    IN p_apellido VARCHAR(100),
+    IN p_identidad VARCHAR(50),
+    IN p_telefono VARCHAR(20),
+    IN p_correo VARCHAR(100),
+    IN p_foto VARCHAR(255),
+    IN p_carrera_principal_id INT,
+    IN p_carrera_secundaria_id INT,
+    IN p_centro_id INT,
+    IN p_certificado_url VARCHAR(255)
+)
+BEGIN
+    DECLARE v_numSolicitud VARCHAR(50);
+    
+    -- Generar el número de solicitud (puedes ajustar el método de generación)
+    SET v_numSolicitud = CONCAT('SOL-', UNIX_TIMESTAMP());
+    
+    -- Insertar el aspirante con estado "PENDIENTE" y campos nulos para revisor y motivo
+    INSERT INTO Aspirante (
+        nombre, apellido, identidad, telefono, correo, foto, numSolicitud,
+        carrera_principal_id, carrera_secundaria_id, centro_id, certificado_url,
+        estado, motivo_rechazo, revisor_usuario_id
+    ) VALUES (
+        p_nombre, p_apellido, p_identidad, p_telefono, p_correo, p_foto, v_numSolicitud,
+        p_carrera_principal_id, p_carrera_secundaria_id, p_centro_id, p_certificado_url,
+        'PENDIENTE', NULL, NULL
+    );
+    
+    -- Puedes retornar el ID insertado si lo deseas
+    SELECT LAST_INSERT_ID() AS aspirante_id;
+END //
+
+DELIMITER ;
+
+DELIMITER //
+
+CREATE PROCEDURE SP_asignarUsuarioDocente(
+    IN p_docente_id INT,
+    IN p_username VARCHAR(100),
+    IN p_password VARCHAR(100)
+)
+BEGIN
+    DECLARE v_rol_id INT;
+    DECLARE v_usuario_id INT;
+
+    -- Verificar que el docente exista y que aún no tenga usuario asignado
+    IF (SELECT COUNT(*) FROM Docente WHERE docente_id = p_docente_id AND usuario_id IS NOT NULL) > 0 THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'El docente ya tiene credenciales asignadas';
+    END IF;
+
+    -- Obtener el rol "docente"
+    SELECT rol_id INTO v_rol_id FROM Rol WHERE nombre = 'docente' LIMIT 1;
+    IF v_rol_id IS NULL THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Rol docente no encontrado en el sistema';
+    END IF;
+
+    -- Insertar el nuevo usuario en la tabla Usuario
+    INSERT INTO Usuario (username, password, rol_id)
+    VALUES (p_username, p_password, v_rol_id);
+    
+    -- Obtener el ID del usuario recién insertado
+    SET v_usuario_id = LAST_INSERT_ID();
+    
+    -- Actualizar el registro del docente para asignarle el usuario
+    UPDATE Docente
+    SET usuario_id = v_usuario_id
+    WHERE docente_id = p_docente_id;
+END //
+
+DELIMITER ;
+
+DELIMITER //
+
+CREATE PROCEDURE crearSeccion(
+    IN p_clase_id INT,
+    IN p_docente_id INT,
+    IN p_periodo_academico_id INT,
+    IN p_aula_id INT,
+    IN p_hora_inicio TIME,
+    IN p_hora_fin TIME,
+    IN p_cupos INT,
+    IN p_dias VARCHAR(255)
+)
+BEGIN
+    DECLARE v_creditos INT;
+    DECLARE v_duracion DECIMAL(5,2);
+    DECLARE v_numDias INT;
+    DECLARE v_totalDays INT;
+    DECLARE v_counter INT DEFAULT 1;
+    DECLARE v_day VARCHAR(50);
+    DECLARE v_section_id INT;
+
+    -- Verificar que la hora de inicio sea menor a la de fin
+    IF p_hora_inicio >= p_hora_fin THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'La hora de inicio debe ser menor a la hora de fin';
+    END IF;
+
+    -- Obtener créditos de la clase
+    SELECT creditos INTO v_creditos FROM Clase WHERE clase_id = p_clase_id;
+    IF v_creditos IS NULL THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Clase no encontrada';
+    END IF;
+
+    -- Calcular duración
+    SET v_duracion = (TIME_TO_SEC(p_hora_fin) - TIME_TO_SEC(p_hora_inicio)) / 3600;
+
+    -- Calcular número de días recibido (cadena separada por comas)
+    IF p_dias = '' THEN
+        SET v_numDias = 0;
+    ELSE
+        SET v_numDias = LENGTH(p_dias) - LENGTH(REPLACE(p_dias, ',', '')) + 1;
+    END IF;
+    SET v_totalDays = v_numDias;
+
+    IF v_totalDays = 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Debe especificarse al menos un día';
+    END IF;
+
+    -- Validar la regla según la cantidad de días y créditos
+    IF v_totalDays > 1 THEN
+        IF v_totalDays <> v_creditos THEN
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El número de días no coincide con los créditos de la clase';
+        END IF;
+        IF ABS(v_duracion - 1) > 0.01 THEN
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Para secciones en varios días, cada sesión debe durar 1 hora';
+        END IF;
+    ELSEIF v_totalDays = 1 THEN
+        IF ABS(v_duracion - v_creditos) > 0.01 THEN
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Para secciones en un solo día, la duración total debe ser igual a los créditos de la clase';
+        END IF;
+    END IF;
+
+    -- Verificar traslapes en el aula para cada día
+    SET v_counter = 1;
+    WHILE v_counter <= v_totalDays DO
+        SET v_day = TRIM(SUBSTRING_INDEX(SUBSTRING_INDEX(p_dias, ',', v_counter), ',', -1));
+        IF EXISTS (
+            SELECT 1
+            FROM Seccion s
+            INNER JOIN SeccionDia sd ON s.seccion_id = sd.seccion_id
+            WHERE s.aula_id = p_aula_id
+              AND sd.dia = v_day
+              AND s.periodo_academico_id = p_periodo_academico_id
+              AND s.estado = 'ACTIVA'
+              AND (TIME_TO_SEC(p_hora_inicio) < TIME_TO_SEC(s.hora_fin)
+                   AND TIME_TO_SEC(p_hora_fin) > TIME_TO_SEC(s.hora_inicio))
+        ) THEN
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Conflicto de horario en el día especificado';
+        END IF;
+        SET v_counter = v_counter + 1;
+    END WHILE;
+
+    -- Insertar la sección
+    INSERT INTO Seccion (clase_id, docente_id, periodo_academico_id, hora_inicio, hora_fin, aula_id, estado, cupos)
+    VALUES (p_clase_id, p_docente_id, p_periodo_academico_id, p_hora_inicio, p_hora_fin, p_aula_id, 'ACTIVA', p_cupos);
+    SET v_section_id = LAST_INSERT_ID();
+
+    -- Insertar cada día en la tabla SeccionDia
+    SET v_counter = 1;
+    WHILE v_counter <= v_totalDays DO
+        SET v_day = TRIM(SUBSTRING_INDEX(SUBSTRING_INDEX(p_dias, ',', v_counter), ',', -1));
+        INSERT INTO SeccionDia (seccion_id, dia) VALUES (v_section_id, v_day);
+        SET v_counter = v_counter + 1;
+    END WHILE;
+
+    SELECT v_section_id AS seccion_id;
+END //
+
+DELIMITER ;
+
+
+
