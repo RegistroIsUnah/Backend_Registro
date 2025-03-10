@@ -57,125 +57,80 @@
  *  }
  */
 
-header('Content-Type: application/json');
-
-require_once __DIR__ . '/../../modules/config/Environments.php';
-require_once __DIR__ . '/../../modules/config/DataBase.php';
-
-$db = new DataBase();
-$conn = $db->getConnection();
-
-// Validar que el método sea POST
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    http_response_code(405);
-    echo json_encode(['error' => 'Method Not Allowed']);
-    exit;
-}
-
-// Decodificar el JSON recibido
-$input = json_decode(file_get_contents('php://input'), true);
-if (!$input) {
-    http_response_code(400);
-    echo json_encode(['error' => 'No se recibieron datos']);
-    exit;
-}
-
-/**
- * Campos obligatorios para el ingreso de un aspirante.
- *
- * @var array $requiredFields
- */
-$requiredFields = ['nombre', 'apellido', 'identidad', 'correo', 'carrera_principal_id', 'centro_id'];
-
-/**
- * Verificar si faltan datos obligatorios.
- *
- * @var array $missingFields Almacena los campos que faltan.
- */
-$missingFields = [];
-foreach ($requiredFields as $field) {
-    if (!isset($input[$field]) || empty(trim($input[$field]))) {
-        $missingFields[] = $field;
-    }
-}
-
-if (count($missingFields) > 0) {
-    http_response_code(400);
-    echo json_encode(['error' => 'Faltan datos obligatorios: ' . implode(', ', $missingFields)]);
-    exit;
-}
-
-// Asignar variables de entrada
-$nombre                = trim($input['nombre']);
-$apellido              = trim($input['apellido']);
-$identidad             = trim($input['identidad']);
-$telefono              = isset($input['telefono']) ? trim($input['telefono']) : null;
-$correo                = trim($input['correo']);
-$foto                  = isset($input['foto']) ? trim($input['foto']) : null;
-$carrera_principal_id  = intval($input['carrera_principal_id']);
-$carrera_secundaria_id = isset($input['carrera_secundaria_id']) ? intval($input['carrera_secundaria_id']) : null;
-$centro_id             = intval($input['centro_id']);
-$certificado_url       = isset($input['certificado_url']) ? trim($input['certificado_url']) : null;
-
-// Generar numSolicitud automáticamente, por ejemplo, con el prefijo "SOL-" seguido de la marca de tiempo
-$numSolicitud = 'SOL-' . time();
-
-// Estado por defecto es 'PENDIENTE'
-$estado = 'PENDIENTE';
-
-// Los campos revisor_usuario_id y motivo_rechazo se insertan como NULL
-$revisor_usuario_id = null;
-$motivo_rechazo     = null;
-
-// Preparar la consulta de inserción
-$stmt = $conn->prepare("INSERT INTO Aspirante (
-    nombre, apellido, identidad, telefono, correo, foto, numSolicitud, 
-    carrera_principal_id, carrera_secundaria_id, centro_id, certificado_url, 
-    estado, motivo_rechazo, revisor_usuario_id
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-
-if (!$stmt) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Error en la preparación de la consulta: ' . $conn->error]);
-    exit;
-}
-
-/**
- * Se asume el siguiente formato para los tipos:
- * - s: string
- * - i: integer
- * 
- * La cadena de tipos será: "sssssssiiisssi"
- */
-$stmt->bind_param(
-    "sssssssiiisssi",
-    $nombre,
-    $apellido,
-    $identidad,
-    $telefono,
-    $correo,
-    $foto,
-    $numSolicitud,
-    $carrera_principal_id,
-    $carrera_secundaria_id,
-    $centro_id,
-    $certificado_url,
-    $estado,
-    $motivo_rechazo,
-    $revisor_usuario_id
-);
-
-// Ejecutar la consulta
-if ($stmt->execute()) {
-    http_response_code(200);
-    echo json_encode([
-        'message' => 'Aspirante ingresado exitosamente',
-        'aspirante_id' => $stmt->insert_id
-    ]);
-} else {
-    http_response_code(500);
-    echo json_encode(['error' => 'Error al ingresar el aspirante: ' . $stmt->error]);
-}
-
-$stmt->close();
-?>
+ header('Content-Type: application/json');
+ require_once __DIR__ . '/../../modules/config/Environments.php';
+ require_once __DIR__ . '/../../modules/config/DataBase.php';
+ 
+ $db = new DataBase();
+ $conn = $db->getConnection();
+ 
+ // Validar que el método sea POST
+ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+     http_response_code(405);
+     echo json_encode(['error' => 'Method Not Allowed']);
+     exit;
+ }
+ 
+ $input = json_decode(file_get_contents('php://input'), true);
+ if (!$input) {
+     http_response_code(400);
+     echo json_encode(['error' => 'No se recibieron datos']);
+     exit;
+ }
+ 
+ $requiredFields = ['nombre', 'apellido', 'identidad', 'correo', 'carrera_principal_id', 'centro_id'];
+ $missingFields = [];
+ foreach ($requiredFields as $field) {
+     if (!isset($input[$field]) || empty(trim($input[$field]))) {
+         $missingFields[] = $field;
+     }
+ }
+ if (count($missingFields) > 0) {
+     http_response_code(400);
+     echo json_encode(['error' => 'Faltan datos obligatorios: ' . implode(', ', $missingFields)]);
+     exit;
+ }
+ 
+ // Asignar variables de entrada
+ $nombre               = trim($input['nombre']);
+ $apellido             = trim($input['apellido']);
+ $identidad            = trim($input['identidad']);
+ $telefono             = isset($input['telefono']) ? trim($input['telefono']) : null;
+ $correo               = trim($input['correo']);
+ $foto                 = isset($input['foto']) ? trim($input['foto']) : null;
+ $carrera_principal_id = intval($input['carrera_principal_id']);
+ $carrera_secundaria_id= isset($input['carrera_secundaria_id']) ? intval($input['carrera_secundaria_id']) : null;
+ $centro_id            = intval($input['centro_id']);
+ $certificado_url      = isset($input['certificado_url']) ? trim($input['certificado_url']) : null;
+ 
+ // Preparar la llamada al procedimiento almacenado
+ $stmt = $conn->prepare("CALL insertarAspirante(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+ $stmt->bind_param(
+     "ssssssiiis", 
+     $nombre,
+     $apellido,
+     $identidad,
+     $telefono,
+     $correo,
+     $foto,
+     $carrera_principal_id,
+     $carrera_secundaria_id,
+     $centro_id,
+     $certificado_url
+ );
+ 
+ if ($stmt->execute()) {
+     $result = $stmt->get_result();
+     $row = $result->fetch_assoc();
+     http_response_code(200);
+     echo json_encode([
+         'message' => 'Aspirante ingresado exitosamente',
+         'aspirante_id' => $row['aspirante_id']
+     ]);
+ } else {
+     http_response_code(500);
+     echo json_encode(['error' => 'Error al ingresar el aspirante: ' . $stmt->error]);
+ }
+ 
+ $stmt->close();
+ ?>
