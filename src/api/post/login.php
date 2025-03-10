@@ -2,12 +2,6 @@
 
 // Archivo: src/api/post/login.php
 
-header('Content-Type: application/json');
-session_start();
-
-require_once __DIR__ . '/../../modules/config/Environments.php';
-require_once __DIR__ . '/../../modules/config/DataBase.php';
-
 /**
  * API para el inicio de sesión de usuarios.
  * 
@@ -24,7 +18,44 @@ require_once __DIR__ . '/../../modules/config/DataBase.php';
  * - `400 Bad Request`: Faltan datos en la solicitud.
  * - `401 Unauthorized`: Credenciales incorrectas.
  * - `405 Method Not Allowed`: Método HTTP no permitido.
+ * 
+ * Ejemplo envio de datos
+ * 
+ * {
+ * "username": "docente2",
+ * "password": "docente345"
+ * }
+ * 
+ * Ejemplo respuesta
+ * 
+ * {
+ *    "token": "q9d32bet0lbba1n3c6tl4dh7r9",
+ *    "user": {
+ *        "id": 7,
+ *        "username": "docente2",
+ *        "roles": [
+ *            "docente",
+ *            "coordinador"
+ *        ],
+ *        "details": {
+ *            "docente": {
+ *                "docente_id": 2,
+ *                "nombre": "Alex",
+ *                "apellido": "Diaz",
+ *                "correo": "alex.diaz@unah.hn",
+ *                "foto": "alex.jpg"
+ *            }
+ *        }
+ *    },
+ *    "message": "Inicio de sesión exitoso"
+ * }
  */
+
+header('Content-Type: application/json');
+session_start();
+
+require_once __DIR__ . '/../../modules/config/Environments.php';
+require_once __DIR__ . '/../../modules/config/DataBase.php';
 
 // Validar que el método sea POST
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
