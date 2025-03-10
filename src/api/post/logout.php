@@ -2,9 +2,6 @@
 
 // Archivo: src/api/post/logout.php
 
-header('Content-Type: application/json');
-session_start();
-
 /**
  * API para cerrar sesión de usuario.
  *
@@ -19,7 +16,17 @@ session_start();
  * Respuestas HTTP:
  * - `200 OK`: Cierre de sesión exitoso.
  * - `405 Method Not Allowed`: Método HTTP no permitido.
+ * 
+ * Ejemplo respuesta
+ * 
+ * {
+ *  "message": "Cierre de sesión exitoso"
+ * }
  */
+
+
+header('Content-Type: application/json');
+session_start();
 
 // Validar que el método sea POST
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
