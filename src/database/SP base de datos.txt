@@ -77,9 +77,11 @@ END //
 
 DELIMITER ;
 
+
+
 DELIMITER //
 
-CREATE PROCEDURE crearSeccion(
+CREATE PROCEDURE SP_crearSeccion(
     IN p_clase_id INT,
     IN p_docente_id INT,
     IN p_periodo_academico_id INT,
@@ -97,6 +99,13 @@ BEGIN
     DECLARE v_counter INT DEFAULT 1;
     DECLARE v_day VARCHAR(50);
     DECLARE v_section_id INT;
+    DECLARE v_estado ENUM('ACTIVO','INACTIVO');
+
+    -- Verificar que el período académico esté activo
+    SELECT estado INTO v_estado FROM PeriodoAcademico WHERE periodo_academico_id = p_periodo_academico_id;
+    IF v_estado <> 'ACTIVO' THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El período académico no está activo';
+    END IF;
 
     -- Verificar que la hora de inicio sea menor a la de fin
     IF p_hora_inicio >= p_hora_fin THEN
@@ -109,7 +118,7 @@ BEGIN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Clase no encontrada';
     END IF;
 
-    -- Calcular duración
+    -- Calcular duración en horas
     SET v_duracion = (TIME_TO_SEC(p_hora_fin) - TIME_TO_SEC(p_hora_inicio)) / 3600;
 
     -- Calcular número de días recibido (cadena separada por comas)
@@ -124,7 +133,7 @@ BEGIN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Debe especificarse al menos un día';
     END IF;
 
-    -- Validar la regla según la cantidad de días y créditos
+    -- Validar la regla según la cantidad de días y créditos:
     IF v_totalDays > 1 THEN
         IF v_totalDays <> v_creditos THEN
             SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El número de días no coincide con los créditos de la clase';
@@ -138,10 +147,12 @@ BEGIN
         END IF;
     END IF;
 
-    -- Verificar traslapes en el aula para cada día
+    -- Verificar traslapes en el aula y traslapes en el docente para cada día
     SET v_counter = 1;
     WHILE v_counter <= v_totalDays DO
         SET v_day = TRIM(SUBSTRING_INDEX(SUBSTRING_INDEX(p_dias, ',', v_counter), ',', -1));
+
+        -- Verificar traslape en el aula
         IF EXISTS (
             SELECT 1
             FROM Seccion s
@@ -153,12 +164,28 @@ BEGIN
               AND (TIME_TO_SEC(p_hora_inicio) < TIME_TO_SEC(s.hora_fin)
                    AND TIME_TO_SEC(p_hora_fin) > TIME_TO_SEC(s.hora_inicio))
         ) THEN
-            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Conflicto de horario en el día especificado';
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Conflicto de horario en el aula para el día especificado';
         END IF;
+
+        -- Verificar traslape en el docente
+        IF EXISTS (
+            SELECT 1
+            FROM Seccion s
+            INNER JOIN SeccionDia sd ON s.seccion_id = sd.seccion_id
+            WHERE s.docente_id = p_docente_id
+              AND sd.dia = v_day
+              AND s.periodo_academico_id = p_periodo_academico_id
+              AND s.estado = 'ACTIVA'
+              AND (TIME_TO_SEC(p_hora_inicio) < TIME_TO_SEC(s.hora_fin)
+                   AND TIME_TO_SEC(p_hora_fin) > TIME_TO_SEC(s.hora_inicio))
+        ) THEN
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El docente ya tiene una sección asignada en ese horario para el día especificado';
+        END IF;
+
         SET v_counter = v_counter + 1;
     END WHILE;
 
-    -- Insertar la sección
+    -- Insertar la sección (incluyendo cupos)
     INSERT INTO Seccion (clase_id, docente_id, periodo_academico_id, hora_inicio, hora_fin, aula_id, estado, cupos)
     VALUES (p_clase_id, p_docente_id, p_periodo_academico_id, p_hora_inicio, p_hora_fin, p_aula_id, 'ACTIVA', p_cupos);
     SET v_section_id = LAST_INSERT_ID();
@@ -177,4 +204,29 @@ END //
 DELIMITER ;
 
 
+CREATE PROCEDURE SP_modificar_seccion(
+    IN p_seccion_id INT,
+    IN p_docente_id INT,         -- Si se desea actualizar, se envía un valor; de lo contrario, NULL.
+    IN p_aula_id INT,            -- Igual que p_docente_id.
+    IN p_estado VARCHAR(20),     -- Se espera 'ACTIVA' o 'CANCELADA'. Si es NULL, no se modifica.
+    IN p_motivo_cancelacion TEXT -- Se utiliza si p_estado es 'CANCELADA'.
+)
+BEGIN
+    -- Si se intenta cancelar, se requiere un motivo de cancelación.
+    IF p_estado = 'CANCELADA' AND (p_motivo_cancelacion IS NULL OR TRIM(p_motivo_cancelacion) = '') THEN
+       SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Debe proporcionar motivo de cancelación';
+    END IF;
+    
+    UPDATE Seccion
+    SET 
+       docente_id = COALESCE(p_docente_id, docente_id),
+       aula_id = COALESCE(p_aula_id, aula_id),
+       estado = COALESCE(p_estado, estado),
+       motivo_cancelacion = CASE 
+                               WHEN p_estado = 'CANCELADA' THEN p_motivo_cancelacion
+                               ELSE motivo_cancelacion
+                            END
+    WHERE seccion_id = p_seccion_id;
+END //
 
+DELIMITER ;
