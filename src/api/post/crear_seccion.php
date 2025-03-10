@@ -45,6 +45,12 @@
  *   "cupos": 30,
  *   "dias": "Lunes,Martes,Miércoles, Jueves"
  * }
+ * 
+ * Ejemplo de respuesta
+ * {
+ *   "message": "Sección creada exitosamente"
+ *   "seccion_id": "5"
+ * }
  */
 
 header('Content-Type: application/json');
