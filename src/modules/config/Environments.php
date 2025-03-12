@@ -3,8 +3,10 @@
 /**
  * Clase para leer configuraciones del archivo de entorno (.env).
  * 
+ * @package config
  * @author Ruben Diaz
  * @version 1.0
+ * 
  */
 class Environments
 {

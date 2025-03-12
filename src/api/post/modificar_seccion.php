@@ -1,25 +1,22 @@
 <?php
 /**
- * API para crear una sección.
+ * API para modificar una sección.
  *
- * Este endpoint recibe datos en formato JSON, valida la información y llama al controlador para crear la sección.
+ * Este endpoint recibe datos en formato JSON, valida la información y llama al controlador para modificar la sección.
  *
  * Ejemplo de JSON de entrada:
  * {
- *   "clase_id": 1,
- *   "docente_id": 2,
- *   "periodo_academico_id": 3,
- *   "aula_id": 4,
- *   "hora_inicio": "08:00:00",
- *   "hora_fin": "10:00:00",
- *   "cupos": 30,
- *   "dias": "Lunes,Miércoles"
+ *   "seccion_id": 15,
+ *   "docente_id": 3,           // Opcional
+ *   "aula_id": 5,              // Opcional
+ *   "estado": "CANCELADA",     // Opcional; se espera 'ACTIVA' o 'CANCELADA'
+ *   "motivo_cancelacion": "Cancelada por indisponibilidad" // Requerido si estado es 'CANCELADA'
  * }
  *
  * Respuestas HTTP:
- * - 200 OK: Devuelve el ID de la sección creada y un mensaje de éxito.
+ * - 200 OK: Devuelve un mensaje de éxito.
  * - 400 Bad Request: Datos faltantes o formato inválido.
- * - 500 Internal Server Error: Error durante la creación de la sección.
+ * - 500 Internal Server Error: Error durante la modificación.
  *
  * @package API
  * @author Ruben Diaz
@@ -45,5 +42,5 @@ if (!$input) {
 require_once __DIR__ . '/../../controllers/SeccionController.php';
 
 $seccionController = new SeccionController();
-$seccionController->crearSeccion($input);
+$seccionController->modificarSeccion($input);
 ?>

@@ -5,8 +5,10 @@ require_once __DIR__ . '/Environments.php';
 /**
  * Clase para manejar la conexión a la base de datos.
  *
+ * @package config
  * @author Ruben Diaz
  * @version 1.0
+ * 
  */
 class Database
 {

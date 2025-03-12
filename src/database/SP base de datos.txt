@@ -10,6 +10,7 @@ CREATE PROCEDURE SP_insertarAspirante(
     IN p_telefono VARCHAR(20),
     IN p_correo VARCHAR(100),
     IN p_foto VARCHAR(255),
+    IN p_fotodni VARCHAR(255),  
     IN p_carrera_principal_id INT,
     IN p_carrera_secundaria_id INT,
     IN p_centro_id INT,
@@ -23,20 +24,24 @@ BEGIN
     
     -- Insertar el aspirante con estado "PENDIENTE" y campos nulos para revisor y motivo
     INSERT INTO Aspirante (
-        nombre, apellido, identidad, telefono, correo, foto, numSolicitud,
+        nombre, apellido, identidad, telefono, correo, foto, fotodni, numSolicitud,
         carrera_principal_id, carrera_secundaria_id, centro_id, certificado_url,
         estado, motivo_rechazo, revisor_usuario_id
     ) VALUES (
-        p_nombre, p_apellido, p_identidad, p_telefono, p_correo, p_foto, v_numSolicitud,
+        p_nombre, p_apellido, p_identidad, p_telefono, p_correo, p_foto, p_fotodni, v_numSolicitud,
         p_carrera_principal_id, p_carrera_secundaria_id, p_centro_id, p_certificado_url,
         'PENDIENTE', NULL, NULL
     );
     
-    -- Puedes retornar el ID insertado si lo deseas
-    SELECT LAST_INSERT_ID() AS aspirante_id;
+    SELECT v_numSolicitud AS numSolicitud;
 END //
 
 DELIMITER ;
+
+
+
+
+
 
 DELIMITER //
 
@@ -73,9 +78,13 @@ BEGIN
     UPDATE Docente
     SET usuario_id = v_usuario_id
     WHERE docente_id = p_docente_id;
+    
+    -- Retornar mensaje de éxito
+    SELECT 'Credenciales correctamente asignadas' AS mensaje;
 END //
 
 DELIMITER ;
+
 
 
 
@@ -204,6 +213,8 @@ END //
 DELIMITER ;
 
 
+DELIMITER //
+
 CREATE PROCEDURE SP_modificar_seccion(
     IN p_seccion_id INT,
     IN p_docente_id INT,         -- Si se desea actualizar, se envía un valor; de lo contrario, NULL.
@@ -232,6 +243,9 @@ END //
 DELIMITER ;
 
 
+
+
+----SIN PROBAR
 
 DELIMITER //
 
@@ -426,28 +440,17 @@ DELIMITER ;
 
 --EVENTOS
 
-SET GLOBAL event_scheduler = ON; --Solo la primera vez
-DELIMITER //
-
-CREATE EVENT EV_actualizar_periodos
+CREATE EVENT IF NOT EXISTS EV_actualizar_estado_periodo
 ON SCHEDULE EVERY 1 DAY
-STARTS CURRENT_TIMESTAMP
 DO
-    UPDATE PeriodoAcademico
-    SET estado = 'INACTIVO'
-    WHERE fecha_fin < NOW() AND estado = 'ACTIVO';
+   UPDATE PeriodoAcademico
+   SET estado = 'INACTIVO'
+   WHERE fecha_fin < NOW() AND estado = 'ACTIVO';
 
-DELIMITER ;
-
-DELIMITER //
-
-CREATE EVENT EV_actualizar_procesos_matricula
+CREATE EVENT IF NOT EXISTS EV_actualizar_estado_proceso_matricula
 ON SCHEDULE EVERY 1 DAY
-STARTS CURRENT_TIMESTAMP
 DO
-    UPDATE ProcesoMatricula
-    SET estado = 'INACTIVO'
-    WHERE fecha_fin < NOW() AND estado = 'ACTIVO';
-
-DELIMITER ;
+   UPDATE ProcesoMatricula
+   SET estado = 'INACTIVO'
+   WHERE fecha_fin < NOW() AND estado = 'ACTIVO';
 

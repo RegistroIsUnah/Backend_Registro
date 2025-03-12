@@ -1,14 +1,8 @@
 <?php
-
-// Archivo: src/api/post/logout.php
-
 /**
- * API para cerrar sesión de usuario.
+ * API para el cierre de sesión de usuarios.
  *
- * @author Ruben Diaz
- * @version 1.0
- * 
- * Este script maneja la destrucción de la sesión del usuario autenticado.
+ * Este script recibe la petición POST y llama a AuthController::logout().
  *
  * Métodos soportados:
  * - `POST`: Finaliza la sesión activa.
@@ -17,33 +11,28 @@
  * - `200 OK`: Cierre de sesión exitoso.
  * - `405 Method Not Allowed`: Método HTTP no permitido.
  * 
- * Ejemplo respuesta
+ * Ejemplo Respuesta
  * 
  * {
- *  "message": "Cierre de sesión exitoso"
+ *   "message": "Cierre de sesión exitoso"
  * }
+ * 
+ * @package API
+ * @author Ruben Diaz
+ * @version 1.0
+ * 
  */
 
-
 header('Content-Type: application/json');
-session_start();
+require_once __DIR__ . '/../../controllers/AuthController.php';
 
-// Validar que el método sea POST
+// Verificar método HTTP
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
-    echo json_encode(['error' => 'Method Not Allowed']);
+    echo json_encode(['error' => 'Método no permitido']);
     exit;
 }
 
-/**
- * Destruye la sesión actual del usuario.
- *
- * @return void
- */
-session_destroy();
-
-/**
- * Devuelve una respuesta en JSON confirmando el cierre de sesión.
- */
-echo json_encode(['message' => 'Cierre de sesión exitoso']);
-?>
+// Llamar al controlador
+$authController = new AuthController();
+$authController->logout();
