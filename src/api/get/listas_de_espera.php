@@ -82,6 +82,9 @@ if ($conn->connect_error) {
 }
 
 // Consulta SQL actualizada
+/*
+*Consulta SQL sujeta a cambios 
+*/
 $sql = "
     SELECT 
         c.nombre AS clase,
