@@ -271,7 +271,7 @@ CREATE TABLE ProcesoMatricula (
     FOREIGN KEY (periodo_academico_id) REFERENCES PeriodoAcademico(periodo_academico_id)
 ) ENGINE=InnoDB;
 
-CREATE TABLE ProcesosExcecionales (
+CREATE TABLE ProcesosExcepcionales (
     proceso_id INT AUTO_INCREMENT PRIMARY KEY,
     periodo_academico_id INT NOT NULL,
     tipo_proceso ENUM('PAGO_REPOSICION','CANCELACIONES', 'CAMBIO_CARRERA') NOT NULL,
