@@ -31,22 +31,22 @@
  * 
  */
 
-header('Content-Type: application/json');
+ header('Content-Type: application/json');
 
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    http_response_code(405);
-    echo json_encode(['error' => 'Método no permitido']);
-    exit;
-}
-
-if (empty($_POST)) {
-    http_response_code(400);
-    echo json_encode(['error' => 'No se recibieron datos']);
-    exit;
-}
-
-require_once __DIR__ . '/../../controllers/AspiranteController.php';
-
-$aspiranteController = new AspiranteController();
-$aspiranteController->insertarAspirante($_POST);
-?>
+ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+     http_response_code(405);
+     echo json_encode(['error' => 'Método no permitido']);
+     exit;
+ }
+ 
+ if (empty($_POST)) {
+     http_response_code(400);
+     echo json_encode(['error' => 'No se recibieron datos']);
+     exit;
+ }
+ 
+ require_once __DIR__ . '/../../controllers/AspiranteController.php';
+ 
+ $aspiranteController = new AspiranteController();
+ $aspiranteController->insertarAspirante($_POST);
+ ?>
