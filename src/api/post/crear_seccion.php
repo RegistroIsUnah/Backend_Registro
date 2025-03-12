@@ -27,23 +27,23 @@
  * 
  */
 
-header('Content-Type: application/json');
+ header('Content-Type: application/json');
 
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    http_response_code(405);
-    echo json_encode(['error' => 'Método no permitido']);
-    exit;
-}
-
-$input = json_decode(file_get_contents('php://input'), true);
-if (!$input) {
-    http_response_code(400);
-    echo json_encode(['error' => 'Datos JSON inválidos']);
-    exit;
-}
-
-require_once __DIR__ . '/../../controllers/SeccionController.php';
-
-$seccionController = new SeccionController();
-$seccionController->crearSeccion($input);
-?>
+ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+     http_response_code(405);
+     echo json_encode(['error' => 'Método no permitido']);
+     exit;
+ }
+ 
+ // Si usas form-data, los datos de texto vendrán en $_POST y el archivo en $_FILES.
+ if (empty($_POST)) {
+     http_response_code(400);
+     echo json_encode(['error' => 'No se recibieron datos']);
+     exit;
+ }
+ 
+ require_once __DIR__ . '/../../controllers/SeccionController.php';
+ 
+ $seccionController = new SeccionController();
+ $seccionController->crearSeccion($_POST, $_FILES);
+ ?>

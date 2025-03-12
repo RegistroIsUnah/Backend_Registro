@@ -21,17 +21,17 @@ class SeccionController {
      * - docente_id
      * - periodo_academico_id
      * - aula_id
+     * - cupos
      * - hora_inicio (formato "HH:MM:SS")
      * - hora_fin (formato "HH:MM:SS")
-     * - cupos
      * - dias (cadena de días separados por comas, ej: "Lunes,Miércoles")
      *
      * @param array $data Datos recibidos del endpoint (JSON).
      * @return void
      */
-    public function crearSeccion($data) {
-        // Validar campos requeridos
-        $required = ['clase_id', 'docente_id', 'periodo_academico_id', 'aula_id', 'hora_inicio', 'hora_fin', 'cupos', 'dias'];
+    public function crearSeccion($data, $files) {
+        // Validar campos requeridos (clase_id, docente_id, periodo_academico_id, etc.)
+        $required = ['clase_id','docente_id','periodo_academico_id','aula_id','hora_inicio','hora_fin','cupos','dias'];
         foreach ($required as $field) {
             if (!isset($data[$field]) || empty($data[$field])) {
                 http_response_code(400);
@@ -39,30 +39,60 @@ class SeccionController {
                 exit;
             }
         }
-        // Validar formato de hora (ejemplo: "08:00:00")
-        if (!preg_match('/^(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d$/', $data['hora_inicio'])) {
-            http_response_code(400);
-            echo json_encode(['error' => 'Formato de hora_inicio inválido']);
-            exit;
-        }
-        if (!preg_match('/^(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d$/', $data['hora_fin'])) {
-            http_response_code(400);
-            echo json_encode(['error' => 'Formato de hora_fin inválido']);
-            exit;
-        }
-        // Convertir a enteros los campos numéricos
-        $clase_id = intval($data['clase_id']);
-        $docente_id = intval($data['docente_id']);
+
+        // Convertir numéricos
+        $clase_id             = intval($data['clase_id']);
+        $docente_id           = intval($data['docente_id']);
         $periodo_academico_id = intval($data['periodo_academico_id']);
-        $aula_id = intval($data['aula_id']);
-        $cupos = intval($data['cupos']);
-        $hora_inicio = $data['hora_inicio'];
-        $hora_fin = $data['hora_fin'];
-        $dias = $data['dias'];
+        $aula_id              = intval($data['aula_id']);
+        $cupos                = intval($data['cupos']);
+        $hora_inicio          = $data['hora_inicio'];
+        $hora_fin             = $data['hora_fin'];
+        $dias                 = $data['dias'];
+
+        // Manejo de archivo de video (opcional).
+        // Si el front envía "video" como un File, lo subimos; de lo contrario, video_url será NULL.
+        $video_url = null;
+        if (isset($files['video']) && $files['video']['error'] === UPLOAD_ERR_OK) {
+            
+            // Validar tipo de archivo de video 
+            $allowedVideoTypes = ['video/mp4','video/avi','video/mpeg','video/quicktime'];
+            if (!in_array($files['video']['type'], $allowedVideoTypes)) {
+                http_response_code(400);
+                echo json_encode(['error' => 'Tipo de video no permitido']);
+                exit;
+            }
+            // Subir el archivo
+            $uploadsDirVideo = __DIR__ . '/../../uploads/videos/';
+            if (!is_dir($uploadsDirVideo)) {
+                mkdir($uploadsDirVideo, 0755, true);
+            }
+            $extVideo = pathinfo($files['video']['name'], PATHINFO_EXTENSION);
+            $videoName = uniqid('video_', true).'.'.$extVideo;
+            $fullPathVideo = $uploadsDirVideo.$videoName;
+
+            if (!move_uploaded_file($files['video']['tmp_name'], $fullPathVideo)) {
+                http_response_code(500);
+                echo json_encode(['error' => 'No se pudo guardar el video']);
+                exit;
+            }
+            // Guardar la ruta relativa
+            $video_url = 'uploads/videos/'.$videoName;
+        }
 
         try {
             $seccionModel = new Seccion();
-            $seccion_id = $seccionModel->crearSeccion($clase_id, $docente_id, $periodo_academico_id, $aula_id, $hora_inicio, $hora_fin, $cupos, $dias);
+            $seccion_id = $seccionModel->crearSeccion(
+                $clase_id,
+                $docente_id,
+                $periodo_academico_id,
+                $aula_id,
+                $hora_inicio,
+                $hora_fin,
+                $cupos,
+                $dias,
+                $video_url
+            );
         } catch (Exception $e) {
             http_response_code(500);
             echo json_encode(['error' => $e->getMessage()]);
@@ -70,7 +100,10 @@ class SeccionController {
         }
 
         http_response_code(200);
-        echo json_encode(['seccion_id' => $seccion_id, 'message' => 'Sección creada exitosamente']);
+        echo json_encode([
+            'seccion_id' => $seccion_id,
+            'message' => 'Sección creada exitosamente'
+        ]);
     }
 
     /**
@@ -100,10 +133,11 @@ class SeccionController {
         $aula_id = isset($data['aula_id']) && $data['aula_id'] !== "" ? intval($data['aula_id']) : null;
         $estado = isset($data['estado']) && $data['estado'] !== "" ? $data['estado'] : null;
         $motivo_cancelacion = isset($data['motivo_cancelacion']) && $data['motivo_cancelacion'] !== "" ? $data['motivo_cancelacion'] : null;
+        $cupos = isset($data['cupos']) && $data['cupos'] !== "" ? intval($data['cupos']) : null;
 
         try {
             $seccionModel = new Seccion();
-            $mensaje = $seccionModel->modificarSeccion($seccion_id, $docente_id, $aula_id, $estado, $motivo_cancelacion);
+            $mensaje = $seccionModel->modificarSeccion($seccion_id, $docente_id, $aula_id, $estado, $motivo_cancelacion, $cupos);
         } catch (Exception $e) {
             http_response_code(500);
             echo json_encode(['error' => $e->getMessage()]);
