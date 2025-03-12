@@ -109,41 +109,40 @@ class SeccionController {
     /**
      * Valida y procesa la modificación de una sección.
      *
-     * Se espera recibir en $data (vía JSON) los siguientes campos:
+     * Se espera recibir en $data los siguientes campos:
      * - seccion_id (requerido)
-     * - docente_id (opcional, para modificar; si no se envía, se pasa NULL)
-     * - aula_id (opcional, para modificar; si no se envía, se pasa NULL)
-     * - estado (opcional, 'ACTIVA' o 'CANCELADA'; si se envía 'CANCELADA', se debe incluir motivo_cancelacion)
-     * - motivo_cancelacion (opcional, pero requerido si estado es 'CANCELADA')
+     * - docente_id (opcional)
+     * - aula_id (opcional)
+     * - estado (opcional, 'ACTIVA' o 'CANCELADA')
+     * - motivo_cancelacion (opcional, requerido si estado es 'CANCELADA')
+     * - cupos (opcional)
+     * - video_url (opcional)
      *
      * @param array $data Datos recibidos del endpoint.
      * @return void
      */
     public function modificarSeccion($data) {
-        // Validar que se haya enviado el campo seccion_id
         if (!isset($data['seccion_id']) || empty($data['seccion_id'])) {
             http_response_code(400);
             echo json_encode(['error' => "Falta el campo seccion_id"]);
             exit;
         }
         $seccion_id = intval($data['seccion_id']);
-
-        // Los demás campos son opcionales. Si no se envían, se asigna NULL.
         $docente_id = isset($data['docente_id']) && $data['docente_id'] !== "" ? intval($data['docente_id']) : null;
         $aula_id = isset($data['aula_id']) && $data['aula_id'] !== "" ? intval($data['aula_id']) : null;
         $estado = isset($data['estado']) && $data['estado'] !== "" ? $data['estado'] : null;
         $motivo_cancelacion = isset($data['motivo_cancelacion']) && $data['motivo_cancelacion'] !== "" ? $data['motivo_cancelacion'] : null;
         $cupos = isset($data['cupos']) && $data['cupos'] !== "" ? intval($data['cupos']) : null;
+        $video_url = isset($data['video_url']) && $data['video_url'] !== "" ? $data['video_url'] : null;
 
         try {
             $seccionModel = new Seccion();
-            $mensaje = $seccionModel->modificarSeccion($seccion_id, $docente_id, $aula_id, $estado, $motivo_cancelacion, $cupos);
+            $mensaje = $seccionModel->modificarSeccion($seccion_id, $docente_id, $aula_id, $estado, $motivo_cancelacion, $cupos, $video_url);
         } catch (Exception $e) {
             http_response_code(500);
             echo json_encode(['error' => $e->getMessage()]);
             exit;
         }
-
         http_response_code(200);
         echo json_encode(['message' => $mensaje]);
     }

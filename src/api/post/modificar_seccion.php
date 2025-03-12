@@ -26,21 +26,21 @@
 
  header('Content-Type: application/json');
 
- if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-     http_response_code(405);
-     echo json_encode(["error" => "Método no permitido"]);
-     exit;
- }
- 
- $input = json_decode(file_get_contents('php://input'), true);
- if (!$input) {
-     http_response_code(400);
-     echo json_encode(["error" => "Datos JSON inválidos"]);
-     exit;
- }
- 
- require_once __DIR__ . '/../../controllers/SeccionController.php';
- 
- $seccionController = new SeccionController();
- $seccionController->modificarSeccion($input);
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
+    echo json_encode(["error" => "Método no permitido"]);
+    exit;
+}
+
+$input = json_decode(file_get_contents('php://input'), true);
+if (!$input) {
+    http_response_code(400);
+    echo json_encode(["error" => "Datos JSON inválidos"]);
+    exit;
+}
+
+require_once __DIR__ . '/../../controllers/SeccionController.php';
+
+$seccionController = new SeccionController();
+$seccionController->modificarSeccion($input);
  ?>
