@@ -4,6 +4,19 @@
  *
  * Este script recibe la petición POST y llama a AuthController::logout().
  *
+ * Métodos soportados:
+ * - `POST`: Finaliza la sesión activa.
+ *
+ * Respuestas HTTP:
+ * - `200 OK`: Cierre de sesión exitoso.
+ * - `405 Method Not Allowed`: Método HTTP no permitido.
+ * 
+ * Ejemplo Respuesta
+ * 
+ * {
+ *   "message": "Cierre de sesión exitoso"
+ * }
+ * 
  * @package API
  * @author Ruben Diaz
  * @version 1.0

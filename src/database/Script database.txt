@@ -169,6 +169,7 @@ CREATE TABLE Aspirante (
     telefono VARCHAR(20),
     correo VARCHAR(100) NOT NULL,
     foto VARCHAR(255),
+    fotodni VARCHAR(255),  
     numSolicitud VARCHAR(50),
     carrera_principal_id INT NOT NULL,
     carrera_secundaria_id INT DEFAULT NULL,
@@ -182,6 +183,7 @@ CREATE TABLE Aspirante (
     FOREIGN KEY (centro_id) REFERENCES Centro(centro_id),
     FOREIGN KEY (revisor_usuario_id) REFERENCES Usuario(usuario_id)
 ) ENGINE=InnoDB;
+
 
 CREATE TABLE ResultadoExamen (
     aspirante_id INT NOT NULL,

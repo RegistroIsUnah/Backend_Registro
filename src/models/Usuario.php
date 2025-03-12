@@ -9,6 +9,7 @@ require_once __DIR__ . '/../modules/config/DataBase.php';
  * @package Models
  * @author Ruben Diaz
  * @version 1.1
+ * 
  */
 class Usuario {
     /** 
