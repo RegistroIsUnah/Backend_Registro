@@ -52,7 +52,7 @@ class AuthController {
         $roles = [];
         $userDetails = [];
 
-        // Ejemplo: obtener datos de Docente
+        // Obtener datos de Docente
         $stmtDocente = $conn->prepare('SELECT docente_id, nombre, apellido, correo, foto FROM Docente WHERE usuario_id = ?');
         $stmtDocente->bind_param('i', $user['usuario_id']);
         $stmtDocente->execute();
@@ -79,7 +79,7 @@ class AuthController {
             }
         }
 
-        // Ejemplo: obtener datos de Estudiante
+        // Obtener datos de Estudiante
         $stmtEstudiante = $conn->prepare('SELECT estudiante_id, nombre, apellido, correo_personal, telefono, direccion FROM Estudiante WHERE usuario_id = ?');
         $stmtEstudiante->bind_param('i', $user['usuario_id']);
         $stmtEstudiante->execute();
@@ -90,7 +90,7 @@ class AuthController {
             $userDetails['estudiante'] = $estudianteData;
         }
 
-        // Ejemplo: verificar si es revisor
+        // Verificar si es revisor
         $stmtRevisor = $conn->prepare('SELECT revisor_id FROM Revisor WHERE usuario_id = ?');
         $stmtRevisor->bind_param('i', $user['usuario_id']);
         $stmtRevisor->execute();
