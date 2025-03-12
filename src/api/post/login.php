@@ -23,18 +23,25 @@
  * Ejemplo respuesta
  * 
  * {
- *   "aulas": [
- *       {
- *           "aula_id": 3,
- *           "nombre": "Aula 201",
- *           "capacidad": 60
- *       },
- *       {
- *           "aula_id": 4,
- *           "nombre": "Aula 202",
- *           "capacidad": 55
+ *   "token": "s50un5803hculv2boajbb3lr58",
+ *   "user": {
+ *       "id": 7,
+ *       "username": "docente2",
+ *       "roles": [
+ *           "docente",
+ *           "coordinador"
+ *       ],
+ *       "details": {
+ *           "docente": {
+ *               "docente_id": 2,
+ *               "nombre": "Alex",
+ *               "apellido": "Diaz",
+ *               "correo": "alex.diaz@unah.hn",
+ *               "foto": "alex.jpg"
+ *           }
  *       }
- *   ]
+ *   },
+ *   "message": "Inicio de sesión exitoso"
  * }
  * 
  * @package API

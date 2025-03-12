@@ -77,6 +77,10 @@ switch (true) {
         require_once __DIR__ . '/../api/post/crear_periodo.php';
         break; 
         
+    case preg_match('/\/api\/post\/crear_proceso_matricula/', $request_uri):
+        require_once __DIR__ . '/../api/post/crear_proceso_matricula.php';
+        break; 
+
     default:
         http_response_code(404);
         echo json_encode(["mensaje" => "Ruta no encontrada"]);
