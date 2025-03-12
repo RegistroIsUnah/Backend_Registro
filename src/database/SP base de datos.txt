@@ -223,13 +223,14 @@ DELIMITER ;
 
 DELIMITER //
 
-CREATE PROCEDURE SP_modificar_seccion(
+CREATE PROCEDURE SP_modificarSeccion(
     IN p_seccion_id INT,
     IN p_docente_id INT,         -- Si se desea actualizar, se envía un valor; de lo contrario, NULL.
     IN p_aula_id INT,            -- Igual que p_docente_id.
     IN p_estado VARCHAR(20),     -- Se espera 'ACTIVA' o 'CANCELADA'. Si es NULL, no se modifica.
     IN p_motivo_cancelacion TEXT, -- Se utiliza si p_estado es 'CANCELADA'.
-    IN p_cupos INT               -- Nuevo parámetro para actualizar cupos.
+    IN p_cupos INT,              -- Para actualizar el número de cupos.
+    IN p_video_url VARCHAR(255)  -- Nuevo parámetro para actualizar o agregar la URL del video.
 )
 BEGIN
     -- Si se intenta cancelar, se requiere un motivo de cancelación.
@@ -246,11 +247,13 @@ BEGIN
                                WHEN p_estado = 'CANCELADA' THEN p_motivo_cancelacion
                                ELSE motivo_cancelacion
                             END,
-       cupos = COALESCE(p_cupos, cupos)
+       cupos = COALESCE(p_cupos, cupos),
+       video_url = COALESCE(p_video_url, video_url)
     WHERE seccion_id = p_seccion_id;
 END //
 
 DELIMITER ;
+
 
 
 

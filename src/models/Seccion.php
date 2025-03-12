@@ -84,11 +84,10 @@ class Seccion {
         return $seccion_id;
     }
 
-    /**
+     /**
      * Modifica una sección utilizando el procedimiento almacenado SP_modificar_seccion.
      *
-     * El SP actualiza los campos de la sección (docente, aula, estado, motivo de cancelación y cupos).
-     * Si se intenta cancelar sin proporcionar un motivo, se lanzará un SIGNAL y el error se capturará.
+     * Actualiza los campos de docente, aula, estado, motivo de cancelación, cupos y video_url.
      *
      * @param int $seccion_id ID de la sección a modificar.
      * @param int|null $docente_id Nuevo ID de docente (o NULL para no modificar).
@@ -96,16 +95,17 @@ class Seccion {
      * @param string|null $estado Nuevo estado ('ACTIVA' o 'CANCELADA') o NULL para no modificar.
      * @param string|null $motivo_cancelacion Motivo de cancelación (requerido si estado es 'CANCELADA').
      * @param int|null $cupos Nuevo número de cupos (o NULL para no modificar).
+     * @param string|null $video_url Nueva URL del video (o NULL para no modificar).
      * @return string Mensaje de éxito.
      * @throws Exception Si ocurre un error durante la modificación.
      */
-    public function modificarSeccion($seccion_id, $docente_id, $aula_id, $estado, $motivo_cancelacion, $cupos) {
-        $stmt = $this->conn->prepare("CALL SP_modificar_seccion(?, ?, ?, ?, ?, ?)");
+    public function modificarSeccion($seccion_id, $docente_id, $aula_id, $estado, $motivo_cancelacion, $cupos, $video_url) {
+        $stmt = $this->conn->prepare("CALL SP_modificarSeccion(?, ?, ?, ?, ?, ?, ?)");
         if (!$stmt) {
             throw new Exception("Error preparando la consulta: " . $this->conn->error);
         }
-        // La cadena de tipos es "iiissi": 3 enteros, 2 strings, 1 entero.
-        if (!$stmt->bind_param("iiissi", $seccion_id, $docente_id, $aula_id, $estado, $motivo_cancelacion, $cupos)) {
+        // "iiissi s": 3 enteros, 2 strings, 1 entero, 1 string
+        if (!$stmt->bind_param("iiissis", $seccion_id, $docente_id, $aula_id, $estado, $motivo_cancelacion, $cupos, $video_url)) {
             throw new Exception("Error vinculando parámetros: " . $stmt->error);
         }
         if (!$stmt->execute()) {
@@ -114,6 +114,5 @@ class Seccion {
         $stmt->close();
         return "Sección modificada exitosamente";
     }
-
 }
 ?>
