@@ -176,7 +176,6 @@ CREATE TABLE Aspirante (
     centro_id INT NOT NULL,
     certificado_url VARCHAR(255),
     estado ENUM('PENDIENTE','ADMITIDO','RECHAZADO') NOT NULL,
-    motivo_rechazo INT DEFAULT NULL,
     revisor_usuario_id INT DEFAULT NULL,
     FOREIGN KEY (carrera_principal_id) REFERENCES Carrera(carrera_id),
     FOREIGN KEY (carrera_secundaria_id) REFERENCES Carrera(carrera_id),
@@ -184,6 +183,34 @@ CREATE TABLE Aspirante (
     FOREIGN KEY (revisor_usuario_id) REFERENCES Usuario(usuario_id)
 ) ENGINE=InnoDB;
 
+CREATE TABLE MotivoRechazoAspirante (
+    motivo_id INT AUTO_INCREMENT PRIMARY KEY,
+    tipo_rechazo ENUM('FOTO','DNI','CERTIFICADO', 'NOMBRES'),
+    descripcion VARCHAR(255) NOT NULL
+) ENGINE=InnoDB;
+
+CREATE TABLE AspiranteMotivoRechazo (
+    aspirante_id INT NOT NULL,
+    motivo_id INT NOT NULL,
+    PRIMARY KEY (aspirante_id, motivo_id),
+    FOREIGN KEY (aspirante_id) REFERENCES Aspirante(aspirante_id),
+    FOREIGN KEY (motivo_id) REFERENCES MotivoRechazoAspirante(motivo_id)
+) ENGINE=InnoDB;
+
+
+CREATE TABLE TipoExamen (
+    tipo_examen_id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    nota_minima DECIMAL(4,2) NOT NULL
+) ENGINE=InnoDB;
+
+CREATE TABLE CarreraExamen (
+    carrera_id INT NOT NULL,
+    tipo_examen_id INT NOT NULL,
+    PRIMARY KEY (carrera_id, tipo_examen_id),
+    FOREIGN KEY (carrera_id) REFERENCES Carrera(carrera_id),
+    FOREIGN KEY (tipo_examen_id) REFERENCES TipoExamen(tipo_examen_id)
+) ENGINE=InnoDB;
 
 CREATE TABLE ResultadoExamen (
     aspirante_id INT NOT NULL,
@@ -203,6 +230,7 @@ CREATE TABLE Seccion (
     hora_fin TIME NOT NULL,
     aula_id INT NOT NULL,
     estado ENUM('ACTIVA','CANCELADA') NOT NULL,
+    video_url VARCHAR(255) DEFAULT NULL;
     motivo_cancelacion TEXT,
     cupos INT NOT NULL,
     FOREIGN KEY (clase_id) REFERENCES Clase(clase_id),
@@ -233,24 +261,21 @@ CREATE TABLE Laboratorio (
     FOREIGN KEY (aula_id) REFERENCES Aula(aula_id)
 ) ENGINE=InnoDB;
 
-CREATE TABLE TipoExamen (
-    tipo_examen_id INT AUTO_INCREMENT PRIMARY KEY,
-    nombre VARCHAR(100) NOT NULL,
-    nota_minima DECIMAL(4,2) NOT NULL
-) ENGINE=InnoDB;
-
-CREATE TABLE CarreraExamen (
-    carrera_id INT NOT NULL,
-    tipo_examen_id INT NOT NULL,
-    PRIMARY KEY (carrera_id, tipo_examen_id),
-    FOREIGN KEY (carrera_id) REFERENCES Carrera(carrera_id),
-    FOREIGN KEY (tipo_examen_id) REFERENCES TipoExamen(tipo_examen_id)
-) ENGINE=InnoDB;
 
 CREATE TABLE ProcesoMatricula (
     proceso_id INT AUTO_INCREMENT PRIMARY KEY,
     periodo_academico_id INT NOT NULL,
     tipo_proceso ENUM('MATRICULA','ADICIONES_CANCELACIONES') NOT NULL,
+    fecha_inicio DATETIME NOT NULL,
+    fecha_fin DATETIME NOT NULL,
+    estado ENUM('ACTIVO','INACTIVO') NOT NULL DEFAULT 'ACTIVO',
+    FOREIGN KEY (periodo_academico_id) REFERENCES PeriodoAcademico(periodo_academico_id)
+) ENGINE=InnoDB;
+
+CREATE TABLE ProcesosExcepcionales (
+    proceso_id INT AUTO_INCREMENT PRIMARY KEY,
+    periodo_academico_id INT NOT NULL,
+    tipo_proceso ENUM('PAGO_REPOSICION','CANCELACIONES', 'CAMBIO_CARRERA') NOT NULL,
     fecha_inicio DATETIME NOT NULL,
     fecha_fin DATETIME NOT NULL,
     estado ENUM('ACTIVO','INACTIVO') NOT NULL DEFAULT 'ACTIVO',
@@ -310,12 +335,13 @@ CREATE TABLE HistorialEstudiante (
     calificacion DECIMAL(4,2),
     observacion TEXT,
     fecha DATE NOT NULL,
-    estado_curso ENUM('CURSADA','ABANDONADA','REPROBADA','APROBADA','CANCELADA') NOT NULL,
+    estado_curso ENUM('ABANDONADA','REPROBADA','APROBADA','CANCELADA') NOT NULL,
     FOREIGN KEY (estudiante_id) REFERENCES Estudiante(estudiante_id),
     FOREIGN KEY (seccion_id) REFERENCES Seccion(seccion_id)
 ) ENGINE=InnoDB;
 
-CREATE TABLE MotivoRechazo (
+
+CREATE TABLE MotivoRechazoSolicitud (
     motivo_id INT AUTO_INCREMENT PRIMARY KEY,
     descripcion VARCHAR(255) NOT NULL
 ) ENGINE=InnoDB;
@@ -323,12 +349,13 @@ CREATE TABLE MotivoRechazo (
 CREATE TABLE Solicitud (
     solicitud_id INT AUTO_INCREMENT PRIMARY KEY,
     estudiante_id INT NOT NULL,
-    tipo VARCHAR(100) NOT NULL,
+    tipo_solicitud ENUM('CAMBIO_CENTRO', 'CANCELACION_EXCEPCIONAL') NOT NULL,
     estado ENUM('PENDIENTE','APROBADA','DENEGADA') NOT NULL,
     motivo_id INT,
     fecha_solicitud DATE NOT NULL,
+    archivo_pdf VARCHAR(255) DEFAULT NULL;
     FOREIGN KEY (estudiante_id) REFERENCES Estudiante(estudiante_id),
-    FOREIGN KEY (motivo_id) REFERENCES MotivoRechazo(motivo_id)
+    FOREIGN KEY (motivo_id) REFERENCES MotivoRechazoSolicitud(motivo_id)
 ) ENGINE=InnoDB;
 
 CREATE TABLE Revisor (

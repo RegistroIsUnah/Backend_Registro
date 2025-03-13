@@ -45,24 +45,27 @@ class Aspirante {
      * @throws Exception Si ocurre un error durante la inserción.
      */
     public function insertarAspirante($nombre, $apellido, $identidad, $telefono, $correo, $fotoRuta, $fotodniRuta, $carrera_principal_id, $carrera_secundaria_id, $centro_id, $certificadoRuta) {
+        // Se esperan 11 parámetros, por lo tanto 11 marcadores
         $stmt = $this->conn->prepare("CALL SP_insertarAspirante(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
         if (!$stmt) {
             throw new Exception("Error preparando la consulta: " . $this->conn->error);
         }
-        $stmt->bind_param(
-            "sssssssiiis",
-            $nombre,
-            $apellido,
-            $identidad,
-            $telefono,
-            $correo,
+        // La cadena de tipos es: 7 strings, 3 enteros, 1 string = "sssssssiiis"
+        if (!$stmt->bind_param("sssssssiiis", 
+            $nombre, 
+            $apellido, 
+            $identidad, 
+            $telefono, 
+            $correo, 
             $fotoRuta,
-            $fotodniRuta,       
-            $carrera_principal_id,
-            $carrera_secundaria_id,
-            $centro_id,
+            $fotodniRuta,
+            $carrera_principal_id, 
+            $carrera_secundaria_id, 
+            $centro_id, 
             $certificadoRuta
-        );
+        )) {
+            throw new Exception("Error vinculando parámetros: " . $stmt->error);
+        }
         if (!$stmt->execute()) {
             throw new Exception("Error ejecutando la consulta: " . $stmt->error);
         }

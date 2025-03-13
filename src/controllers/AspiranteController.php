@@ -69,7 +69,7 @@ class AspiranteController {
             echo json_encode(['error' => 'Error al subir la foto del aspirante']);
             exit;
         }
-        $allowedImageTypes = ['image/jpeg', 'image/png', 'image/gif'];
+        $allowedImageTypes = ['image/jpeg', 'image/png', 'image/webp'];
         if (!in_array($_FILES['foto']['type'], $allowedImageTypes)) {
             http_response_code(400);
             echo json_encode(['error' => 'Tipo de imagen de aspirante no permitido']);
@@ -120,7 +120,7 @@ class AspiranteController {
             echo json_encode(['error' => 'Error al subir el certificado']);
             exit;
         }
-        $allowedCertTypes = ['application/pdf', 'image/jpeg', 'image/png'];
+        $allowedCertTypes = ['image/jpeg', 'image/png'];
         if (!in_array($_FILES['certificado']['type'], $allowedCertTypes)) {
             http_response_code(400);
             echo json_encode(['error' => 'Tipo de archivo de certificado no permitido']);

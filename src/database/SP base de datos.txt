@@ -19,18 +19,18 @@ CREATE PROCEDURE SP_insertarAspirante(
 BEGIN
     DECLARE v_numSolicitud VARCHAR(50);
     
-    -- Generar el número de solicitud (puedes ajustar el método de generación)
+    -- Generar el número de solicitud (ajusta el método de generación según sea necesario)
     SET v_numSolicitud = CONCAT('SOL-', UNIX_TIMESTAMP());
     
-    -- Insertar el aspirante con estado "PENDIENTE" y campos nulos para revisor y motivo
+    -- Insertar el aspirante con estado "PENDIENTE"
     INSERT INTO Aspirante (
         nombre, apellido, identidad, telefono, correo, foto, fotodni, numSolicitud,
         carrera_principal_id, carrera_secundaria_id, centro_id, certificado_url,
-        estado, motivo_rechazo, revisor_usuario_id
+        estado, revisor_usuario_id
     ) VALUES (
         p_nombre, p_apellido, p_identidad, p_telefono, p_correo, p_foto, p_fotodni, v_numSolicitud,
         p_carrera_principal_id, p_carrera_secundaria_id, p_centro_id, p_certificado_url,
-        'PENDIENTE', NULL, NULL
+        'PENDIENTE', NULL
     );
     
     SELECT v_numSolicitud AS numSolicitud;
@@ -98,7 +98,8 @@ CREATE PROCEDURE SP_crearSeccion(
     IN p_hora_inicio TIME,
     IN p_hora_fin TIME,
     IN p_cupos INT,
-    IN p_dias VARCHAR(255)
+    IN p_dias VARCHAR(255),
+    IN p_video_url VARCHAR(255)
 )
 BEGIN
     DECLARE v_creditos INT;
@@ -195,8 +196,12 @@ BEGIN
     END WHILE;
 
     -- Insertar la sección (incluyendo cupos)
-    INSERT INTO Seccion (clase_id, docente_id, periodo_academico_id, hora_inicio, hora_fin, aula_id, estado, cupos)
-    VALUES (p_clase_id, p_docente_id, p_periodo_academico_id, p_hora_inicio, p_hora_fin, p_aula_id, 'ACTIVA', p_cupos);
+     INSERT INTO Seccion (
+        clase_id, docente_id, periodo_academico_id, hora_inicio, hora_fin, aula_id, estado, cupos, video_url
+    )
+    VALUES (
+        p_clase_id, p_docente_id, p_periodo_academico_id, p_hora_inicio, p_hora_fin, p_aula_id, 'ACTIVA', p_cupos, p_video_url
+    );
     SET v_section_id = LAST_INSERT_ID();
 
     -- Insertar cada día en la tabla SeccionDia
@@ -213,6 +218,9 @@ END //
 DELIMITER ;
 
 
+
+
+
 DELIMITER //
 
 CREATE PROCEDURE SP_modificar_seccion(
@@ -220,7 +228,8 @@ CREATE PROCEDURE SP_modificar_seccion(
     IN p_docente_id INT,         -- Si se desea actualizar, se envía un valor; de lo contrario, NULL.
     IN p_aula_id INT,            -- Igual que p_docente_id.
     IN p_estado VARCHAR(20),     -- Se espera 'ACTIVA' o 'CANCELADA'. Si es NULL, no se modifica.
-    IN p_motivo_cancelacion TEXT -- Se utiliza si p_estado es 'CANCELADA'.
+    IN p_motivo_cancelacion TEXT, -- Se utiliza si p_estado es 'CANCELADA'.
+    IN p_cupos INT               -- Nuevo parámetro para actualizar cupos.
 )
 BEGIN
     -- Si se intenta cancelar, se requiere un motivo de cancelación.
@@ -236,11 +245,13 @@ BEGIN
        motivo_cancelacion = CASE 
                                WHEN p_estado = 'CANCELADA' THEN p_motivo_cancelacion
                                ELSE motivo_cancelacion
-                            END
+                            END,
+       cupos = COALESCE(p_cupos, cupos)
     WHERE seccion_id = p_seccion_id;
 END //
 
 DELIMITER ;
+
 
 
 
@@ -446,11 +457,24 @@ DO
    UPDATE PeriodoAcademico
    SET estado = 'INACTIVO'
    WHERE fecha_fin < NOW() AND estado = 'ACTIVO';
+   
+   
+   
 
 CREATE EVENT IF NOT EXISTS EV_actualizar_estado_proceso_matricula
 ON SCHEDULE EVERY 1 DAY
 DO
    UPDATE ProcesoMatricula
+   SET estado = 'INACTIVO'
+   WHERE fecha_fin < NOW() AND estado = 'ACTIVO';
+   
+  
+  
+  
+CREATE EVENT IF NOT EXISTS EV_actualizar_estado_procesos_excepcionales
+ON SCHEDULE EVERY 1 DAY
+DO
+   UPDATE ProcesosExcepcionales
    SET estado = 'INACTIVO'
    WHERE fecha_fin < NOW() AND estado = 'ACTIVO';
 
