@@ -15,11 +15,9 @@
  * - 500 Internal Server Error: En caso de error al obtener los datos.
  *
  * Ejemplo de respuesta:
- * [
+ * 
  *   {
  *       "seccion_id": 15,
- *       "clase": "Cálculo Avanzado",
- *       "departamento": "Matemáticas",
  *       "lista_espera": [
  *           {
  *               "estudiante_id": 45,
@@ -37,12 +35,12 @@
  *           }
  *       ]
  *   }
- * ]
+ * 
  *
  * @package API
  * @author Jose Vargas
  * @version 1.1
- * GET /api/get/listas_de_espera.php?departamentoId=5
+ * GET /api/get/listas_de_espera.php?seccionId=15
  */
 
 header('Content-Type: application/json');
@@ -50,6 +48,7 @@ header('Content-Type: application/json');
 
 require_once __DIR__ . '/../../controllers/ListasEsperaController.php';
 
+// listas_de_espera.php
 $controller = new ListasEsperaController();
-$controller->obtenerListasPorDepartamento();
+$controller->obtenerListaPorSeccion();
 ?>
