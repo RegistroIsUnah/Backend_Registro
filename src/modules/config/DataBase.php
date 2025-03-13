@@ -38,6 +38,9 @@ class Database
         if ($this->connection->connect_error) {
             throw new Exception('Error de conexión: ' . $this->connection->connect_error);
         }
+        if (!$this->connection->set_charset("utf8mb4")) {
+            throw new Exception('Error configurando el charset: ' . $this->connection->error);
+        }
     }
 
     /**
