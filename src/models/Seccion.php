@@ -114,5 +114,47 @@ class Seccion {
         $stmt->close();
         return "Sección modificada exitosamente";
     }
+
+     /**
+     * Obtiene las secciones de una clase con los detalles del docente, aula y edificio.
+     *
+     * @param int $clase_id ID de la clase.
+     * @return array Lista de secciones con sus detalles.
+     * @throws Exception Si ocurre un error en la consulta.
+     */
+    public function obtenerSeccionesPorClase($clase_id) {
+        $query = "
+            SELECT 
+                s.seccion_id,
+                s.hora_inicio,
+                s.hora_fin,
+                s.estado,
+                s.video_url,
+                s.motivo_cancelacion,
+                s.cupos,
+                d.nombre AS docente_nombre,
+                d.apellido AS docente_apellido,
+                a.nombre AS aula_nombre,
+                e.nombre AS edificio_nombre
+            FROM Seccion s
+            LEFT JOIN Docente d ON s.docente_id = d.docente_id
+            LEFT JOIN Aula a ON s.aula_id = a.aula_id
+            LEFT JOIN Edificio e ON a.edificio_id = e.edificio_id
+            WHERE s.clase_id = ?
+        ";
+        $stmt = $this->conn->prepare($query);
+        if (!$stmt) {
+            throw new Exception("Error preparando la consulta: " . $this->conn->error);
+        }
+        $stmt->bind_param("i", $clase_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $secciones = [];
+        while ($row = $result->fetch_assoc()) {
+            $secciones[] = $row;
+        }
+        $stmt->close();
+        return $secciones;
+    }
 }
 ?>

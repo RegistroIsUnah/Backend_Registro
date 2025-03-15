@@ -146,5 +146,23 @@ class SeccionController {
         http_response_code(200);
         echo json_encode(['message' => $mensaje]);
     }
+
+     /**
+     * Obtiene las secciones de una clase y envía la respuesta en JSON.
+     *
+     * @param int $clase_id ID de la clase.
+     * @return void
+     */
+    public function getSeccionesPorClase($clase_id) {
+        try {
+            $seccionModel = new Seccion();
+            $secciones = $seccionModel->obtenerSeccionesPorClase($clase_id);
+            http_response_code(200);
+            echo json_encode($secciones);
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => $e->getMessage()]);
+        }
+    }
 }
 ?>

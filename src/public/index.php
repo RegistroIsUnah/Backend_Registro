@@ -93,6 +93,22 @@ switch (true) {
         require_once __DIR__ . '/../api/get/listas_de_espera.phpphp';
         break; 
 
+    case preg_match('/\/api\/get\/listas_de_espera/', $request_uri):
+        require_once __DIR__ . '/../api/get/listas_de_espera.php';
+        break; 
+        
+    case preg_match('/\/api\/get\/clases_depto/', $request_uri):
+        require_once __DIR__ . '/../api/get/clases_depto.php';
+        break;
+
+    case preg_match('/\/api\/get\/seccion_detalles/', $request_uri):
+        require_once __DIR__ . '/../api/get/seccion_detalles.php';
+        break;
+        
+    case preg_match('/\/api\/post\/matricular_estudiante/', $request_uri):
+            require_once __DIR__ . '/../api/post/matricular_estudiante.php';
+            break; 
+
     default:
         http_response_code(404);
         echo json_encode(["mensaje" => "Ruta no encontrada"]);
