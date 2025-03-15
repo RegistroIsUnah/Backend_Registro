@@ -1,8 +1,8 @@
 -- Crear la base de datos y usarla
 
-CREATE DATABASE IF NOT EXISTS sistemaregistro;
+CREATE DATABASE IF NOT EXISTS sistemaregistro1;
 
-USE sistemaregistro;
+USE sistemaregistro1;
 
 CREATE TABLE Centro (
     centro_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -175,11 +175,40 @@ CREATE TABLE Aspirante (
     carrera_secundaria_id INT DEFAULT NULL,
     centro_id INT NOT NULL,
     certificado_url VARCHAR(255),
-    estado ENUM('PENDIENTE','ADMITIDO','RECHAZADO') NOT NULL,
+    estado ENUM('PENDIENTE','ADMITIDO','RECHAZADO', 'CORREGIDO_PENDIENTE') NOT NULL,
     revisor_usuario_id INT DEFAULT NULL,
+    fecha_solicitud DATE NOT NULL,
     FOREIGN KEY (carrera_principal_id) REFERENCES Carrera(carrera_id),
     FOREIGN KEY (carrera_secundaria_id) REFERENCES Carrera(carrera_id),
     FOREIGN KEY (centro_id) REFERENCES Centro(centro_id),
+    FOREIGN KEY (revisor_usuario_id) REFERENCES Usuario(usuario_id)
+) ENGINE=InnoDB;
+
+CREATE TABLE Revisor (
+    revisor_id INT AUTO_INCREMENT PRIMARY KEY,
+    estudiante_id INT NOT NULL,
+    fecha_aprobacion DATE NOT NULL,
+    usuario_id INT NOT NULL,
+    FOREIGN KEY (estudiante_id) REFERENCES Estudiante(estudiante_id),
+    FOREIGN KEY (usuario_id) REFERENCES Usuario(usuario_id)
+) ENGINE=InnoDB;
+
+CREATE TABLE AplicanteRevisor (
+    aplicante_revisor_id INT AUTO_INCREMENT PRIMARY KEY,
+    estudiante_id INT NOT NULL,
+    carrera_id INT NOT NULL,
+    fecha_solicitud DATE NOT NULL,
+    estado_solicitud ENUM('PENDIENTE','APROBADO','RECHAZADO') NOT NULL,
+    FOREIGN KEY (estudiante_id) REFERENCES Estudiante(estudiante_id),
+    FOREIGN KEY (carrera_id) REFERENCES Carrera(carrera_id)
+) ENGINE=InnoDB;
+
+CREATE TABLE RevisionAspirante (
+    revision_id INT AUTO_INCREMENT PRIMARY KEY,
+    aspirante_id INT NOT NULL,
+    revisor_usuario_id INT NOT NULL,
+    fecha_revision DATETIME NOT NULL,
+    FOREIGN KEY (aspirante_id) REFERENCES Aspirante(aspirante_id),
     FOREIGN KEY (revisor_usuario_id) REFERENCES Usuario(usuario_id)
 ) ENGINE=InnoDB;
 
@@ -190,13 +219,13 @@ CREATE TABLE MotivoRechazoAspirante (
 ) ENGINE=InnoDB;
 
 CREATE TABLE AspiranteMotivoRechazo (
-    aspirante_id INT NOT NULL,
+    revision_id INT NOT NULL,
     motivo_id INT NOT NULL,
-    PRIMARY KEY (aspirante_id, motivo_id),
-    FOREIGN KEY (aspirante_id) REFERENCES Aspirante(aspirante_id),
+    fecha_rechazo DATE NOT NULL,
+    PRIMARY KEY (revision_id, motivo_id),
+    FOREIGN KEY (revision_id) REFERENCES RevisionAspirante(revision_id),
     FOREIGN KEY (motivo_id) REFERENCES MotivoRechazoAspirante(motivo_id)
 ) ENGINE=InnoDB;
-
 
 CREATE TABLE TipoExamen (
     tipo_examen_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -215,6 +244,7 @@ CREATE TABLE CarreraExamen (
 CREATE TABLE ResultadoExamen (
     aspirante_id INT NOT NULL,
     tipo_examen_id INT NOT NULL,
+    fecha_examen DATE NOT NULL,
     calificacion DECIMAL(4,2) NOT NULL,
     PRIMARY KEY (aspirante_id, tipo_examen_id),
     FOREIGN KEY (aspirante_id) REFERENCES Aspirante(aspirante_id),
@@ -230,7 +260,7 @@ CREATE TABLE Seccion (
     hora_fin TIME NOT NULL,
     aula_id INT NOT NULL,
     estado ENUM('ACTIVA','CANCELADA') NOT NULL,
-    video_url VARCHAR(255) DEFAULT NULL;
+    video_url VARCHAR(255) DEFAULT NULL,
     motivo_cancelacion TEXT,
     cupos INT NOT NULL,
     FOREIGN KEY (clase_id) REFERENCES Clase(clase_id),
@@ -261,6 +291,12 @@ CREATE TABLE Laboratorio (
     FOREIGN KEY (aula_id) REFERENCES Aula(aula_id)
 ) ENGINE=InnoDB;
 
+CREATE TABLE LaboratorioDia (
+    laboratorio_id INT NOT NULL,
+    dia ENUM('Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo') NOT NULL,
+    PRIMARY KEY (laboratorio_id, dia),
+    FOREIGN KEY (laboratorio_id) REFERENCES Laboratorio(laboratorio_id)
+) ENGINE=InnoDB;
 
 CREATE TABLE ProcesoMatricula (
     proceso_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -353,28 +389,9 @@ CREATE TABLE Solicitud (
     estado ENUM('PENDIENTE','APROBADA','DENEGADA') NOT NULL,
     motivo_id INT,
     fecha_solicitud DATE NOT NULL,
-    archivo_pdf VARCHAR(255) DEFAULT NULL;
+    archivo_pdf VARCHAR(255) DEFAULT NULL,
     FOREIGN KEY (estudiante_id) REFERENCES Estudiante(estudiante_id),
     FOREIGN KEY (motivo_id) REFERENCES MotivoRechazoSolicitud(motivo_id)
-) ENGINE=InnoDB;
-
-CREATE TABLE Revisor (
-    revisor_id INT AUTO_INCREMENT PRIMARY KEY,
-    estudiante_id INT NOT NULL,
-    fecha_aprobacion DATE NOT NULL,
-    usuario_id INT NOT NULL,
-    FOREIGN KEY (estudiante_id) REFERENCES Estudiante(estudiante_id),
-    FOREIGN KEY (usuario_id) REFERENCES Usuario(usuario_id)
-) ENGINE=InnoDB;
-
-CREATE TABLE AplicanteRevisor (
-    aplicante_revisor_id INT AUTO_INCREMENT PRIMARY KEY,
-    estudiante_id INT NOT NULL,
-    carrera_id INT NOT NULL,
-    fecha_solicitud DATE NOT NULL,
-    estado_solicitud ENUM('PENDIENTE','APROBADO','RECHAZADO') NOT NULL,
-    FOREIGN KEY (estudiante_id) REFERENCES Estudiante(estudiante_id),
-    FOREIGN KEY (carrera_id) REFERENCES Carrera(carrera_id)
 ) ENGINE=InnoDB;
 
 CREATE TABLE Chat (
@@ -467,25 +484,4 @@ CREATE TABLE ClaseRequisito (
     FOREIGN KEY (requisito_id) REFERENCES Requisito(requisito_id)
 ) ENGINE=InnoDB;
 
-CREATE TABLE ObservacionPredefinida (
-    observacion_id INT AUTO_INCREMENT PRIMARY KEY,
-    descripcion VARCHAR(255) NOT NULL
-) ENGINE=InnoDB;
-
-CREATE TABLE RevisionAspirante (
-    revision_id INT AUTO_INCREMENT PRIMARY KEY,
-    aspirante_id INT NOT NULL,
-    revisor_usuario_id INT NOT NULL,
-    fecha_revision DATETIME NOT NULL,
-    FOREIGN KEY (aspirante_id) REFERENCES Aspirante(aspirante_id),
-    FOREIGN KEY (revisor_usuario_id) REFERENCES Usuario(usuario_id)
-) ENGINE=InnoDB;
-
-CREATE TABLE RevisionObservacion (
-    revision_id INT NOT NULL,
-    observacion_id INT NOT NULL,
-    PRIMARY KEY (revision_id, observacion_id),
-    FOREIGN KEY (revision_id) REFERENCES RevisionAspirante(revision_id),
-    FOREIGN KEY (observacion_id) REFERENCES ObservacionPredefinida(observacion_id)
-) ENGINE=InnoDB;
 
