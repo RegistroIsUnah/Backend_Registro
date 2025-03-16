@@ -5,6 +5,9 @@
  * Ejemplo de URL 
  * servidor:puerto/api/put o patch/modificar_libro
  *
+ * Ejemplo de URL 
+ * servidor:puerto/api/put o patch/modificar_libro
+ *
  * Se espera recibir (multipart/form-data) los siguientes parámetros:
  *   - libro_id: int (requerido)
  *   - titulo: string (opcional)

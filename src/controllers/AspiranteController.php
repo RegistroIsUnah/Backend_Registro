@@ -255,7 +255,7 @@ class AspiranteController {
             exit;
         }
     }
-
+  
      /**
      * Obtiene una solicitud pendiente o corregida y la asigna al revisor que realiza la petición.
      *
