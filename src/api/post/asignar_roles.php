@@ -5,6 +5,9 @@
  * Se espera recibir vía POST (multipart/form-data o x-www-form-urlencoded):
  *   - usuario_id: int
  *   - roles: JSON string (ej. [1,2,3])
+ * 
+ * Ejemplo de URL:
+ * servidor:puerto/api/post/asignar_roles
  *
  * Ejemplo de solicitud:
  *   usuario_id: 5

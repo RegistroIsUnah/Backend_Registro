@@ -10,6 +10,9 @@
  *  - seccion_id (int): ID de la sección principal.
  *  - tipo_proceso (string): Tipo de proceso, e.g., "MATRICULA".
  *  - laboratorio_id (int, opcional): ID del laboratorio seleccionado.
+ * 
+ * Ejemplo de URL 
+ * servidor:puerto/api/post/matricular_estudiante
  *
  * Ejemplo de solicitud sin laboratorio:
  * {

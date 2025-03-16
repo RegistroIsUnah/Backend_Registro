@@ -28,46 +28,42 @@ class Libro {
         $this->conn = $database->getConnection();
     }
     
-      /**
+    /**
      * Registra un libro y sus asociaciones.
      *
      * @param string $titulo Título del libro.
+     * @param string $editorial Editorial del libro.
      * @param string $libro_url Ruta donde se guarda el archivo.
      * @param string $fecha_publicacion Fecha de publicación (YYYY-MM-DD).
      * @param string $descripcion Descripción del libro.
      * @param string $estado Estado del libro ('ACTIVO' o 'INACTIVO').
-     * @param array $tags Array de nombres de tags (se asume que ya existen en la tabla Tag).
+     * @param array $tags Array de tag IDs.
      * @param array $autores Array de arrays con claves 'nombre' y 'apellido'.
      * @param int $clase_id ID de la clase a asociar (0 si no se asocia).
      * @return int ID del libro insertado.
      * @throws Exception Si ocurre un error en la transacción.
      */
-    public function registrarLibro($titulo, $libro_url, $fecha_publicacion, $descripcion, $estado, $tags, $autores, $clase_id) {
+    public function registrarLibro($titulo, $editorial, $libro_url, $fecha_publicacion, $descripcion, $estado, $tags, $autores, $clase_id) {
         $this->conn->begin_transaction();
         try {
-            // 1. Insertar en la tabla Libro (incluyendo estado)
-            $stmt = $this->conn->prepare("INSERT INTO Libro (titulo, libro_url, fecha_publicacion, descripcion, estado) VALUES (?, ?, ?, ?, ?)");
+            // Insertar en la tabla Libro incluyendo el campo editorial
+            $stmt = $this->conn->prepare("INSERT INTO Libro (titulo, editorial, libro_url, fecha_publicacion, descripcion, estado) VALUES (?, ?, ?, ?, ?, ?)");
             if (!$stmt) {
                 throw new Exception("Error preparando inserción en Libro: " . $this->conn->error);
             }
-            $stmt->bind_param("sssss", $titulo, $libro_url, $fecha_publicacion, $descripcion, $estado);
+            $stmt->bind_param("ssssss", $titulo, $editorial, $libro_url, $fecha_publicacion, $descripcion, $estado);
             if (!$stmt->execute()) {
                 throw new Exception("Error insertando en Libro: " . $stmt->error);
             }
             $libro_id = $stmt->insert_id;
             $stmt->close();
             
-            // 2. Procesar Tags: se asume que se envía un array de tag_id y se insertan las asociaciones en TagLibro.
+            // Procesar Tags (se espera un array de tag IDs)
             if (!empty($tags) && is_array($tags)) {
-                foreach ($tags as $tag_id) {
-                    // Verificar que el valor sea numérico
-                    if (!is_numeric($tag_id)) {
-                        throw new Exception("El tag_id '$tag_id' no es válido.");
-                    }
-                    $tag_id = (int)$tag_id;
-                    // Insertar en TagLibro directamente
+                foreach ($tags as $tagId) {
+                    $tagId = (int)$tagId;
                     $stmt = $this->conn->prepare("INSERT INTO TagLibro (libro_id, tag_id) VALUES (?, ?)");
-                    $stmt->bind_param("ii", $libro_id, $tag_id);
+                    $stmt->bind_param("ii", $libro_id, $tagId);
                     if (!$stmt->execute()) {
                         throw new Exception("Error insertando en TagLibro: " . $stmt->error);
                     }
@@ -75,7 +71,7 @@ class Libro {
                 }
             }
             
-            // 3. Procesar Autores: insertar o obtener cada autor y asociarlo en LibroAutor.
+            // Procesar Autores
             if (!empty($autores) && is_array($autores)) {
                 foreach ($autores as $autor) {
                     if (!isset($autor['nombre']) || !isset($autor['apellido'])) continue;
@@ -110,7 +106,7 @@ class Libro {
                 }
             }
             
-            // 4. Asociar el libro a una clase (si se proporciona un id mayor que 0)
+            // Asociar el libro a una clase (si se proporciona)
             if ($clase_id > 0) {
                 $stmt = $this->conn->prepare("INSERT INTO ClaseLibro (clase_id, libro_id) VALUES (?, ?)");
                 $stmt->bind_param("ii", $clase_id, $libro_id);
@@ -128,7 +124,7 @@ class Libro {
         }
     }
 
-     /**
+    /**
      * Actualiza un libro y sus asociaciones de forma parcial.
      *
      * Todos los parámetros (excepto $libro_id) son opcionales; solo se actualizan los que se proporcionen.
@@ -136,6 +132,7 @@ class Libro {
      *
      * @param int $libro_id ID del libro a actualizar.
      * @param string|null $titulo
+     * @param string|null $editorial
      * @param string|null $libro_url (ruta del archivo, si se sube uno nuevo)
      * @param string|null $fecha_publicacion (YYYY-MM-DD)
      * @param string|null $descripcion
@@ -146,7 +143,7 @@ class Libro {
      * @return bool True si la actualización se realizó correctamente.
      * @throws Exception Si ocurre un error en la transacción.
      */
-    public function actualizarLibro($libro_id, $titulo = null, $libro_url = null, $fecha_publicacion = null, $descripcion = null, $tags = null, $autores = null, $clase_id = null, $estado = null) {
+    public function actualizarLibro($libro_id, $titulo = null, $editorial = null, $libro_url = null, $fecha_publicacion = null, $descripcion = null, $tags = null, $autores = null, $clase_id = null, $estado = null) {
         $this->conn->begin_transaction();
         try {
             // 1. Actualizar la tabla Libro (solo los campos proporcionados)
@@ -156,6 +153,11 @@ class Libro {
             if ($titulo !== null && $titulo !== "") {
                 $updateFields[] = "titulo = ?";
                 $params[] = $titulo;
+                $paramTypes .= "s";
+            }
+            if ($editorial !== null && $editorial !== "") {
+                $updateFields[] = "editorial = ?";
+                $params[] = $editorial;
                 $paramTypes .= "s";
             }
             if ($libro_url !== null && $libro_url !== "") {
@@ -279,8 +281,8 @@ class Libro {
             throw $e;
         }
     }
-
-     /**
+        
+    /**
      * Obtiene los detalles de un libro, incluidos sus autores y tags.
      *
      * @param int $libro_id ID del libro.
@@ -289,7 +291,7 @@ class Libro {
      */
     public function obtenerLibro($libro_id) {
         // 1. Obtener los datos principales del libro (solo si está ACTIVO)
-        $sql = "SELECT libro_id, titulo, libro_url, fecha_publicacion, descripcion, estado 
+        $sql = "SELECT libro_id, titulo, editorial, libro_url, fecha_publicacion, descripcion, estado 
                 FROM Libro 
                 WHERE libro_id = ? AND estado = 'ACTIVO'";
         $stmt = $this->conn->prepare($sql);
@@ -308,9 +310,9 @@ class Libro {
         
         // 2. Obtener los autores asociados al libro
         $sqlAuthors = "SELECT a.autor_id, a.nombre, a.apellido 
-                       FROM LibroAutor la 
-                       INNER JOIN Autor a ON la.autor_id = a.autor_id 
-                       WHERE la.libro_id = ?";
+                    FROM LibroAutor la 
+                    INNER JOIN Autor a ON la.autor_id = a.autor_id 
+                    WHERE la.libro_id = ?";
         $stmt = $this->conn->prepare($sqlAuthors);
         $stmt->bind_param("i", $libro_id);
         $stmt->execute();
@@ -344,7 +346,7 @@ class Libro {
      */
     public function obtenerLibroCompleto($libro_id) {
         // 1. Obtener los datos principales del libro (sin filtrar por estado)
-        $sql = "SELECT libro_id, titulo, libro_url, fecha_publicacion, descripcion, estado 
+        $sql = "SELECT libro_id, titulo, editorial, libro_url, fecha_publicacion, descripcion, estado 
                 FROM Libro 
                 WHERE libro_id = ?";
         $stmt = $this->conn->prepare($sql);
@@ -403,8 +405,8 @@ class Libro {
      *       "clase_id": 1,
      *       "clase_nombre": "Matemáticas I",
      *       "libros": [
-     *          { "libro_id": 3, "titulo": "Álgebra", "libro_url": "/uploads/libros/...", ... },
-     *          { "libro_id": 5, "titulo": "Cálculo", "libro_url": "/uploads/libros/...", ... }
+     *          { "libro_id": 3, "titulo": "Álgebra", "editorial": "Editorial X", "libro_url": "/uploads/libros/...", ... },
+     *          { "libro_id": 5, "titulo": "Cálculo", "editorial": "Editorial Y", "libro_url": "/uploads/libros/...", ... }
      *       ]
      *     },
      *     ...
@@ -417,6 +419,7 @@ class Libro {
                     c.nombre AS clase_nombre,
                     l.libro_id,
                     l.titulo,
+                    l.editorial,
                     l.libro_url,
                     l.fecha_publicacion,
                     l.descripcion,
@@ -449,21 +452,22 @@ class Libro {
                     'libros' => []
                 ];
             }
-            // Agregar libro a la clase
+            // Agregar libro a la clase, incluyendo el campo editorial
             $clases[$clase_id]['libros'][] = [
                 'libro_id' => $row['libro_id'],
                 'titulo' => $row['titulo'],
+                'editorial' => $row['editorial'],
                 'libro_url' => $row['libro_url'],
                 'fecha_publicacion' => $row['fecha_publicacion'],
                 'descripcion' => $row['descripcion'],
                 'estado' => $row['estado']
             ];
         }
-        // Convertir el arreglo asociativo a un arreglo indexado
         return array_values($clases);
     }
 
-    /**
+
+   /**
      * Obtiene todos los libros (estado ACTIVO) asociados a las clases en las que el estudiante está matriculado o que ya cursó.
      *
      * Se obtiene el conjunto de secciones en las que el estudiante aparece en la tabla Matricula o en HistorialEstudiante,
@@ -476,8 +480,8 @@ class Libro {
      *      "clase_id": 1,
      *      "clase_nombre": "Matemáticas I",
      *      "libros": [
-     *         { "libro_id": 3, "titulo": "Álgebra", ... },
-     *         { "libro_id": 5, "titulo": "Cálculo", ... }
+     *         { "libro_id": 3, "titulo": "Álgebra", "editorial": "Editorial X", "libro_url": "/uploads/libros/...", ... },
+     *         { "libro_id": 5, "titulo": "Cálculo", "editorial": "Editorial Y", "libro_url": "/uploads/libros/...", ... }
      *      ]
      *    },
      *    ...
@@ -491,6 +495,7 @@ class Libro {
                     c.nombre AS clase_nombre,
                     l.libro_id,
                     l.titulo,
+                    l.editorial,
                     l.libro_url,
                     l.fecha_publicacion,
                     l.descripcion,
@@ -527,25 +532,27 @@ class Libro {
             $clase_id = $row['clase_id'];
             if (!isset($clases[$clase_id])) {
                 $clases[$clase_id] = [
-                    'clase_id' => $clase_id,
+                    'clase_id'     => $clase_id,
                     'clase_nombre' => $row['clase_nombre'],
-                    'libros' => []
+                    'libros'       => []
                 ];
             }
-            // Agregar libro a la clase
+            // Agregar libro a la clase, incluyendo el campo editorial
             $clases[$clase_id]['libros'][] = [
-                'libro_id' => $row['libro_id'],
-                'titulo' => $row['titulo'],
-                'libro_url' => $row['libro_url'],
+                'libro_id'          => $row['libro_id'],
+                'titulo'            => $row['titulo'],
+                'editorial'         => $row['editorial'],
+                'libro_url'         => $row['libro_url'],
                 'fecha_publicacion' => $row['fecha_publicacion'],
-                'descripcion' => $row['descripcion'],
-                'estado' => $row['estado']
+                'descripcion'       => $row['descripcion'],
+                'estado'            => $row['estado']
             ];
         }
         
         // Convertir a arreglo indexado
         return array_values($clases);
     }
+
 
     /**
      * Elimina (desasocia) ciertos tags y autores de un libro.

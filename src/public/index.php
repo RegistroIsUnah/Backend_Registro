@@ -8,9 +8,6 @@
  * @version 1.0
  * @package public
  * 
- * @author Jose Vargas
- * @version 1.1
- * @package public
  * Cabeceras incluidas:
  * - Access-Control-Allow-Origin: * → Permite acceso desde cualquier origen (CORS).
  * - Access-Control-Allow-Methods: GET, POST, PUT, DELETE → Define los métodos HTTP permitidos.
@@ -23,15 +20,10 @@
  * - /api/get/carreras → Obtiene una lista de las carreras
  * - /api/get/centros → Obtiene una lista de los centros
  * 
- * Version 1.1
- * - /api/get/listas_de_espera → Obtiene una lista de los estudiantes en espera
- * 
  * Respuestas HTTP:
  * - 200 OK: Si la ruta existe y se ejecuta correctamente.
  * - 404 Not Found: Si la ruta no está definida.
  * - 500 Internal Server Error: Si hay errores internos en la API.
- * 
- * 
  * 
  */
 
@@ -84,13 +76,9 @@ switch (true) {
     case preg_match('/\/api\/post\/crear_periodo/', $request_uri):
         require_once __DIR__ . '/../api/post/crear_periodo.php';
         break; 
-
+        
     case preg_match('/\/api\/post\/crear_proceso_matricula/', $request_uri):
         require_once __DIR__ . '/../api/post/crear_proceso_matricula.php';
-        break; 
-    
-    case preg_match('/\/api\/get\/listas_de_espera/', $request_uri):
-        require_once __DIR__ . '/../api/get/listas_de_espera.phpphp';
         break; 
 
     case preg_match('/\/api\/get\/listas_de_espera/', $request_uri):

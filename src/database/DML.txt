@@ -233,12 +233,12 @@ INSERT INTO ProcesosExcepcionales (periodo_academico_id, tipo_proceso, fecha_ini
 (3, 'PAGO_REPOSICION', '2024-06-18 00:00:00', '2024-06-22 23:59:59', 'INACTIVO'),  -- Proceso de pago de reposición para el período 3
 (3, 'CANCELACIONES', '2024-06-23 00:00:00', '2024-06-27 23:59:59', 'INACTIVO');  -- Proceso de cancelaciones excepcionales para el período 3
 
-INSERT INTO Libro (titulo, libro_url, fecha_publicacion, descripcion, estado) VALUES
-('Álgebra Lineal', '/libros/algebra_lineal.pdf', '2020-01-01', 'Libro introductorio de Álgebra Lineal.', 'ACTIVO'),
-('Física General', '/libros/fisica_general.pdf', '2019-05-15', 'Libro de Física para estudiantes de ingeniería.', 'ACTIVO'),
-('Mecánica de Materiales', '/libros/mecanica_materiales.pdf', '2018-09-20', 'Libro avanzado de Mecánica de Materiales.', 'ACTIVO'),
-('Anatomía Humana', '/libros/anatomia_humana.pdf', '2021-03-10', 'Libro de Anatomía para estudiantes de medicina.', 'ACTIVO'),
-('Pintura al Óleo', '/libros/pintura_oleo.pdf', '2022-07-25', 'Guía práctica de Pintura al Óleo.', 'ACTIVO');
+INSERT INTO Libro (titulo, editorial, libro_url, fecha_publicacion, descripcion, estado) VALUES
+('Álgebra Lineal', 'Pearson', '/libros/algebra_lineal.pdf', '2020-01-01', 'Libro introductorio de Álgebra Lineal.', 'ACTIVO'),
+('Física General', 'Pearson', '/libros/fisica_general.pdf', '2019-05-15', 'Libro de Física para estudiantes de ingeniería.', 'ACTIVO'),
+('Mecánica de Materiales', 'Pearson', '/libros/mecanica_materiales.pdf', '2018-09-20', 'Libro avanzado de Mecánica de Materiales.', 'ACTIVO'),
+('Anatomía Humana', 'Pearson', '/libros/anatomia_humana.pdf', '2021-03-10', 'Libro de Anatomía para estudiantes de medicina.', 'ACTIVO'),
+('Pintura al Óleo', 'Pearson', '/libros/pintura_oleo.pdf', '2022-07-25', 'Guía práctica de Pintura al Óleo.', 'ACTIVO');
 
 INSERT INTO Tag (tag_nombre) VALUES
 ('Matemáticas'),

@@ -46,7 +46,7 @@
 header('Content-Type: application/json');
 
 
-require_once __DIR__ . '/../../controllers/MatriculaController.php';
+require_once __DIR__ . '/../../controllers/ListasEsperaController.php';
 
 
 $controller = new MatriculaController();
