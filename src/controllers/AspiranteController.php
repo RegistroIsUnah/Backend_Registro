@@ -37,11 +37,34 @@ class AspiranteController {
             echo json_encode(['error' => 'Identidad inválida']);
             exit;
         }
+
+        /*
+        if (!isset($data['identidad']) || !preg_match('/^((01(0[1-8]))|(02(0[1-9]|10))|(03(0[1-9]|1[0-9]|2[01]))|
+        (04(0[1-9]|1[0-9]|2[0-3]))|(05(0[1-9]|1[0-2]))|(06(0[1-9]|1[0-6]))|(07(0[1-9]|1[0-9]))|
+        (08(0[1-9]|1[0-9]|2[0-8]))|(09(0[1-6]))|(10(0[1-9]|1[0-7]))|(11(0[1-4]))|(12(0[1-9]|1[0-9]))|
+        (13(0[1-9]|1[0-9]|2[0-8]))|(14(0[1-9]|1[0-6]))|(15(0[1-9]|1[0-9]|2[0-3]))|(16(0[1-9]|1[0-9]|2[0-8]))|
+        (17(0[1-9]))|(18(0[1-9]|1[0-1])))-((19[4-9][0-9])|(20[0-9]{2}))-([0-9]{5})$/', $data['identidad'])) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Identidad inválida']);
+        exit;
+        }
+        */
+        
         if (!isset($data['telefono']) || !preg_match('/^[0-9\+\-\s]+$/', $data['telefono'])) {
             http_response_code(400);
             echo json_encode(['error' => 'Teléfono inválido']);
             exit;
         }
+
+        /*
+        if (!isset($data['telefono']) || !preg_match('/^(\+504|504|\(\+504\))?[-]?([369][0-9]{3})[-]?([0-9]{4})+$/', 
+        $data['telefono'])) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Teléfono inválido']);
+            exit;
+        }
+        */
+
         if (!isset($data['correo']) || !filter_var($data['correo'], FILTER_VALIDATE_EMAIL)) {
             http_response_code(400);
             echo json_encode(['error' => 'Correo inválido']);
@@ -69,7 +92,7 @@ class AspiranteController {
             echo json_encode(['error' => 'Error al subir la foto del aspirante']);
             exit;
         }
-        $allowedImageTypes = ['image/jpeg', 'image/png', 'image/webp'];
+        $allowedImageTypes = ['image/jpeg', 'image/jpg', 'image/tiff', 'image/avif', 'image/png', 'image/webp'];
         if (!in_array($_FILES['foto']['type'], $allowedImageTypes)) {
             http_response_code(400);
             echo json_encode(['error' => 'Tipo de imagen de aspirante no permitido']);
@@ -95,7 +118,8 @@ class AspiranteController {
             echo json_encode(['error' => 'Error al subir la foto del DNI']);
             exit;
         }
-        if (!in_array($_FILES['fotodni']['type'], $allowedImageTypes)) {
+        $allowedImageTypesDni = ['image/jpeg', 'image/jpg', 'image/tiff', 'image/avif', 'image/png', 'image/webp', 'application.pdf'];
+        if (!in_array($_FILES['fotodni']['type'], $allowedImageTypesDni)) {
             http_response_code(400);
             echo json_encode(['error' => 'Tipo de imagen para el DNI no permitido']);
             exit;
@@ -120,7 +144,7 @@ class AspiranteController {
             echo json_encode(['error' => 'Error al subir el certificado']);
             exit;
         }
-        $allowedCertTypes = ['image/jpeg', 'image/png'];
+        $allowedCertTypes = ['image/jpeg', 'image/jpg', 'image/tiff', 'image/avif', 'image/png', 'image/webp, application.pdf'];
         if (!in_array($_FILES['certificado']['type'], $allowedCertTypes)) {
             http_response_code(400);
             echo json_encode(['error' => 'Tipo de archivo de certificado no permitido']);
