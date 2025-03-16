@@ -319,7 +319,7 @@ CREATE TABLE ProcesoMatricula (
 CREATE TABLE ProcesosExcepcionales (
     proceso_id INT AUTO_INCREMENT PRIMARY KEY,
     periodo_academico_id INT NOT NULL,
-    tipo_proceso ENUM('PAGO_REPOSICION','CANCELACIONES', 'CAMBIO_CARRERA') NOT NULL,
+    tipo_proceso ENUM('PAGO_REPOSICION','CANCELACION_EXCEPCIONAL') NOT NULL,
     fecha_inicio DATETIME NOT NULL,
     fecha_fin DATETIME NOT NULL,
     estado ENUM('ACTIVO','INACTIVO') NOT NULL DEFAULT 'ACTIVO',
@@ -403,7 +403,7 @@ CREATE TABLE MotivoRechazoSolicitud (
 CREATE TABLE Solicitud (
     solicitud_id INT AUTO_INCREMENT PRIMARY KEY,
     estudiante_id INT NOT NULL,
-    tipo_solicitud ENUM('CAMBIO_CENTRO', 'CANCELACION_EXCEPCIONAL') NOT NULL,
+    tipo_solicitud ENUM('CAMBIO_CENTRO', 'CANCELACION_EXCEPCIONAL', 'CAMBIO_CARRERA', 'PAGO_REPOSICION') NOT NULL,
     estado ENUM('PENDIENTE','APROBADA','DENEGADA') NOT NULL,
     motivo_id INT,
     fecha_solicitud DATE NOT NULL,
