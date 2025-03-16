@@ -136,7 +136,23 @@ switch (true) {
     case preg_match('/\/api\/post\/quitar_roles/', $request_uri):
         require_once __DIR__ . '/../api/post/quitar_roles.php';
         break; 
+
+    case preg_match('/\/api\/post\/matricular_estudiante_adiciones_cancelaciones/', $request_uri):
+        require_once __DIR__ . '/../api/post/matricular_estudiante_adiciones_cancelaciones.php';
+        break; 
     
+    case preg_match('/\/api\/get\/departamentos/', $request_uri):
+        require_once __DIR__ . '/../api/get/departamentos.php';
+        break;
+
+    case preg_match('/\/api\/get\/listar_clases_matriculables/', $request_uri):
+        require_once __DIR__ . '/../api/get/listar_clases_matriculables.php';
+        break;
+
+    case preg_match('/\/api\/get\/listar_laboratorios_clase/', $request_uri):
+        require_once __DIR__ . '/../api/get/listar_laboratorios_clase.php';
+        break;
+
     default:
         http_response_code(404);
         echo json_encode(["mensaje" => "Ruta no encontrada"]);
