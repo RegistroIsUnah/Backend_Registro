@@ -40,8 +40,8 @@
  */
 header('Content-Type: application/json');
 
-require_once __DIR__ . '/../../controllers/ClasesDepartamentosController.php';
+require_once __DIR__ . '/../../controllers/DepartamentoController.php';
 
-$controller = new ClasesDepartamentosController();
+$controller = new DepartamentoController();
 $controller->obtenerClasesPorDepartamento();
 ?>
