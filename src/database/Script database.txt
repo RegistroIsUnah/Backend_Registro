@@ -184,7 +184,6 @@ CREATE TABLE Aspirante (
     centro_id INT NOT NULL,
     certificado_url VARCHAR(255),
     estado ENUM('PENDIENTE','ADMITIDO','RECHAZADO', 'CORREGIDO_PENDIENTE') NOT NULL,
-    revisor_usuario_id INT DEFAULT NULL,
     fecha_solicitud DATE NOT NULL,
     FOREIGN KEY (carrera_principal_id) REFERENCES Carrera(carrera_id),
     FOREIGN KEY (carrera_secundaria_id) REFERENCES Carrera(carrera_id),
