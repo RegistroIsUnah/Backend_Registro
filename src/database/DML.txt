@@ -130,12 +130,12 @@ INSERT INTO Docente (usuario_id, nombre, apellido, correo, numero_empleado, cent
 (10, 'Sofía', 'López', 'sofia.lopez@example.com', 'EMP004', 4, 4, '/fotos/docente4.jpg'),
 (11, 'Jorge', 'Martínez', 'jorge.martinez@example.com', 'EMP005', 5, 5, '/fotos/docente5.jpg');
 
-INSERT INTO Aspirante (nombre, apellido, identidad, telefono, correo, foto, fotodni, numSolicitud, carrera_principal_id, carrera_secundaria_id, centro_id, certificado_url, estado, revisor_usuario_id, fecha_solicitud) VALUES
-('Pedro', 'Sánchez', '0801199901111', '1234-5678', 'pedro.sanchez@example.com', '/fotos/aspirante1.jpg', '/fotos/dni1.jpg', 'SOL001', 1, 2, 1, '/certificados/cert1.pdf', 'PENDIENTE', NULL, '2023-10-01'),
-('Lucía', 'González', '0801199902222', '8765-4321', 'lucia.gonzalez@example.com', '/fotos/aspirante2.jpg', '/fotos/dni2.jpg', 'SOL002', 3, 4, 2, '/certificados/cert2.pdf', 'ADMITIDO', 1, '2023-10-02'),
-('Mario', 'Ramírez', '0801199903333', '5555-5555', 'mario.ramirez@example.com', '/fotos/aspirante3.jpg', '/fotos/dni3.jpg', 'SOL003', 5, 1, 3, '/certificados/cert3.pdf', 'RECHAZADO', 2, '2023-10-03'),
-('Carmen', 'Díaz', '0801199904444', '2222-3333', 'carmen.diaz@example.com', '/fotos/aspirante4.jpg', '/fotos/dni4.jpg', 'SOL004', 2, 3, 4, '/certificados/cert4.pdf', 'CORREGIDO_PENDIENTE', 3, '2023-10-04'),
-('Javier', 'Torres', '0801199905555', '9999-8888', 'javier.torres@example.com', '/fotos/aspirante5.jpg', '/fotos/dni5.jpg', 'SOL005', 4, 5, 5, '/certificados/cert5.pdf', 'PENDIENTE', NULL, '2023-10-05');
+INSERT INTO Aspirante (nombre, apellido, identidad, telefono, correo, foto, fotodni, numSolicitud, carrera_principal_id, carrera_secundaria_id, centro_id, certificado_url, estado, fecha_solicitud) VALUES
+('Pedro', 'Sánchez', '0801199901111', '1234-5678', 'pedro.sanchez@example.com', '/fotos/aspirante1.jpg', '/fotos/dni1.jpg', 'SOL001', 1, 2, 1, '/certificados/cert1.pdf', 'PENDIENTE', '2023-10-01'),
+('Lucía', 'González', '0801199902222', '8765-4321', 'lucia.gonzalez@example.com', '/fotos/aspirante2.jpg', '/fotos/dni2.jpg', 'SOL002', 3, 4, 2, '/certificados/cert2.pdf', 'ADMITIDO', '2023-10-02'),
+('Mario', 'Ramírez', '0801199903333', '5555-5555', 'mario.ramirez@example.com', '/fotos/aspirante3.jpg', '/fotos/dni3.jpg', 'SOL003', 5, 1, 3, '/certificados/cert3.pdf', 'RECHAZADO', '2023-10-03'),
+('Carmen', 'Díaz', '0801199904444', '2222-3333', 'carmen.diaz@example.com', '/fotos/aspirante4.jpg', '/fotos/dni4.jpg', 'SOL004', 2, 3, 4, '/certificados/cert4.pdf', 'CORREGIDO_PENDIENTE','2023-10-04'),
+('Javier', 'Torres', '0801199905555', '9999-8888', 'javier.torres@example.com', '/fotos/aspirante5.jpg', '/fotos/dni5.jpg', 'SOL005', 4, 5, 5, '/certificados/cert5.pdf', 'PENDIENTE', '2023-10-05');
 
 INSERT INTO Revisor (estudiante_id, fecha_aprobacion, usuario_id) VALUES
 (1, '2023-10-01', 2),  -- Juan Pérez aprobado como revisor
@@ -233,12 +233,12 @@ INSERT INTO ProcesosExcepcionales (periodo_academico_id, tipo_proceso, fecha_ini
 (3, 'PAGO_REPOSICION', '2024-06-18 00:00:00', '2024-06-22 23:59:59', 'INACTIVO'),  -- Proceso de pago de reposición para el período 3
 (3, 'CANCELACIONES', '2024-06-23 00:00:00', '2024-06-27 23:59:59', 'INACTIVO');  -- Proceso de cancelaciones excepcionales para el período 3
 
-INSERT INTO Libro (titulo, libro_url, fecha_publicacion, descripcion, estado) VALUES
-('Álgebra Lineal', '/libros/algebra_lineal.pdf', '2020-01-01', 'Libro introductorio de Álgebra Lineal.', 'ACTIVO'),
-('Física General', '/libros/fisica_general.pdf', '2019-05-15', 'Libro de Física para estudiantes de ingeniería.', 'ACTIVO'),
-('Mecánica de Materiales', '/libros/mecanica_materiales.pdf', '2018-09-20', 'Libro avanzado de Mecánica de Materiales.', 'ACTIVO'),
-('Anatomía Humana', '/libros/anatomia_humana.pdf', '2021-03-10', 'Libro de Anatomía para estudiantes de medicina.', 'ACTIVO'),
-('Pintura al Óleo', '/libros/pintura_oleo.pdf', '2022-07-25', 'Guía práctica de Pintura al Óleo.', 'ACTIVO');
+INSERT INTO Libro (titulo, editorial, libro_url, fecha_publicacion, descripcion, estado) VALUES
+('Álgebra Lineal', 'Pearson', '/libros/algebra_lineal.pdf', '2020-01-01', 'Libro introductorio de Álgebra Lineal.', 'ACTIVO'),
+('Física General', 'Pearson', '/libros/fisica_general.pdf', '2019-05-15', 'Libro de Física para estudiantes de ingeniería.', 'ACTIVO'),
+('Mecánica de Materiales', 'Pearson', '/libros/mecanica_materiales.pdf', '2018-09-20', 'Libro avanzado de Mecánica de Materiales.', 'ACTIVO'),
+('Anatomía Humana', 'Pearson', '/libros/anatomia_humana.pdf', '2021-03-10', 'Libro de Anatomía para estudiantes de medicina.', 'ACTIVO'),
+('Pintura al Óleo', 'Pearson', '/libros/pintura_oleo.pdf', '2022-07-25', 'Guía práctica de Pintura al Óleo.', 'ACTIVO');
 
 INSERT INTO Tag (tag_nombre) VALUES
 ('Matemáticas'),

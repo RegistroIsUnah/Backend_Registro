@@ -38,7 +38,7 @@ if (!$data || !isset($data['clase_id'])) {
     exit;
 }
 
-require_once __DIR__ . '/../../controllers/LaboratorioController.php';
+require_once __DIR__ . '/../../controllers/ClaseController.php';
 
 $controller = new ClaseController();
 $controller->listarLaboratorios($data);

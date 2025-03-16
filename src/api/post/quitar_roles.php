@@ -1,6 +1,9 @@
 <?php
 /**
  * API para quitar roles a un usuario.
+ * 
+ * Ejemplo de URL 
+ * servidor:puerto/api/post/quitar_roles
  *
  * Se espera recibir vía POST:
  *   - usuario_id: int

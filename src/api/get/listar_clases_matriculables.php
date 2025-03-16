@@ -42,7 +42,7 @@ if (!$data || !isset($data['departamento_id'], $data['estudiante_id'])) {
     exit;
 }
 
-require_once __DIR__ . '/../../controllers/ClaseMatriculableController.php';
+require_once __DIR__ . '/../../controllers/MatriculaController.php';
 
 $controller = new ClaseController();
 $controller->listarClasesMatriculables($data);

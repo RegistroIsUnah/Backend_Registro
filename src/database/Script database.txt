@@ -329,6 +329,7 @@ CREATE TABLE ProcesosExcepcionales (
 CREATE TABLE Libro (
     libro_id INT AUTO_INCREMENT PRIMARY KEY,
     titulo VARCHAR(200) NOT NULL,
+    editorial VARCHAR(200) NOT NULL,
     libro_url VARCHAR(255) NOT NULL,
     fecha_publicacion DATE NOT NULL,
     descripcion TEXT,
