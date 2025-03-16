@@ -1,6 +1,9 @@
 <?php
 /**
  * Endpoint para actualizar un libro.
+ * 
+ * Ejemplo de URL 
+ * servidor:puerto/api/put o patch/modificar_libro
  *
  * Ejemplo de URL 
  * servidor:puerto/api/put o patch/modificar_libro

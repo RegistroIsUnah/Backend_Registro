@@ -157,6 +157,18 @@ switch (true) {
         require_once __DIR__ . '/../api/get/listar_tags.php';
         break;
 
+    case preg_match('/\/api\/get\/obtener_aspirantes_admitidos/', $request_uri):
+        require_once __DIR__ . '/../api/get/obtener_aspirantes_admitidos.php';
+        break;
+    
+    case preg_match('/\/api\/get\/clases_departamento/', $request_uri):
+        require_once __DIR__ . '/../api/get/clases_departamento.php';
+        break;
+
+    case preg_match('/\/api\/get\/obtener_solicitud_aspirante/', $request_uri):
+        require_once __DIR__ . '/../api/get/obtener_solicitud_aspirante.php';
+        break;
+
     default:
         http_response_code(404);
         echo json_encode(["mensaje" => "Ruta no encontrada"]);
