@@ -1,6 +1,9 @@
 <?php
 /**
  * API para crear un proceso de matrícula.
+ * 
+ * Ejemplo de URL:
+ * servidor:puerto/api/post/crear_proceso_matricula
  *
  * Este endpoint recibe datos en formato JSON:
  * {

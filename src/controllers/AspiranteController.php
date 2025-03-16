@@ -14,16 +14,6 @@
 require_once __DIR__ . '/../models/Aspirante.php';
 
 class AspiranteController {
-    private $modelo; // Propiedad para almacenar el modelo
-
-    /**
-     * Constructor del controlador.
-     */
-    public function __construct() {
-        // Inicializar el modelo Aspirante
-        $this->modelo = new Aspirante();
-    }
-
     /**
      * Inserta un aspirante.
      *
@@ -199,52 +189,5 @@ class AspiranteController {
         http_response_code(200);
         echo json_encode(['numSolicitud' => $numSolicitud, 'message' => 'Aspirante ingresado exitosamente']);
     }
-
-    /**
-     * Genera un CSV con los aspirantes admitidos y fuerza la descarga.
-     */
-    public function generarCSVAspirantesAdmitidos() {
-        // Validar que el método de solicitud sea GET
-        if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
-            http_response_code(405); // Método no permitido
-            echo json_encode(['error' => 'Método no permitido']);
-            exit;
-        }
-    
-        // Validar permisos (opcional, dependiendo de tu sistema de autenticación)
-        if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'admin') {
-            http_response_code(403); // Prohibido
-            echo json_encode(['error' => 'No tienes permisos para realizar esta acción']);
-            exit;
-        }
-    
-        // Intentar generar el CSV
-        try {
-            // Configurar headers para descarga
-            header('Content-Type: text/csv; charset=utf-8');
-            header('Content-Disposition: attachment; filename="aspirantes_admitidos.csv"');
-    
-            // Verificar que el método exista en el modelo
-            if (!method_exists($this->modelo, 'exportarAspirantesAdmitidosCSV')) {
-                throw new Exception("El método exportarAspirantesAdmitidosCSV no existe en el modelo.");
-            }
-    
-            // Llamar al método del modelo para generar el CSV
-            $this->modelo->exportarAspirantesAdmitidosCSV();
-    
-            exit; // Terminar ejecución después de enviar el archivo
-    
-        } catch (Exception $e) {
-            // Registrar el error en el log
-            error_log("Error generando CSV: " . $e->getMessage());
-    
-            // Devolver error en formato JSON
-            http_response_code(500);
-            echo json_encode(['error' => 'Error al generar el archivo CSV: ' . $e->getMessage()]);
-            exit;
-        }
-    }
-
- 
 }
 ?>
