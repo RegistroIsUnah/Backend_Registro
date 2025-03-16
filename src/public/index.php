@@ -93,6 +93,78 @@ switch (true) {
         require_once __DIR__ . '/../api/get/listas_de_espera.phpphp';
         break; 
 
+    case preg_match('/\/api\/get\/listas_de_espera/', $request_uri):
+        require_once __DIR__ . '/../api/get/listas_de_espera.php';
+        break; 
+        
+    case preg_match('/\/api\/get\/clases_depto/', $request_uri):
+        require_once __DIR__ . '/../api/get/clases_depto.php';
+        break;
+
+    case preg_match('/\/api\/get\/seccion_detalles/', $request_uri):
+        require_once __DIR__ . '/../api/get/seccion_detalles.php';
+        break;
+        
+    case preg_match('/\/api\/post\/matricular_estudiante/', $request_uri):
+        require_once __DIR__ . '/../api/post/matricular_estudiante.php';
+        break; 
+
+    case preg_match('/\/api\/post\/registrar_libro/', $request_uri):
+        require_once __DIR__ . '/../api/post/registrar_libro.php';
+        break; 
+    
+    case preg_match('/\/api\/put\/modificar_libro/', $request_uri):
+        require_once __DIR__ . '/../api/put/modificar_libro.php';
+        break; 
+    
+    case preg_match('/\/api\/get\/listar_usuarios_con_roles/', $request_uri):
+        require_once __DIR__ . '/../api/get/listar_usuarios_con_roles.php';
+        break;
+    
+    case preg_match('/\/api\/get\/obtener_libro_encargado/', $request_uri):
+        require_once __DIR__ . '/../api/get/obtener_libro_encargado.php';
+        break;
+
+    case preg_match('/\/api\/get\/obtener_libro/', $request_uri):
+        require_once __DIR__ . '/../api/get/obtener_libro.php';
+        break;
+    
+    case preg_match('/\/api\/get\/obtener_libros_por_departamento/', $request_uri):
+        require_once __DIR__ . '/../api/get/obtener_libros_por_departamento.php';
+        break; 
+        
+    case preg_match('/\/api\/get\/obtener_libros_por_estudiante/', $request_uri):
+        require_once __DIR__ . '/../api/get/obtener_libros_por_estudiante.php';
+        break;    
+
+    case preg_match('/\/api\/post\/asignar_roles/', $request_uri):
+        require_once __DIR__ . '/../api/post/asignar_roles.php';
+        break; 
+    
+    case preg_match('/\/api\/post\/eliminar_asociaciones_libro/', $request_uri):
+        require_once __DIR__ . '/../api/post/eliminar_asociaciones_libro.php';
+        break; 
+
+    case preg_match('/\/api\/post\/quitar_roles/', $request_uri):
+        require_once __DIR__ . '/../api/post/quitar_roles.php';
+        break; 
+
+    case preg_match('/\/api\/post\/matricular_estudiante_adiciones_cancelaciones/', $request_uri):
+        require_once __DIR__ . '/../api/post/matricular_estudiante_adiciones_cancelaciones.php';
+        break; 
+    
+    case preg_match('/\/api\/get\/departamentos/', $request_uri):
+        require_once __DIR__ . '/../api/get/departamentos.php';
+        break;
+
+    case preg_match('/\/api\/get\/listar_clases_matriculables/', $request_uri):
+        require_once __DIR__ . '/../api/get/listar_clases_matriculables.php';
+        break;
+
+    case preg_match('/\/api\/get\/listar_laboratorios_clase/', $request_uri):
+        require_once __DIR__ . '/../api/get/listar_laboratorios_clase.php';
+        break;
+
     default:
         http_response_code(404);
         echo json_encode(["mensaje" => "Ruta no encontrada"]);

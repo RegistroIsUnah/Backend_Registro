@@ -48,7 +48,7 @@ header('Content-Type: application/json');
 
 require_once __DIR__ . '/../../controllers/ListasEsperaController.php';
 
-// listas_de_espera.php
-$controller = new ListasEsperaController();
+
+$controller = new MatriculaController();
 $controller->obtenerListaPorSeccion();
 ?>
