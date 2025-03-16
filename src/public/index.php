@@ -134,7 +134,7 @@ switch (true) {
         break; 
         
     case preg_match('/\/api\/get\/obtener_libros_por_estudiante/', $request_uri):
-        require_once __DIR__ . '/../api/get/obtener_libros_por_estudiante.php';
+        require_once __DIR__ . '/../api/get/obtener_libros_estudiante.php';
         break;    
 
     case preg_match('/\/api\/post\/asignar_roles/', $request_uri):
@@ -163,6 +163,10 @@ switch (true) {
 
     case preg_match('/\/api\/get\/listar_laboratorios_clase/', $request_uri):
         require_once __DIR__ . '/../api/get/listar_laboratorios_clase.php';
+        break;
+
+    case preg_match('/\/api\/get\/listar_tags/', $request_uri):
+        require_once __DIR__ . '/../api/get/listar_tags.php';
         break;
 
     default:
