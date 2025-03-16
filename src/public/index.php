@@ -169,6 +169,10 @@ switch (true) {
         require_once __DIR__ . '/../api/get/obtener_solicitud_aspirante.php';
         break;
 
+    case preg_match('/\/api\/post\/procesar_revision_aspirante/', $request_uri):
+        require_once __DIR__ . '/../api/post/procesar_revision_aspirante.php';
+        break;             
+
     default:
         http_response_code(404);
         echo json_encode(["mensaje" => "Ruta no encontrada"]);
