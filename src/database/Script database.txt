@@ -95,6 +95,14 @@ CREATE TABLE Usuario (
     FOREIGN KEY (rol_id) REFERENCES Rol(rol_id)
 ) ENGINE=InnoDB;
 
+CREATE TABLE UsuarioRol (
+    usuario_id INT NOT NULL,
+    rol_id INT NOT NULL,
+    PRIMARY KEY (usuario_id, rol_id),
+    FOREIGN KEY (usuario_id) REFERENCES Usuario(usuario_id),
+    FOREIGN KEY (rol_id) REFERENCES Rol(rol_id)
+) ENGINE=InnoDB;
+
 CREATE TABLE ResetPasswordRequest (
     request_id INT AUTO_INCREMENT PRIMARY KEY,
     usuario_id INT NOT NULL,
@@ -318,16 +326,26 @@ CREATE TABLE ProcesosExcepcionales (
     FOREIGN KEY (periodo_academico_id) REFERENCES PeriodoAcademico(periodo_academico_id)
 ) ENGINE=InnoDB;
 
-
-CREATE TABLE Libros (
+CREATE TABLE Libro (
     libro_id INT AUTO_INCREMENT PRIMARY KEY,
     titulo VARCHAR(200) NOT NULL,
-    archivo VARCHAR(255) NOT NULL,
+    libro_url VARCHAR(255) NOT NULL,
     fecha_publicacion DATE NOT NULL,
     descripcion TEXT,
-    tag VARCHAR(100),
-    carrera_id INT NOT NULL,
-    FOREIGN KEY (carrera_id) REFERENCES Carrera(carrera_id)
+    estado ENUM('ACTIVO','INACTIVO') NOT NULL DEFAULT 'ACTIVO'
+) ENGINE=InnoDB;
+
+CREATE TABLE Tag (
+     tag_id INT AUTO_INCREMENT PRIMARY KEY,
+     tag_nombre VARCHAR(200) NOT NULL
+) ENGINE=InnoDB;
+
+CREATE TABLE TagLibro (
+    libro_id INT NOT NULL,
+    tag_id INT NOT NULL,
+    PRIMARY KEY (libro_id, tag_id),
+    FOREIGN KEY (libro_id) REFERENCES Libro(libro_id),
+    FOREIGN KEY (tag_id) REFERENCES Tag(tag_id)
 ) ENGINE=InnoDB;
 
 CREATE TABLE Autor (
@@ -340,16 +358,16 @@ CREATE TABLE LibroAutor (
     libro_id INT NOT NULL,
     autor_id INT NOT NULL,
     PRIMARY KEY (libro_id, autor_id),
-    FOREIGN KEY (libro_id) REFERENCES Libros(libro_id),
+    FOREIGN KEY (libro_id) REFERENCES Libro(libro_id),
     FOREIGN KEY (autor_id) REFERENCES Autor(autor_id)
 ) ENGINE=InnoDB;
 
 CREATE TABLE ClaseLibro (
-    carrera_id INT NOT NULL,
+    clase_id INT NOT NULL,
     libro_id INT NOT NULL,
-    PRIMARY KEY (carrera_id, libro_id),
-    FOREIGN KEY (carrera_id) REFERENCES Carrera(carrera_id),
-    FOREIGN KEY (libro_id) REFERENCES Libros(libro_id)
+    PRIMARY KEY (clase_id, libro_id),
+    FOREIGN KEY (clase_id) REFERENCES Clase(clase_id),
+    FOREIGN KEY (libro_id) REFERENCES Libro(libro_id)
 ) ENGINE=InnoDB;
 
 CREATE TABLE Matricula (
