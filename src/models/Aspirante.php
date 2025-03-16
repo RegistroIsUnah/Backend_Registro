@@ -83,7 +83,6 @@ class Aspirante {
         return $numSolicitud;
     }
 
-
     /**
      *Obtiene la lista de los aspirantes admitidos 
      * @return string JSON con la lista de los aspirantes admitidos.
@@ -234,5 +233,141 @@ class Aspirante {
         fclose($output);
     }
     
+    /**
+     * Obtiene una solicitud pendiente o corregida y la asigna al revisor.
+     *
+     * Se selecciona una solicitud de la tabla Aspirante en la que:
+     *   - estado IN ('PENDIENTE', 'CORREGIDO_PENDIENTE')
+     * Se ordena por fecha_solicitud ascendente y se toma la primera.
+     * Luego, se inserta un registro en RevisionAspirante con el ID del aspirante, el ID del revisor
+     * y la fecha de revisión (NOW()). Si no hay solicitudes disponibles, se retorna NULL.
+     *
+     * @param int $revisor_id ID del revisor que solicita la revisión.
+     * @return array|null Los datos de la solicitud asignada o NULL si no hay solicitudes pendientes.
+     * @throws Exception Si ocurre un error durante la transacción.
+     */
+    public function obtenerYAsignarSolicitud($revisor_id) {
+        $this->conn->begin_transaction();
+        try {
+            // Seleccionar una solicitud que esté pendiente o corregida (sin filtrar por revisor, pues ahora no está en Aspirante)
+            $sql = "SELECT aspirante_id, nombre, apellido, identidad, telefono, correo, foto, fotodni, numSolicitud, 
+                        carrera_principal_id, carrera_secundaria_id, centro_id, certificado_url, estado, fecha_solicitud
+                    FROM Aspirante
+                    WHERE estado IN ('PENDIENTE','CORREGIDO_PENDIENTE')
+                    ORDER BY fecha_solicitud ASC
+                    LIMIT 1";
+            $stmt = $this->conn->prepare($sql);
+            if (!$stmt) {
+                throw new Exception("Error preparando la consulta: " . $this->conn->error);
+            }
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $solicitud = $result->fetch_assoc();
+            $stmt->close();
+            
+            if (!$solicitud) {
+                $this->conn->commit();
+                return null; // No hay solicitudes pendientes
+            }
+            
+            // Insertar la asignación de la revisión en RevisionAspirante
+            $sqlInsert = "INSERT INTO RevisionAspirante (aspirante_id, revisor_usuario_id, fecha_revision)
+                        VALUES (?, ?, NOW())";
+            $stmt = $this->conn->prepare($sqlInsert);
+            if (!$stmt) {
+                throw new Exception("Error preparando la inserción en RevisionAspirante: " . $this->conn->error);
+            }
+            $stmt->bind_param("ii", $solicitud['aspirante_id'], $revisor_id);
+            if (!$stmt->execute()) {
+                throw new Exception("Error insertando en RevisionAspirante: " . $stmt->error);
+            }
+            $stmt->close();
+            
+            $this->conn->commit();
+            return $solicitud;
+        } catch (Exception $e) {
+            $this->conn->rollback();
+            throw $e;
+        }
+    }
+
+    /**
+     * Procesa la revisión de una solicitud de aspirante.
+     *
+     * @param int $aspirante_id ID del aspirante.
+     * @param int $revisor_id ID del revisor.
+     * @param string $accion 'aceptar' o 'rechazar'.
+     * @param array|null $motivos Array de motivo_id (numéricos) en caso de rechazo.
+     * @return array Datos de la revisión (revision_id y la acción realizada).
+     * @throws Exception Si ocurre algún error durante la transacción.
+     */
+    public function procesarRevision($aspirante_id, $revisor_id, $accion, $motivos = null) {
+        $this->conn->begin_transaction();
+        try {
+            // Determinar el nuevo estado según la acción
+            if (strtolower($accion) === 'aceptar') {
+                $nuevoEstado = 'ADMITIDO';
+            } elseif (strtolower($accion) === 'rechazar') {
+                $nuevoEstado = 'RECHAZADO';
+            } else {
+                throw new Exception("La acción debe ser 'aceptar' o 'rechazar'");
+            }
+            
+            // Actualizar el estado del aspirante
+            $sqlUpdate = "UPDATE Aspirante SET estado = ? WHERE aspirante_id = ?";
+            $stmt = $this->conn->prepare($sqlUpdate);
+            if (!$stmt) {
+                throw new Exception("Error preparando actualización en Aspirante: " . $this->conn->error);
+            }
+            $stmt->bind_param("si", $nuevoEstado, $aspirante_id);
+            if (!$stmt->execute()) {
+                throw new Exception("Error actualizando el estado del aspirante: " . $stmt->error);
+            }
+            $stmt->close();
+            
+            // Insertar registro en RevisionAspirante
+            $sqlInsertRevision = "INSERT INTO RevisionAspirante (aspirante_id, revisor_usuario_id, fecha_revision) VALUES (?, ?, NOW())";
+            $stmt = $this->conn->prepare($sqlInsertRevision);
+            if (!$stmt) {
+                throw new Exception("Error preparando inserción en RevisionAspirante: " . $this->conn->error);
+            }
+            $stmt->bind_param("ii", $aspirante_id, $revisor_id);
+            if (!$stmt->execute()) {
+                throw new Exception("Error insertando en RevisionAspirante: " . $stmt->error);
+            }
+            $revision_id = $stmt->insert_id;
+            $stmt->close();
+            
+            // Si la acción es rechazar, registrar los motivos
+            if (strtolower($accion) === 'rechazar') {
+                if (empty($motivos) || !is_array($motivos)) {
+                    throw new Exception("Al rechazar, se debe enviar al menos un motivo");
+                }
+                foreach ($motivos as $motivo_id) {
+                    if (!is_numeric($motivo_id)) {
+                        throw new Exception("El motivo_id '$motivo_id' debe ser numérico");
+                    }
+                    $motivo_id = (int)$motivo_id;
+                    $sqlInsertMotivo = "INSERT INTO AspiranteMotivoRechazo (revision_id, motivo_id, fecha_rechazo) VALUES (?, ?, NOW())";
+                    $stmt = $this->conn->prepare($sqlInsertMotivo);
+                    if (!$stmt) {
+                        throw new Exception("Error preparando inserción en AspiranteMotivoRechazo: " . $this->conn->error);
+                    }
+                    $stmt->bind_param("ii", $revision_id, $motivo_id);
+                    if (!$stmt->execute()) {
+                        throw new Exception("Error insertando en AspiranteMotivoRechazo: " . $stmt->error);
+                    }
+                    $stmt->close();
+                }
+            }
+            
+            $this->conn->commit();
+            return ['revision_id' => $revision_id, 'accion' => strtolower($accion)];
+        } catch (Exception $e) {
+            $this->conn->rollback();
+            throw $e;
+        }
+    }
+
 }
 ?>
