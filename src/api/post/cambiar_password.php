@@ -22,7 +22,7 @@
  * {
  *   "password_actual": "passwordgenericavieja",
  *   "nueva_password": "passwordgenericanueva",
- *   "confirmar_password": "passwordgenericavieja"
+ *   "confirmar_password": "passwordgenericanueva"
  * }
  * 
  * Ejemplo de respuesta exitosa:
