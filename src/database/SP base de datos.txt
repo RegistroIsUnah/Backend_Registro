@@ -743,5 +743,5 @@ Expresion regular validacion Identidades
 Expresion regular validacion Numeros de telefono
 
 /*
-(\+504|504|\(\+504\))?[-]?([369][0-9]{3})[-]?([0-9]{4})
+(\+504|504|\(\+504\)|\+\(504\))?[-]?([369][0-9]{3})[-]?([0-9]{4})
 */
