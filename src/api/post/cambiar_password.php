@@ -20,9 +20,9 @@
  * 
  * Ejemplo de solicitud:
  * {
- *   "password_actual": "miPassActual123",
- *   "nueva_password": "nuevaPassSegura456",
- *   "confirmar_password": "nuevaPassSegura456"
+ *   "password_actual": "passwordgenericavieja",
+ *   "nueva_password": "passwordgenericanueva",
+ *   "confirmar_password": "passwordgenericavieja"
  * }
  * 
  * Ejemplo de respuesta exitosa:
