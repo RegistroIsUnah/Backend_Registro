@@ -121,7 +121,7 @@ switch (true) {
         require_once __DIR__ . '/../api/get/obtener_libros_por_departamento.php';
         break; 
         
-    case preg_match('/\/api\/get\/obtener_libros_por_estudiante/', $request_uri):
+    case preg_match('/\/api\/get\/obtener_libros_estudiante/', $request_uri):
         require_once __DIR__ . '/../api/get/obtener_libros_estudiante.php';
         break;    
 

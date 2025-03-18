@@ -4,10 +4,6 @@
  *
  * Encapsula la lógica para registrar un libro.
  *
- * Sólo podrán ejecutar esta acción usuarios con rol:
- *   - Biblioteca_Jefe de Departamento
- *   - Biblioteca_Coordinador
- *
  * @package Controllers
  * @author Ruben Diaz
  * @version 1.0

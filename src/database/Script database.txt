@@ -187,8 +187,7 @@ CREATE TABLE Aspirante (
     fecha_solicitud DATE NOT NULL,
     FOREIGN KEY (carrera_principal_id) REFERENCES Carrera(carrera_id),
     FOREIGN KEY (carrera_secundaria_id) REFERENCES Carrera(carrera_id),
-    FOREIGN KEY (centro_id) REFERENCES Centro(centro_id),
-    FOREIGN KEY (revisor_usuario_id) REFERENCES Usuario(usuario_id)
+    FOREIGN KEY (centro_id) REFERENCES Centro(centro_id)
 ) ENGINE=InnoDB;
 
 CREATE TABLE Revisor (
@@ -318,7 +317,7 @@ CREATE TABLE ProcesoMatricula (
 CREATE TABLE ProcesosExcepcionales (
     proceso_id INT AUTO_INCREMENT PRIMARY KEY,
     periodo_academico_id INT NOT NULL,
-    tipo_proceso ENUM('PAGO_REPOSICION','CANCELACION_EXCEPCIONAL') NOT NULL,
+    tipo_proceso ENUM('PAGO_REPOSICION','CANCELACION_EXCEPCIONAL', 'CAMBIO_CARRERA') NOT NULL,
     fecha_inicio DATETIME NOT NULL,
     fecha_fin DATETIME NOT NULL,
     estado ENUM('ACTIVO','INACTIVO') NOT NULL DEFAULT 'ACTIVO',
