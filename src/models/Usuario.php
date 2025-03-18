@@ -61,5 +61,49 @@ class Usuario {
 
         return $usuario;
     }
+
+    /**
+     * Actualiza la contraseña de un usuario
+     * 
+     * @param int $userId
+     * @param string $newPassword
+     * @param string|null $oldPassword (opcional para validación)
+     * @return bool
+     * @throws Exception
+     */
+    public function cambiarPassword($userId, $newPassword, $oldPassword = null) {
+        // Validar contraseña anterior si se provee
+        if ($oldPassword !== null) {
+            $sql = "SELECT password FROM Usuario WHERE usuario_id = ?";
+            $stmt = $this->conn->prepare($sql);
+            $stmt->bind_param("i", $userId);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            
+            if ($result->num_rows === 0) {
+                throw new Exception("Usuario no encontrado");
+            }
+            
+            $user = $result->fetch_assoc();
+            if (!password_verify($oldPassword, $user['password'])) {
+                throw new Exception("Contraseña actual incorrecta");
+            }
+        }
+
+        // Hashear nueva contraseña
+        $hashedPassword = password_hash($newPassword, PASSWORD_BCRYPT);
+
+        // Actualizar en BD
+        $sql = "UPDATE Usuario SET password = ? WHERE usuario_id = ?";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param("si", $hashedPassword, $userId);
+
+        if (!$stmt->execute()) {
+            throw new Exception("Error al actualizar contraseña: " . $stmt->error);
+        }
+
+        return true;
+    }
+
 }
 ?>
