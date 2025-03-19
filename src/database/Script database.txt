@@ -234,7 +234,7 @@ CREATE TABLE AspiranteMotivoRechazo (
 CREATE TABLE TipoExamen (
     tipo_examen_id INT AUTO_INCREMENT PRIMARY KEY,
     nombre VARCHAR(100) NOT NULL,
-    nota_minima DECIMAL(4,2) NOT NULL
+    nota_minima DECIMAL(6,2) NOT NULL
 ) ENGINE=InnoDB;
 
 CREATE TABLE CarreraExamen (
