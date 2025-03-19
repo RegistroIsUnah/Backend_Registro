@@ -488,17 +488,12 @@ CREATE TABLE RespuestaEvaluacion (
     FOREIGN KEY (pregunta_id) REFERENCES PreguntaEvaluacion(pregunta_id)
 ) ENGINE=InnoDB;
 
-CREATE TABLE Requisito (
-    requisito_id INT AUTO_INCREMENT PRIMARY KEY,
-    descripcion VARCHAR(255) NOT NULL
-) ENGINE=InnoDB;
-
 CREATE TABLE ClaseRequisito (
     clase_id INT NOT NULL,
     requisito_id INT NOT NULL,
     PRIMARY KEY (clase_id, requisito_id),
     FOREIGN KEY (clase_id) REFERENCES Clase(clase_id),
-    FOREIGN KEY (requisito_id) REFERENCES Requisito(requisito_id)
+    FOREIGN KEY (requisito_id) REFERENCES Clase(clase_id)
 ) ENGINE=InnoDB;
 
 

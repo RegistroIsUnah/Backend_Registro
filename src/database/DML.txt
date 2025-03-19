@@ -47,7 +47,14 @@ INSERT INTO Clase (dept_id, codigo, nombre, creditos, tiene_laboratorio) VALUES
 (2, 'FIS101', 'Física General', 4, TRUE),
 (3, 'ING101', 'Mecánica de Materiales', 3, TRUE),
 (4, 'MED101', 'Anatomía Humana', 5, TRUE),
-(5, 'ART101', 'Pintura al Óleo', 3, FALSE);
+(5, 'ART101', 'Pintura al Óleo', 3, FALSE),
+(2, 'FIS200', 'Física Avanzada', 3, FALSE),
+(1, 'MAT200', 'Álgebra Vectorial', 4, FALSE),
+(4, 'MED200', 'Anatomía Avanzada', 5, TRUE),
+(5, 'ART200', 'Arte Contemporaneo', 3, FALSE),
+(3, 'ING200', 'Materiales Expertos', 3, TRUE),
+(1, 'MAT110', 'Calculo', 4, FALSE);
+
 
 INSERT INTO ClaseCarrera (clase_id, carrera_id) VALUES
 (1, 1),  -- Álgebra Lineal - Licenciatura en Matemáticas
@@ -325,18 +332,13 @@ INSERT INTO RespuestaEvaluacion (evaluacion_id, pregunta_id, respuesta) VALUES
 (3, 4, 'El docente fomenta la participación en clase.'),  -- Respuesta a la pregunta 4 en la evaluación 3
 (4, 5, 'El docente cumple con los horarios establecidos.');  -- Respuesta a la pregunta 5 en la evaluación 4
 
-INSERT INTO Requisito (descripcion) VALUES
-('Haber aprobado Álgebra Lineal.'),  -- Requisito para cursos avanzados de matemáticas
-('Haber aprobado Física General.'),  -- Requisito para cursos avanzados de física
-('Haber aprobado Mecánica de Materiales.'),  -- Requisito para cursos avanzados de ingeniería
-('Haber aprobado Anatomía Humana.'),  -- Requisito para cursos avanzados de medicina
-('Haber aprobado Pintura al Óleo.');  -- Requisito para cursos avanzados de arte
+INSERT INTO ClaseRequisito (clase_id, requisito_id) VALUES 
+(7, 2),
+(9, 4),
+(10, 5),
+(11, 3),
+(7, 12),
+(8, 1);
 
-INSERT INTO ClaseRequisito (clase_id, requisito_id) VALUES
-(2, 1),  -- Física General requiere haber aprobado Álgebra Lineal
-(3, 2),  -- Mecánica de Materiales requiere haber aprobado Física General
-(4, 3),  -- Anatomía Humana requiere haber aprobado Mecánica de Materiales
-(5, 4),  -- Pintura al Óleo requiere haber aprobado Anatomía Humana
-(1, 5);  -- Álgebra Lineal requiere haber aprobado Pintura al Óleo
 
 
