@@ -137,6 +137,7 @@ CREATE TABLE FotosEstudiante (
 CREATE TABLE EstudianteCarrera (
     estudiante_id INT NOT NULL,
     carrera_id INT NOT NULL,
+    estado_aprobacion ENUM('APROBADO', 'NO_APROBADO') NOT NULL DEFAULT 'NO_APROBADO',
     PRIMARY KEY (estudiante_id, carrera_id),
     FOREIGN KEY (estudiante_id) REFERENCES Estudiante(estudiante_id),
     FOREIGN KEY (carrera_id) REFERENCES Carrera(carrera_id)
