@@ -134,12 +134,12 @@ INSERT INTO FotosEstudiante (ruta_foto, estudiante_id) VALUES
 ('/fotos/estudiante4.jpg', 4),
 ('/fotos/estudiante5.jpg', 5);
 
-INSERT INTO EstudianteCarrera (estudiante_id, carrera_id) VALUES
-(1, 1),  -- Juan Pérez - Licenciatura en Matemáticas
-(2, 2),  -- María Gómez - Licenciatura en Física
-(3, 3),  -- Carlos López - Ingeniería Civil
-(4, 4),  -- Ana Martínez - Medicina General
-(5, 5);  -- Luis Hernández - Licenciatura en Bellas Artes
+INSERT INTO EstudianteCarrera (estudiante_id, carrera_id, estado_aprobacion) VALUES
+(1, 1, 'APROBADO'),  -- Juan Pérez - Licenciatura en Matemáticas
+(2, 2, 'APROBADO'),  -- María Gómez - Licenciatura en Física
+(3, 3, 'NO_APROBADO'),  -- Carlos López - Ingeniería Civil
+(4, 4, 'NO_APROBADO'),  -- Ana Martínez - Medicina General
+(5, 5, 'NO_APROBADO');  -- Luis Hernández - Licenciatura en Bellas Artes
 
 INSERT INTO Docente (usuario_id, nombre, apellido, correo, numero_empleado, centro_id, dept_id, foto) VALUES
 (7, 'Roberto', 'García', 'roberto.garcia@example.com', 'EMP001', 1, 1, '/fotos/docente1.jpg'),
