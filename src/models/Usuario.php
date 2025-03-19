@@ -37,29 +37,35 @@ class Usuario {
     }
 
     /**
-     * Obtiene un usuario por su nombre de usuario.
+     * Obtiene los roles de un usuario dado su usuario_id.
      *
-     * @param string $username Nombre de usuario a buscar.
-     * @return array|null Retorna un array asociativo con los datos del usuario si existe, o null si no se encuentra.
+     * @param int $usuario_id ID del usuario.
+     * @return array Lista de roles asociados al usuario.
      */
-    public function obtenerUsuarioPorUsername($username) {
-        $query = "SELECT usuario_id, username, password, rol_id FROM " . $this->table . " WHERE username = ?";
+    public function obtenerRolesPorUsuarioId($usuario_id) {
+        $query = "SELECT r.nombre
+                  FROM Rol r
+                  INNER JOIN UsuarioRol ur ON r.rol_id = ur.rol_id
+                  WHERE ur.usuario_id = ?";
         $stmt = $this->conn->prepare($query);
 
         if (!$stmt) {
-            // Aquí podrías manejar el error de forma personalizada o lanzar una excepción.
-            return null;
+            return [];
         }
 
-        $stmt->bind_param("s", $username);
+        $stmt->bind_param("i", $usuario_id);
         $stmt->execute();
 
         $result = $stmt->get_result();
-        $usuario = $result->fetch_assoc();
+        $roles = [];
 
-        $stmt->close(); // Liberamos el recurso
+        while ($role = $result->fetch_assoc()) {
+            $roles[] = $role['nombre'];
+        }
 
-        return $usuario;
+        $stmt->close();
+
+        return $roles;
     }
 }
 ?>
