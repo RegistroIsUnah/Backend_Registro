@@ -137,7 +137,6 @@ CREATE TABLE FotosEstudiante (
 CREATE TABLE EstudianteCarrera (
     estudiante_id INT NOT NULL,
     carrera_id INT NOT NULL,
-    estado_aprobacion ENUM('APROBADO', 'NO_APROBADO') NOT NULL DEFAULT 'NO_APROBADO',
     PRIMARY KEY (estudiante_id, carrera_id),
     FOREIGN KEY (estudiante_id) REFERENCES Estudiante(estudiante_id),
     FOREIGN KEY (carrera_id) REFERENCES Carrera(carrera_id)
@@ -187,6 +186,15 @@ CREATE TABLE Aspirante (
     FOREIGN KEY (carrera_principal_id) REFERENCES Carrera(carrera_id),
     FOREIGN KEY (carrera_secundaria_id) REFERENCES Carrera(carrera_id),
     FOREIGN KEY (centro_id) REFERENCES Centro(centro_id)
+) ENGINE=InnoDB;
+
+CREATE TABLE AspiranteCarrera (
+    aspirante_id INT NOT NULL,
+    carrera_id INT NOT NULL,
+    estado_aprobacion ENUM('APROBADO', 'NO_APROBADO') NOT NULL DEFAULT 'NO_APROBADO',
+    PRIMARY KEY (aspirante_id, carrera_id),
+    FOREIGN KEY (aspirante_id) REFERENCES Aspirante(aspirante_id),
+    FOREIGN KEY (carrera_id) REFERENCES Carrera(carrera_id)
 ) ENGINE=InnoDB;
 
 CREATE TABLE Revisor (
