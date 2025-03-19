@@ -87,27 +87,38 @@ INSERT INTO Rol (nombre) VALUES ('Biblioteca_Estudiante');
 INSERT INTO Rol (nombre) VALUES ('Biblioteca_Coordinador');
 INSERT INTO Rol (nombre) VALUES ('Biblioteca_Jefe de Departamento');
 
-INSERT INTO Usuario (username, password, rol_id) VALUES
-('admin1', 'password1', 1),  -- Administrador
-('estudiante1', 'password1', 2),  -- Estudiante
-('estudiante2', 'password2', 2),  -- Estudiante
-('estudiante3', 'password3', 2),  -- Estudiante
-('estudiante4', 'password4', 2),  -- Estudiante
-('estudiante5', 'password5', 2),  -- Estudiante
-('docente1', 'password6', 3),  -- Docente
-('docente2', 'password7', 3),  -- Docente
-('docente3', 'password8', 3),  -- Docente
-('docente4', 'password9', 3),  -- Docente
-('docente5', 'password10', 3),  -- Docente
-('jefe1', 'password4', 4),  -- Jefe de Departamento
-('coordinador1', 'password5', 5);  -- Coordinador
+INSERT INTO Usuario (username, password) VALUES
+('admin1', 'password1'),  -- Administrador
+('estudiante1', 'password1'),  -- Estudiante
+('estudiante2', 'password2'),  -- Estudiante
+('estudiante3', 'password3'),  -- Estudiante
+('estudiante4', 'password4'),  -- Estudiante
+('estudiante5', 'password5'),  -- Estudiante
+('docente1', 'password6'),  -- Docente
+('docente2', 'password7'),  -- Docente
+('docente3', 'password8'),  -- Docente
+('docente4', 'password9'),  -- Docente
+('docente5', 'password10'),  -- Docente
+('jefe1', 'password4'),  -- Jefe de Departamento
+('coordinador1', 'password5');  -- Coordinador
 
 INSERT INTO UsuarioRol (usuario_id, rol_id) VALUES
 (1, 1),  -- admin1 es Administrador
-(2, 2),  -- estudiante1 es Estudiante
-(3, 3),  -- docente1 es Docente
-(4, 4),  -- jefe1 es Jefe de Departamento
-(5, 5);  -- coordinador1 es Coordinador
+(2, 3),  -- estudiante1 es Estudiante
+(3, 3),  -- estudiante2 es Estudiante
+(4, 3),  -- estudiante3 es Estudiante
+(5, 3),  -- estudiante4 es Estudiante
+(6, 3),  -- estudiante4 es Estudiante
+(7, 2),  -- docente1 es Docente
+(8, 2),  -- docente2 es Docente
+(9, 2),  -- docente3 es Docente
+(10, 2),  -- docente4 es Docente
+(11, 2),  -- docente5 es Docente
+(12, 2),  -- jefe1 es Docente
+(12, 5),  -- jefe1 es Jefe de Departamento
+(7, 5),  -- docente1 es Jefe de Departamento
+(13, 4);  -- coordinador1 es Coordinador
+(13, 2);  -- coordinador1 es Docente
 
 INSERT INTO Estudiante (usuario_id, identidad, nombre, apellido, correo_personal, telefono, direccion, centro_id, indice_global, indice_periodo) VALUES
 (2, '0801199901234', 'Juan', 'Pérez', 'juan.perez@example.com', '1234-5678', 'Calle 123, Tegucigalpa', 1, 85.50, 88.00),
@@ -191,12 +202,12 @@ INSERT INTO CarreraExamen (carrera_id, tipo_examen_id) VALUES
 (4, 4),  -- Medicina General requiere Examen de Biología
 (5, 5);  -- Licenciatura en Bellas Artes requiere Examen de Arte
 
-INSERT INTO ResultadoExamen (aspirante_id, tipo_examen_id, fecha_examen, calificacion) VALUES
-(1, 1, '2023-10-10', 85.00),  -- Pedro Sánchez - Examen de Matemáticas
-(2, 2, '2023-10-11', 70.00),  -- Lucía González - Examen de Física
-(3, 3, '2023-10-12', 65.00),  -- Mario Ramírez - Examen de Inglés
-(4, 4, '2023-10-13', 80.00),  -- Carmen Díaz - Examen de Biología
-(5, 5, '2023-10-14', 90.00);  -- Javier Torres - Examen de Arte
+INSERT INTO ResultadoExamen (aspirante_id, tipo_examen_id, fecha_examen, calificacion, resultado) VALUES
+(1, 1, '2023-10-10', 85.00, 'APROBO'),  -- Pedro Sánchez - Examen de Matemáticas
+(2, 2, '2023-10-11', 70.00, 'APROBO'),  -- Lucía González - Examen de Física
+(3, 3, '2023-10-12', 65.00, 'NO_APROBO'),  -- Mario Ramírez - Examen de Inglés
+(4, 4, '2023-10-13', 80.00, 'APROBO'),  -- Carmen Díaz - Examen de Biología
+(5, 5, '2023-10-14', 90.00, 'APROBO');  -- Javier Torres - Examen de Arte
 
 INSERT INTO Seccion (clase_id, docente_id, periodo_academico_id, hora_inicio, hora_fin, aula_id, estado, video_url, motivo_cancelacion, cupos) VALUES
 (1, 1, 1, '08:00:00', '10:00:00', 1, 'ACTIVA', NULL, NULL, 30),  -- Álgebra Lineal - Docente 1
