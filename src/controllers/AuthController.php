@@ -1,17 +1,17 @@
 <?php
 require_once __DIR__ . '/../models/Usuario.php';
 
-/**
- * Controlador de Autenticación
- *
- * Maneja el proceso de autenticación y gestión de sesiones.
- * 
- * @package controllers
- * @author Ruben Diaz
- * @version 1.0
- * 
- */
-class AuthController {
+    /**
+     * Controlador de Autenticación
+     *
+     * Maneja el proceso de autenticación y gestión de sesiones.
+     * 
+     * @package controllers
+     * @author Ruben Diaz
+     * @version 1.0
+     * 
+     */
+    class AuthController {
     /**
      * Inicia sesión de un usuario verificando sus credenciales.
      *
@@ -63,6 +63,7 @@ class AuthController {
         }
 
         $userDetails = [];
+        $userDetails['user_id'] = $user['usuario_id']; // Siempre se incluye el usuario_id
 
         // Obtener datos de Docente (si aplica)
         if (in_array('Docente', $roles)) {
@@ -72,19 +73,22 @@ class AuthController {
             $resultDocente = $stmtDocente->get_result();
             if ($resultDocente->num_rows > 0) {
                 $docenteData = $resultDocente->fetch_assoc();
-                $userDetails['docente'] = $docenteData;
+                $userDetails['docente_id'] = $docenteData['docente_id']; // Agregamos el ID del docente
+                $userDetails['docente'] = $docenteData;  // Agregamos todos los detalles del docente
             }
         }
 
         // Obtener datos de Estudiante (si aplica)
         if (in_array('Estudiante', $roles)) {
-            $stmtEstudiante = $conn->prepare('SELECT estudiante_id, nombre, apellido, correo_personal, telefono, direccion FROM Estudiante WHERE usuario_id = ?');
+            $stmtEstudiante = $conn->prepare('SELECT estudiante_id, nombre, apellido, correo_personal, telefono, direccion 
+                                             FROM Estudiante WHERE usuario_id = ?');
             $stmtEstudiante->bind_param('i', $user['usuario_id']);
             $stmtEstudiante->execute();
             $resultEstudiante = $stmtEstudiante->get_result();
             if ($resultEstudiante->num_rows > 0) {
                 $estudianteData = $resultEstudiante->fetch_assoc();
-                $userDetails['estudiante'] = $estudianteData;
+                $userDetails['estudiante_id'] = $estudianteData['estudiante_id']; // Agregar estudiante_id
+                $userDetails['estudiante'] = $estudianteData; // Agregar los detalles del estudiante
             }
         }
 
@@ -95,7 +99,8 @@ class AuthController {
             $stmtRevisor->execute();
             $resultRevisor = $stmtRevisor->get_result();
             if ($resultRevisor->num_rows > 0) {
-                $userDetails['revisor'] = true;
+                $revisorData = $resultRevisor->fetch_assoc();
+                $userDetails['revisor_id'] = $revisorData['revisor_id']; // Agregar revisor_id
             }
         }
 
@@ -103,6 +108,7 @@ class AuthController {
         $_SESSION['user_id'] = $user['usuario_id'];
         $_SESSION['username'] = $user['username'];
         $_SESSION['roles'] = $roles;
+        $_SESSION['revisor_id'] = $revisorData['revisor_id'];
         
         $token = session_id();
 
