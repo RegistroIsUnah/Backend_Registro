@@ -81,5 +81,39 @@ class Estudiante {
         
         return $docentes;
     }
+    public function obtenerPerfilEstudiante($estudianteId) {
+        $sql = "SELECT 
+                    e.estudiante_id,
+                    e.nombre,
+                    e.apellido,
+                    e.identidad,
+                    e.correo_personal,
+                    e.telefono,
+                    e.direccion,
+                    e.indice_global,
+                    e.indice_periodo,
+                    c.nombre AS centro,
+                    u.username,
+                    GROUP_CONCAT(ca.nombre SEPARATOR ', ') AS carreras
+                FROM Estudiante e
+                INNER JOIN Usuario u ON e.usuario_id = u.usuario_id
+                INNER JOIN Centro c ON e.centro_id = c.centro_id
+                LEFT JOIN EstudianteCarrera ec ON e.estudiante_id = ec.estudiante_id
+                LEFT JOIN Carrera ca ON ec.carrera_id = ca.carrera_id
+                WHERE e.estudiante_id = ?
+                GROUP BY e.estudiante_id";
+    
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param("i", $estudianteId);
+        $stmt->execute();
+        
+        $result = $stmt->get_result();
+        
+        if ($result->num_rows === 0) {
+            throw new Exception("Estudiante no encontrado");
+        }
+        
+        return $result->fetch_assoc();
+    }
 }
 ?>
