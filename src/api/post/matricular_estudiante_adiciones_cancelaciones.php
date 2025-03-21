@@ -5,7 +5,6 @@
  * Ejemplo de URL 
  * servidor:puerto/api/post/matricular_estudiante_adiciones
  *
- *
  * Este endpoint recibe datos en formato JSON, por ejemplo:
  * {
  *   "estudiante_id": 10,

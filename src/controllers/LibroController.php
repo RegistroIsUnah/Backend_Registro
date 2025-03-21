@@ -4,10 +4,6 @@
  *
  * Encapsula la lógica para registrar un libro.
  *
- * Sólo podrán ejecutar esta acción usuarios con rol:
- *   - Biblioteca_Jefe de Departamento
- *   - Biblioteca_Coordinador
- *
  * @package Controllers
  * @author Ruben Diaz
  * @version 1.0
@@ -22,21 +18,22 @@ class LibroController {
      *
      * Se esperan los siguientes datos vía POST (multipart/form-data):
      *   - titulo (string)
+     *   - editorial (string)   <--- Nuevo campo
      *   - fecha_publicacion (YYYY-MM-DD)
      *   - descripcion (string)
      *   - tags (opcional, JSON string con array de tag IDs)
      *   - autores (opcional, JSON string con array de objetos {nombre, apellido})
      *   - clase_id (opcional, int)
      *   - estado (opcional, string: 'ACTIVO' o 'INACTIVO'; por defecto se usa 'ACTIVO')
-     *   - libro (archivo a subir, **obligatoriamente PDF**)
+     *   - libro (archivo a subir, solo PDF)
      *
      * @param array $data Datos enviados vía POST.
      * @param array $files Datos de archivos enviados vía $_FILES.
      * @return void Envía la respuesta en formato JSON.
      */
     public function registrarLibro($data, $files) {
-        // Validar campos obligatorios
-        $camposObligatorios = ['titulo', 'fecha_publicacion', 'descripcion'];
+        // Validar campos obligatorios (agregamos "editorial")
+        $camposObligatorios = ['titulo', 'editorial', 'fecha_publicacion', 'descripcion'];
         foreach ($camposObligatorios as $campo) {
             if (empty($data[$campo])) {
                 http_response_code(400);
@@ -47,6 +44,7 @@ class LibroController {
         
         // Expresiones regulares de validación
         $regexTitulo = '/^[\w\s\.\-áéíóúÁÉÍÓÚñÑ,!?]+$/u';
+        $regexEditorial = '/^[\w\s\.\-áéíóúÁÉÍÓÚñÑ,!?]+$/u'; // Puedes ajustar según tus necesidades
         $regexFecha  = '/^\d{4}-\d{2}-\d{2}$/';
         $regexDescripcion = '/^.{1,1000}$/s';
         $regexTag    = '/^\d+$/'; // Se esperan tag IDs numéricos
@@ -57,6 +55,14 @@ class LibroController {
         if (!preg_match($regexTitulo, $titulo)) {
             http_response_code(400);
             echo json_encode(['error' => 'El título tiene un formato no válido']);
+            return;
+        }
+        
+        // Validar y limpiar editorial
+        $editorial = trim($data['editorial']);
+        if (!preg_match($regexEditorial, $editorial)) {
+            http_response_code(400);
+            echo json_encode(['error' => 'La editorial tiene un formato no válido']);
             return;
         }
         
@@ -141,13 +147,12 @@ class LibroController {
         }
         
         // Validar que el archivo sea PDF
-        $alloweDocTypes = ['application/pdf'];
-        if (!in_array($files['libro']['type'], $alloweDocTypes)) {
+        $allowedMimeTypes = ['application/pdf'];
+        if (!in_array($files['libro']['type'], $allowedMimeTypes)) {
             http_response_code(400);
             echo json_encode(['error' => 'Solo se permiten archivos PDF']);
             return;
         }
-        
         $nombreArchivo = basename($files['libro']['name']);
         $extension = strtolower(pathinfo($nombreArchivo, PATHINFO_EXTENSION));
         if ($extension !== 'pdf') {
@@ -156,12 +161,11 @@ class LibroController {
             return;
         }
         
-        // Manejar el archivo: moverlo a la carpeta de destino
+        // Manejar el archivo: moverlo a la carpeta de destino y generar un nombre único
         $uploadDir = __DIR__ . '/../../uploads/libros/';
         if (!is_dir($uploadDir)) {
             mkdir($uploadDir, 0755, true);
         }
-        // Generar un nombre único para evitar conflictos
         $newFileName = uniqid('libro_', true) . '.' . $extension;
         $targetPath = $uploadDir . $newFileName;
         if (!move_uploaded_file($files['libro']['tmp_name'], $targetPath)) {
@@ -169,7 +173,6 @@ class LibroController {
             echo json_encode(['error' => 'Error moviendo el archivo subido']);
             return;
         }
-        // Guardar la ruta relativa o URL del archivo
         $libro_url = '/uploads/libros/' . $newFileName;
         
         // Llamar al modelo para registrar el libro, pasando también el estado
@@ -177,6 +180,7 @@ class LibroController {
             $libroModel = new Libro();
             $libro_id = $libroModel->registrarLibro(
                 $titulo,
+                $editorial,
                 $libro_url,
                 $fecha_publicacion,
                 $descripcion,
@@ -192,167 +196,183 @@ class LibroController {
             echo json_encode(['error' => $e->getMessage()]);
         }
     }
+   
 
     /**
-     * Actualiza un libro.
+     * Actualiza un libro y sus asociaciones de forma parcial.
      *
-     * Se esperan los siguientes parámetros vía POST (multipart/form-data):
+     * Se esperan los siguientes parámetros vía PATCH (multipart/form-data):
      *   - libro_id: int (requerido)
      *   - titulo: string (opcional)
+     *   - editorial: string (opcional)
      *   - fecha_publicacion: string (YYYY-MM-DD, opcional)
      *   - descripcion: string (opcional)
      *   - tags: JSON string (opcional, array de tag IDs)
      *   - autores: JSON string (opcional, array de objetos {nombre, apellido})
      *   - clase_id: int (opcional)
      *   - estado: string (opcional, 'ACTIVO' o 'INACTIVO')
-     *   - libro: archivo (opcional, para actualizar el archivo)
+     *   - libro: archivo (opcional, para actualizar el archivo; solo PDF)
      *
-     * @param array $data Datos enviados vía POST.
+     * Nota: Se recomienda que la solicitud use el método PATCH, de modo que solo se actualicen los campos enviados.
+     *
+     * @param array $data Datos enviados vía PATCH (usualmente a través de POST con override).
      * @param array $files Datos de archivos enviados vía $_FILES.
      * @return void Envía la respuesta en formato JSON.
      */
     public function actualizarLibro($data, $files) {
-        // Validar libro_id
-        if (empty($data['libro_id']) || !is_numeric($data['libro_id'])) {
-            http_response_code(400);
-            echo json_encode(['error' => 'Falta el campo obligatorio: libro_id']);
-            return;
-        }
-        $libro_id = (int)$data['libro_id'];
-        
-        // Expresiones regulares
-        $regexTitulo = '/^[\w\s\.\-áéíóúÁÉÍÓÚñÑ,!?]+$/u';
-        $regexFecha  = '/^\d{4}-\d{2}-\d{2}$/';
-        $regexTexto  = '/^.{0,1000}$/s'; // Permite hasta 1000 caracteres, opcional
-        $regexTag    = '/^\d+$/'; // Cada tag se espera sea numérico
-        $regexNombre = '/^[A-Za-z\sáéíóúÁÉÍÓÚñÑ]+$/u';
-        
-        // Variables opcionales para actualizar (si no se envían, se dejan null)
-        $titulo = isset($data['titulo']) ? trim($data['titulo']) : null;
-        if ($titulo !== null && $titulo !== "" && !preg_match($regexTitulo, $titulo)) {
-            http_response_code(400);
-            echo json_encode(['error' => 'El título tiene un formato no válido']);
-            return;
-        }
-        
-        $fecha_publicacion = isset($data['fecha_publicacion']) ? trim($data['fecha_publicacion']) : null;
-        if ($fecha_publicacion !== null && $fecha_publicacion !== "" && !preg_match($regexFecha, $fecha_publicacion)) {
-            http_response_code(400);
-            echo json_encode(['error' => 'La fecha de publicación debe tener el formato YYYY-MM-DD']);
-            return;
-        }
-        
-        $descripcion = isset($data['descripcion']) ? trim($data['descripcion']) : null;
-        if ($descripcion !== null && $descripcion !== "" && !preg_match($regexTexto, $descripcion)) {
-            http_response_code(400);
-            echo json_encode(['error' => 'La descripción debe tener máximo 1000 caracteres']);
-            return;
-        }
-        
-        // Procesar tags (opcional) - se espera un array JSON de números (tag IDs)
-        $tags = null;
-        if (!empty($data['tags'])) {
-            $tagsDecoded = json_decode($data['tags'], true);
-            if (!is_array($tagsDecoded)) {
-                http_response_code(400);
-                echo json_encode(['error' => 'El campo tags debe ser un array JSON válido de identificadores']);
-                return;
-            }
-            $tags = [];
-            foreach ($tagsDecoded as $tagId) {
-                if (!preg_match($regexTag, $tagId)) {
-                    http_response_code(400);
-                    echo json_encode(['error' => "El tag_id '$tagId' debe ser numérico"]);
-                    return;
-                }
-                $tags[] = (int)$tagId;
-            }
-        }
-        
-        // Procesar autores (opcional)
-        $autores = null;
-        if (!empty($data['autores'])) {
-            $autoresDecoded = json_decode($data['autores'], true);
-            if (!is_array($autoresDecoded)) {
-                http_response_code(400);
-                echo json_encode(['error' => 'El campo autores debe ser un array JSON válido']);
-                return;
-            }
-            $autores = [];
-            foreach ($autoresDecoded as $autor) {
-                if (!isset($autor['nombre']) || !isset($autor['apellido'])) {
-                    http_response_code(400);
-                    echo json_encode(['error' => 'Cada autor debe tener nombre y apellido']);
-                    return;
-                }
-                $nombre = trim($autor['nombre']);
-                $apellido = trim($autor['apellido']);
-                if (!preg_match($regexNombre, $nombre) || !preg_match($regexNombre, $apellido)) {
-                    http_response_code(400);
-                    echo json_encode(['error' => "El autor $nombre $apellido tiene un formato no válido"]);
-                    return;
-                }
-                $autores[] = ['nombre' => $nombre, 'apellido' => $apellido];
-            }
-        }
-        
-        // Procesar clase_id (opcional)
-        $clase_id = null;
-        if (isset($data['clase_id']) && is_numeric($data['clase_id'])) {
-            $clase_id = (int)$data['clase_id'];
-        }
-        
-        // Procesar estado (opcional)
-        $estado = null;
-        if (isset($data['estado']) && in_array($data['estado'], ['ACTIVO', 'INACTIVO'])) {
-            $estado = $data['estado'];
-        }
-        
-        // Procesar el archivo del libro (opcional)
-        $libro_url = null;
-        if (isset($_FILES['libro']) && $_FILES['libro']['error'] === UPLOAD_ERR_OK) {
-        // Definir tipos MIME permitidos para PDF
-        $allowedDocTypes = ['application/pdf'];
-        if (!in_array($_FILES['libro']['type'], $allowedDocTypes)) {
+    // Validar libro_id
+    if (empty($data['libro_id']) || !is_numeric($data['libro_id'])) {
         http_response_code(400);
-        echo json_encode(['error' => 'Solo se permiten archivos PDF']);
-        exit;
+        echo json_encode(['error' => 'Falta el campo obligatorio: libro_id']);
+        return;
     }
-    
-        // Definir la carpeta de destino para los archivos PDF
+    $libro_id = (int)$data['libro_id'];
+
+    // Expresiones regulares
+    $regexTitulo    = '/^[\w\s\.\-áéíóúÁÉÍÓÚñÑ,!?]+$/u';
+    $regexEditorial = '/^[\w\s\.\-áéíóúÁÉÍÓÚñÑ,!?]+$/u/';
+    $regexFecha     = '/^\d{4}-\d{2}-\d{2}$/';
+    $regexTexto     = '/^.{0,1000}$/s'; // Hasta 1000 caracteres, opcional
+    $regexTag       = '/^\d+$/'; // Se esperan tag IDs numéricos
+    $regexNombre    = '/^[A-Za-z\sáéíóúÁÉÍÓÚñÑ]+$/u';
+
+    // Recoger y validar de forma opcional cada campo
+
+    // Título
+    $titulo = isset($data['titulo']) ? trim($data['titulo']) : null;
+    if ($titulo !== null && $titulo !== "" && !preg_match($regexTitulo, $titulo)) {
+        http_response_code(400);
+        echo json_encode(['error' => 'El título tiene un formato no válido']);
+        return;
+    }
+
+    // Editorial
+    $editorial = isset($data['editorial']) ? trim($data['editorial']) : null;
+    if ($editorial !== null && $editorial !== "" && !preg_match($regexEditorial, $editorial)) {
+        http_response_code(400);
+        echo json_encode(['error' => 'La editorial tiene un formato no válido']);
+        return;
+    }
+
+    // Fecha de publicación
+    $fecha_publicacion = isset($data['fecha_publicacion']) ? trim($data['fecha_publicacion']) : null;
+    if ($fecha_publicacion !== null && $fecha_publicacion !== "" && !preg_match($regexFecha, $fecha_publicacion)) {
+        http_response_code(400);
+        echo json_encode(['error' => 'La fecha de publicación debe tener el formato YYYY-MM-DD']);
+        return;
+    }
+
+    // Descripción
+    $descripcion = isset($data['descripcion']) ? trim($data['descripcion']) : null;
+    if ($descripcion !== null && $descripcion !== "" && !preg_match($regexTexto, $descripcion)) {
+        http_response_code(400);
+        echo json_encode(['error' => 'La descripción debe tener máximo 1000 caracteres']);
+        return;
+    }
+
+    // Tags (opcional) - se espera un JSON array de tag IDs
+    $tags = null;
+    if (!empty($data['tags'])) {
+        $tagsDecoded = json_decode($data['tags'], true);
+        if (!is_array($tagsDecoded)) {
+            http_response_code(400);
+            echo json_encode(['error' => 'El campo tags debe ser un array JSON válido de identificadores']);
+            return;
+        }
+        $tags = [];
+        foreach ($tagsDecoded as $tagId) {
+            if (!preg_match($regexTag, $tagId)) {
+                http_response_code(400);
+                echo json_encode(['error' => "El tag_id '$tagId' debe ser numérico"]);
+                return;
+            }
+            $tags[] = (int)$tagId;
+        }
+    }
+
+    // Autores (opcional) - se espera un JSON array de objetos {nombre, apellido}
+    $autores = null;
+    if (!empty($data['autores'])) {
+        $autoresDecoded = json_decode($data['autores'], true);
+        if (!is_array($autoresDecoded)) {
+            http_response_code(400);
+            echo json_encode(['error' => 'El campo autores debe ser un array JSON válido']);
+            return;
+        }
+        $autores = [];
+        foreach ($autoresDecoded as $autor) {
+            if (!isset($autor['nombre']) || !isset($autor['apellido'])) {
+                http_response_code(400);
+                echo json_encode(['error' => 'Cada autor debe tener nombre y apellido']);
+                return;
+            }
+            $nombre = trim($autor['nombre']);
+            $apellido = trim($autor['apellido']);
+            if (!preg_match($regexNombre, $nombre) || !preg_match($regexNombre, $apellido)) {
+                http_response_code(400);
+                echo json_encode(['error' => "El autor $nombre $apellido tiene un formato no válido"]);
+                return;
+            }
+            $autores[] = ['nombre' => $nombre, 'apellido' => $apellido];
+        }
+    }
+
+    // Clase_id (opcional)
+    $clase_id = null;
+    if (isset($data['clase_id']) && is_numeric($data['clase_id'])) {
+        $clase_id = (int)$data['clase_id'];
+    }
+
+    // Estado (opcional)
+    $estado = null;
+    if (isset($data['estado']) && in_array($data['estado'], ['ACTIVO', 'INACTIVO'])) {
+        $estado = $data['estado'];
+    }
+
+    // Procesar archivo (opcional)
+    $libro_url = null;
+    if (isset($files['libro']) && $files['libro']['error'] === UPLOAD_ERR_OK) {
         $uploadDir = __DIR__ . '/../../uploads/libros/';
         if (!is_dir($uploadDir)) {
             mkdir($uploadDir, 0755, true);
         }
-        
-        // Generar un nombre único para el archivo
-        $fileExt = pathinfo($_FILES['libro']['name'], PATHINFO_EXTENSION);
-        $fileName = uniqid('libro_', true) . '.' . strtolower($fileExt);
-        $targetPath = $uploadDir . $fileName;
-        
-        // Mover el archivo subido a la carpeta de destino
-        if (!move_uploaded_file($_FILES['libro']['tmp_name'], $targetPath)) {
-            http_response_code(500);
-            echo json_encode(['error' => 'No se pudo guardar el archivo del libro']);
-            exit;
+        $nombreArchivo = basename($files['libro']['name']);
+        // Validar que el archivo sea PDF
+        $allowedMimeTypes = ['application/pdf'];
+        if (!in_array($files['libro']['type'], $allowedMimeTypes)) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Solo se permiten archivos PDF']);
+            return;
         }
-        
-        // Guardar la ruta relativa o URL del archivo
-        $libro_url = '/uploads/libros/' . $fileName;
+        $extension = strtolower(pathinfo($nombreArchivo, PATHINFO_EXTENSION));
+        if ($extension !== 'pdf') {
+            http_response_code(400);
+            echo json_encode(['error' => 'El archivo debe tener extensión PDF']);
+            return;
+        }
+        // Generar un nombre único
+        $newFileName = uniqid('libro_', true) . '.' . $extension;
+        $targetPath = $uploadDir . $newFileName;
+        if (!move_uploaded_file($files['libro']['tmp_name'], $targetPath)) {
+            http_response_code(500);
+            echo json_encode(['error' => 'Error moviendo el archivo subido']);
+            return;
+        }
+        $libro_url = '/uploads/libros/' . $newFileName;
     }
 
-        
-        // Llamar al modelo para actualizar el libro
-        try {
-            $libroModel = new Libro();
-            $libroModel->actualizarLibro($libro_id, $titulo, $libro_url, $fecha_publicacion, $descripcion, $tags, $autores, $clase_id, $estado);
-            http_response_code(200);
-            echo json_encode(['mensaje' => 'Libro actualizado correctamente']);
-        } catch (Exception $e) {
-            http_response_code(500);
-            echo json_encode(['error' => $e->getMessage()]);
-        }
+    // Llamar al modelo para actualizar el libro (actualización parcial)
+    try {
+        $libroModel = new Libro();
+        $libroModel->actualizarLibro($libro_id, $titulo, $editorial, $libro_url, $fecha_publicacion, $descripcion, $tags, $autores, $clase_id, $estado);
+        http_response_code(200);
+        echo json_encode(['mensaje' => 'Libro actualizado correctamente']);
+    } catch (Exception $e) {
+        http_response_code(500);
+        echo json_encode(['error' => $e->getMessage()]);
     }
+    }
+
 
     /**
      * Obtiene los detalles de un libro que estan activos para Estudiantes.

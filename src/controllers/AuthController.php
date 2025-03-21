@@ -1,17 +1,17 @@
 <?php
 require_once __DIR__ . '/../models/Usuario.php';
 
-/**
- * Controlador de Autenticación
- *
- * Maneja el proceso de autenticación y gestión de sesiones.
- * 
- * @package controllers
- * @author Ruben Diaz
- * @version 1.0
- * 
- */
-class AuthController {
+    /**
+     * Controlador de Autenticación
+     *
+     * Maneja el proceso de autenticación y gestión de sesiones.
+     * 
+     * @package controllers
+     * @author Ruben Diaz
+     * @version 1.0
+     * 
+     */
+    class AuthController {
     /**
      * Inicia sesión de un usuario verificando sus credenciales.
      *
@@ -31,7 +31,7 @@ class AuthController {
         $conn = $db->getConnection();
 
         // Se utiliza el modelo Usuario para obtener los datos
-        $stmt = $conn->prepare('SELECT usuario_id, username, password, rol_id FROM Usuario WHERE username = ?');
+        $stmt = $conn->prepare('SELECT usuario_id, username, password FROM Usuario WHERE username = ?');
         $stmt->bind_param('s', $username);
         $stmt->execute();
         $result = $stmt->get_result();
@@ -49,60 +49,66 @@ class AuthController {
             exit;
         }
 
+        // Obtener roles del usuario desde la tabla UsuarioRol
         $roles = [];
+        $stmtRoles = $conn->prepare('SELECT r.nombre FROM Rol r
+                                    INNER JOIN UsuarioRol ur ON r.rol_id = ur.rol_id
+                                    WHERE ur.usuario_id = ?');
+        $stmtRoles->bind_param('i', $user['usuario_id']);
+        $stmtRoles->execute();
+        $resultRoles = $stmtRoles->get_result();
+        
+        while ($role = $resultRoles->fetch_assoc()) {
+            $roles[] = $role['nombre'];
+        }
+
         $userDetails = [];
+        $userDetails['user_id'] = $user['usuario_id']; // Siempre se incluye el usuario_id
 
-        // Obtener datos de Docente
-        $stmtDocente = $conn->prepare('SELECT docente_id, nombre, apellido, correo, foto FROM Docente WHERE usuario_id = ?');
-        $stmtDocente->bind_param('i', $user['usuario_id']);
-        $stmtDocente->execute();
-        $resultDocente = $stmtDocente->get_result();
-        if ($resultDocente->num_rows > 0) {
-            $roles[] = 'docente';
-            $docenteData = $resultDocente->fetch_assoc();
-            $userDetails['docente'] = $docenteData;
-
-            // Verificar roles adicionales, por ejemplo, jefe o coordinador
-            $stmtJefe = $conn->prepare('SELECT dept_id FROM Departamento WHERE jefe_docente_id = ?');
-            $stmtJefe->bind_param('i', $docenteData['docente_id']);
-            $stmtJefe->execute();
-            $resultJefe = $stmtJefe->get_result();
-            if ($resultJefe->num_rows > 0) {
-                $roles[] = 'jefe_departamento';
-            }
-            $stmtCoord = $conn->prepare('SELECT carrera_id FROM Carrera WHERE coordinador_docente_id = ?');
-            $stmtCoord->bind_param('i', $docenteData['docente_id']);
-            $stmtCoord->execute();
-            $resultCoord = $stmtCoord->get_result();
-            if ($resultCoord->num_rows > 0) {
-                $roles[] = 'coordinador';
+        // Obtener datos de Docente (si aplica)
+        if (in_array('Docente', $roles)) {
+            $stmtDocente = $conn->prepare('SELECT docente_id, nombre, apellido, correo, foto FROM Docente WHERE usuario_id = ?');
+            $stmtDocente->bind_param('i', $user['usuario_id']);
+            $stmtDocente->execute();
+            $resultDocente = $stmtDocente->get_result();
+            if ($resultDocente->num_rows > 0) {
+                $docenteData = $resultDocente->fetch_assoc();
+                $userDetails['docente_id'] = $docenteData['docente_id']; // Agregamos el ID del docente
+                $userDetails['docente'] = $docenteData;  // Agregamos todos los detalles del docente
             }
         }
 
-        // Obtener datos de Estudiante
-        $stmtEstudiante = $conn->prepare('SELECT estudiante_id, nombre, apellido, correo_personal, telefono, direccion FROM Estudiante WHERE usuario_id = ?');
-        $stmtEstudiante->bind_param('i', $user['usuario_id']);
-        $stmtEstudiante->execute();
-        $resultEstudiante = $stmtEstudiante->get_result();
-        if ($resultEstudiante->num_rows > 0) {
-            $roles[] = 'estudiante';
-            $estudianteData = $resultEstudiante->fetch_assoc();
-            $userDetails['estudiante'] = $estudianteData;
+        // Obtener datos de Estudiante (si aplica)
+        if (in_array('Estudiante', $roles)) {
+            $stmtEstudiante = $conn->prepare('SELECT estudiante_id, nombre, apellido, correo_personal, telefono, direccion 
+                                             FROM Estudiante WHERE usuario_id = ?');
+            $stmtEstudiante->bind_param('i', $user['usuario_id']);
+            $stmtEstudiante->execute();
+            $resultEstudiante = $stmtEstudiante->get_result();
+            if ($resultEstudiante->num_rows > 0) {
+                $estudianteData = $resultEstudiante->fetch_assoc();
+                $userDetails['estudiante_id'] = $estudianteData['estudiante_id']; // Agregar estudiante_id
+                $userDetails['estudiante'] = $estudianteData; // Agregar los detalles del estudiante
+            }
         }
 
         // Verificar si es revisor
-        $stmtRevisor = $conn->prepare('SELECT revisor_id FROM Revisor WHERE usuario_id = ?');
-        $stmtRevisor->bind_param('i', $user['usuario_id']);
-        $stmtRevisor->execute();
-        $resultRevisor = $stmtRevisor->get_result();
-        if ($resultRevisor->num_rows > 0) {
-            $roles[] = 'revisor';
+        if (in_array('Revisor', $roles)) {
+            $stmtRevisor = $conn->prepare('SELECT revisor_id FROM Revisor WHERE usuario_id = ?');
+            $stmtRevisor->bind_param('i', $user['usuario_id']);
+            $stmtRevisor->execute();
+            $resultRevisor = $stmtRevisor->get_result();
+            if ($resultRevisor->num_rows > 0) {
+                $revisorData = $resultRevisor->fetch_assoc();
+                $userDetails['revisor_id'] = $revisorData['revisor_id']; // Agregar revisor_id
+            }
         }
 
         // Guardar en la sesión
         $_SESSION['user_id'] = $user['usuario_id'];
         $_SESSION['username'] = $user['username'];
         $_SESSION['roles'] = $roles;
+        $_SESSION['revisor_id'] = $revisorData['revisor_id'];
         
         $token = session_id();
 
@@ -119,12 +125,12 @@ class AuthController {
 
         echo json_encode($response);
     }
+
     /**
      * Cierra la sesión del usuario actual.
      *
      * @return void Responde con Json con confirmacion de cierre o con error
      */
-
     public function logout() {
         // Iniciar la sesión si aún no está iniciada
         if (session_status() === PHP_SESSION_NONE) {
@@ -142,7 +148,6 @@ class AuthController {
         session_destroy();
 
         // (Opcional) Eliminar cookie de sesión, si se quiere ser más exhaustivo:
-        
         if (ini_get("session.use_cookies")) {
             $params = session_get_cookie_params();
             setcookie(session_name(), '', time() - 42000,
@@ -155,6 +160,5 @@ class AuthController {
         http_response_code(200);
         echo json_encode(['message' => 'Cierre de sesión exitoso']);
     }
-
 }
 ?>

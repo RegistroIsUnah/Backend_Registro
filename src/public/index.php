@@ -8,9 +8,6 @@
  * @version 1.0
  * @package public
  * 
- * @author Jose Vargas
- * @version 1.1
- * @package public
  * Cabeceras incluidas:
  * - Access-Control-Allow-Origin: * → Permite acceso desde cualquier origen (CORS).
  * - Access-Control-Allow-Methods: GET, POST, PUT, DELETE → Define los métodos HTTP permitidos.
@@ -23,15 +20,10 @@
  * - /api/get/carreras → Obtiene una lista de las carreras
  * - /api/get/centros → Obtiene una lista de los centros
  * 
- * Version 1.1
- * - /api/get/listas_de_espera → Obtiene una lista de los estudiantes en espera
- * 
  * Respuestas HTTP:
  * - 200 OK: Si la ruta existe y se ejecuta correctamente.
  * - 404 Not Found: Si la ruta no está definida.
  * - 500 Internal Server Error: Si hay errores internos en la API.
- * 
- * 
  * 
  */
 
@@ -84,13 +76,9 @@ switch (true) {
     case preg_match('/\/api\/post\/crear_periodo/', $request_uri):
         require_once __DIR__ . '/../api/post/crear_periodo.php';
         break; 
-
+        
     case preg_match('/\/api\/post\/crear_proceso_matricula/', $request_uri):
         require_once __DIR__ . '/../api/post/crear_proceso_matricula.php';
-        break; 
-    
-    case preg_match('/\/api\/get\/listas_de_espera/', $request_uri):
-        require_once __DIR__ . '/../api/get/listas_de_espera.phpphp';
         break; 
 
     case preg_match('/\/api\/get\/listas_de_espera/', $request_uri):
@@ -133,8 +121,8 @@ switch (true) {
         require_once __DIR__ . '/../api/get/obtener_libros_por_departamento.php';
         break; 
         
-    case preg_match('/\/api\/get\/obtener_libros_por_estudiante/', $request_uri):
-        require_once __DIR__ . '/../api/get/obtener_libros_por_estudiante.php';
+    case preg_match('/\/api\/get\/obtener_libros_estudiante/', $request_uri):
+        require_once __DIR__ . '/../api/get/obtener_libros_estudiante.php';
         break;    
 
     case preg_match('/\/api\/post\/asignar_roles/', $request_uri):
@@ -164,6 +152,26 @@ switch (true) {
     case preg_match('/\/api\/get\/listar_laboratorios_clase/', $request_uri):
         require_once __DIR__ . '/../api/get/listar_laboratorios_clase.php';
         break;
+
+    case preg_match('/\/api\/get\/listar_tags/', $request_uri):
+        require_once __DIR__ . '/../api/get/listar_tags.php';
+        break;
+
+    case preg_match('/\/api\/get\/obtener_aspirantes_admitidos/', $request_uri):
+        require_once __DIR__ . '/../api/get/obtener_aspirantes_admitidos.php';
+        break;
+    
+    case preg_match('/\/api\/get\/clases_departamento/', $request_uri):
+        require_once __DIR__ . '/../api/get/clases_departamento.php';
+        break;
+
+    case preg_match('/\/api\/get\/obtener_solicitud_aspirante/', $request_uri):
+        require_once __DIR__ . '/../api/get/obtener_solicitud_aspirante.php';
+        break;
+
+    case preg_match('/\/api\/post\/procesar_revision_aspirante/', $request_uri):
+        require_once __DIR__ . '/../api/post/procesar_revision_aspirante.php';
+        break;             
 
     default:
         http_response_code(404);

@@ -1,0 +1,362 @@
+USE sistemaregistro1;
+
+INSERT INTO Centro (nombre) VALUES
+('Centro Universitario Regional Tegucigalpa'),
+('Centro Universitario Regional San Pedro Sula'),
+('Centro Universitario Regional La Ceiba'),
+('Centro Universitario Regional Choluteca'),
+('Centro Universitario Regional Danlí');
+
+INSERT INTO Edificio (centro_id, nombre) VALUES
+(1, 'A1'),
+(2, 'C3'),
+(3, 'B2'),
+(4, 'A1'),
+(5, 'C3');
+
+INSERT INTO Facultad (edificio_id, nombre) VALUES
+(1, 'Facultad de Matemáticas'),
+(2, 'Facultad de Física'),
+(3, 'Facultad de Ingeniería Civil'),
+(4, 'Facultad de Medicina'),
+(5, 'Facultad de Bellas Artes');
+
+INSERT INTO Departamento (facultad_id, nombre) VALUES
+(1, 'Departamento de Álgebra'),
+(2, 'Departamento de Física Teórica'),
+(3, 'Departamento de Estructuras'),
+(4, 'Departamento de Cirugía'),
+(5, 'Departamento de Pintura');
+
+INSERT INTO Carrera (dept_id, nombre) VALUES
+(1, 'Licenciatura en Matemáticas'),
+(2, 'Licenciatura en Física'),
+(3, 'Ingeniería Civil'),
+(4, 'Medicina General'),
+(5, 'Licenciatura en Bellas Artes');
+
+INSERT INTO CentroCarrera (centro_id, carrera_id) VALUES
+(1, 1),  -- Centro de Ciencias Básicas - Licenciatura en Matemáticas
+(1, 2),  -- Centro de Ciencias Básicas - Licenciatura en Física
+(2, 3),  -- Centro de Ingeniería y Tecnología - Ingeniería Civil
+(3, 4),  -- Centro de Ciencias de la Salud - Medicina General
+(4, 5);  -- Centro de Arte y Cultura - Licenciatura en Bellas Artes
+
+INSERT INTO Clase (dept_id, codigo, nombre, creditos, tiene_laboratorio) VALUES
+(1, 'MAT101', 'Álgebra Lineal', 4, FALSE),
+(2, 'FIS101', 'Física General', 4, TRUE),
+(3, 'ING101', 'Mecánica de Materiales', 3, TRUE),
+(4, 'MED101', 'Anatomía Humana', 5, TRUE),
+(5, 'ART101', 'Pintura al Óleo', 3, FALSE),
+(2, 'FIS200', 'Física Avanzada', 3, FALSE),
+(1, 'MAT200', 'Álgebra Vectorial', 4, FALSE),
+(4, 'MED200', 'Anatomía Avanzada', 5, TRUE),
+(5, 'ART200', 'Arte Contemporaneo', 3, FALSE),
+(3, 'ING200', 'Materiales Expertos', 3, TRUE),
+(1, 'MAT110', 'Calculo', 4, FALSE);
+
+
+INSERT INTO ClaseCarrera (clase_id, carrera_id) VALUES
+(1, 1),  -- Álgebra Lineal - Licenciatura en Matemáticas
+(2, 2),  -- Física General - Licenciatura en Física
+(3, 3),  -- Mecánica de Materiales - Ingeniería Civil
+(4, 4),  -- Anatomía Humana - Medicina General
+(5, 5);  -- Pintura al Óleo - Licenciatura en Bellas Artes
+
+INSERT INTO PeriodoAcademico (anio, numero_periodo, fecha_inicio, fecha_fin, estado) VALUES
+(2023, '1', '2023-01-16 00:00:00', '2023-05-20 23:59:59', 'ACTIVO'),
+(2023, '2', '2023-06-05 00:00:00', '2023-10-15 23:59:59', 'INACTIVO'),
+(2023, '3', '2023-11-01 00:00:00', '2023-12-20 23:59:59', 'INACTIVO'),
+(2024, '1', '2024-01-15 00:00:00', '2024-05-19 23:59:59', 'INACTIVO'),
+(2024, '2', '2024-06-03 00:00:00', '2024-10-13 23:59:59', 'INACTIVO');
+
+INSERT INTO Aula (edificio_id, nombre, capacidad) VALUES
+(1, 'Aula 101', 50),
+(1, 'Aula 102', 60),
+(2, 'Aula 201', 40),
+(3, 'Aula 301', 70),
+(4, 'Aula 401', 30);
+
+INSERT INTO Rol (nombre) VALUES ('Administrador');
+INSERT INTO Rol (nombre) VALUES ('Docente');
+INSERT INTO Rol (nombre) VALUES ('Estudiante');
+INSERT INTO Rol (nombre) VALUES ('Coordinador');
+INSERT INTO Rol (nombre) VALUES ('Jefe de Departamento');
+INSERT INTO Rol (nombre) VALUES ('Revisor');
+INSERT INTO Rol (nombre) VALUES ('Biblioteca_Estudiante');
+INSERT INTO Rol (nombre) VALUES ('Biblioteca_Coordinador');
+INSERT INTO Rol (nombre) VALUES ('Biblioteca_Jefe de Departamento');
+
+INSERT INTO Usuario (username, password) VALUES
+('admin1', 'password1'),  -- Administrador
+('estudiante1', 'password1'),  -- Estudiante
+('estudiante2', 'password2'),  -- Estudiante
+('estudiante3', 'password3'),  -- Estudiante
+('estudiante4', 'password4'),  -- Estudiante
+('estudiante5', 'password5'),  -- Estudiante
+('docente1', 'password6'),  -- Docente
+('docente2', 'password7'),  -- Docente
+('docente3', 'password8'),  -- Docente
+('docente4', 'password9'),  -- Docente
+('docente5', 'password10'),  -- Docente
+('jefe1', 'password4'),  -- Jefe de Departamento
+('coordinador1', 'password5');  -- Coordinador
+
+INSERT INTO UsuarioRol (usuario_id, rol_id) VALUES
+(1, 1),  -- admin1 es Administrador
+(2, 3),  -- estudiante1 es Estudiante
+(3, 3),  -- estudiante2 es Estudiante
+(4, 3),  -- estudiante3 es Estudiante
+(5, 3),  -- estudiante4 es Estudiante
+(6, 3),  -- estudiante4 es Estudiante
+(7, 2),  -- docente1 es Docente
+(8, 2),  -- docente2 es Docente
+(9, 2),  -- docente3 es Docente
+(10, 2),  -- docente4 es Docente
+(11, 2),  -- docente5 es Docente
+(12, 2),  -- jefe1 es Docente
+(12, 5),  -- jefe1 es Jefe de Departamento
+(7, 5),  -- docente1 es Jefe de Departamento
+(13, 4),  -- coordinador1 es Coordinador
+(13, 2);  -- coordinador1 es Docente
+
+INSERT INTO Estudiante (usuario_id, identidad, nombre, apellido, correo_personal, telefono, direccion, centro_id, indice_global, indice_periodo) VALUES
+(2, '0801199901234', 'Juan', 'Pérez', 'juan.perez@example.com', '1234-5678', 'Calle 123, Tegucigalpa', 1, 85.50, 88.00),
+(3, '0801199905678', 'María', 'Gómez', 'maria.gomez@example.com', '8765-4321', 'Avenida 456, San Pedro Sula', 2, 90.00, 91.50),
+(4, '0801199909876', 'Carlos', 'López', 'carlos.lopez@example.com', '5555-5555', 'Colonia Los Pinos, La Ceiba', 3, 78.00, 80.00),
+(5, '0801199904321', 'Ana', 'Martínez', 'ana.martinez@example.com', '2222-3333', 'Residencial Las Flores, Comayagua', 4, 92.50, 93.00),
+(6, '0801199908765', 'Luis', 'Hernández', 'luis.hernandez@example.com', '9999-8888', 'Barrio El Centro, Choluteca', 5, 87.00, 89.50);
+
+INSERT INTO FotosEstudiante (ruta_foto, estudiante_id) VALUES
+('/fotos/estudiante1.jpg', 1),
+('/fotos/estudiante2.jpg', 2),
+('/fotos/estudiante3.jpg', 3),
+('/fotos/estudiante4.jpg', 4),
+('/fotos/estudiante5.jpg', 5);
+
+INSERT INTO EstudianteCarrera (estudiante_id, carrera_id) VALUES
+(1, 1),  -- Juan Pérez - Licenciatura en Matemáticas
+(2, 2),  -- María Gómez - Licenciatura en Física
+(3, 3),  -- Carlos López - Ingeniería Civil
+(4, 4),  -- Ana Martínez - Medicina General
+(5, 5);  -- Luis Hernández - Licenciatura en Bellas Artes
+
+INSERT INTO Docente (usuario_id, nombre, apellido, correo, numero_empleado, centro_id, dept_id, foto) VALUES
+(7, 'Roberto', 'García', 'roberto.garcia@example.com', 'EMP001', 1, 1, '/fotos/docente1.jpg'),
+(8, 'Laura', 'Fernández', 'laura.fernandez@example.com', 'EMP002', 2, 2, '/fotos/docente2.jpg'),
+(9, 'Miguel', 'Rodríguez', 'miguel.rodriguez@example.com', 'EMP003', 3, 3, '/fotos/docente3.jpg'),
+(10, 'Sofía', 'López', 'sofia.lopez@example.com', 'EMP004', 4, 4, '/fotos/docente4.jpg'),
+(11, 'Jorge', 'Martínez', 'jorge.martinez@example.com', 'EMP005', 5, 5, '/fotos/docente5.jpg');
+
+INSERT INTO Aspirante (nombre, apellido, identidad, telefono, correo, foto, fotodni, numSolicitud, carrera_principal_id, carrera_secundaria_id, centro_id, certificado_url, estado, fecha_solicitud) VALUES
+('Pedro', 'Sánchez', '0801199901111', '1234-5678', 'pedro.sanchez@example.com', '/fotos/aspirante1.jpg', '/fotos/dni1.jpg', 'SOL001', 1, 2, 1, '/certificados/cert1.pdf', 'PENDIENTE', '2023-10-01'),
+('Lucía', 'González', '0801199902222', '8765-4321', 'lucia.gonzalez@example.com', '/fotos/aspirante2.jpg', '/fotos/dni2.jpg', 'SOL002', 3, 4, 2, '/certificados/cert2.pdf', 'ADMITIDO', '2023-10-02'),
+('Mario', 'Ramírez', '0801199903333', '5555-5555', 'mario.ramirez@example.com', '/fotos/aspirante3.jpg', '/fotos/dni3.jpg', 'SOL003', 5, 1, 3, '/certificados/cert3.pdf', 'RECHAZADO', '2023-10-03'),
+('Carmen', 'Díaz', '0801199904444', '2222-3333', 'carmen.diaz@example.com', '/fotos/aspirante4.jpg', '/fotos/dni4.jpg', 'SOL004', 2, 3, 4, '/certificados/cert4.pdf', 'CORREGIDO_PENDIENTE','2023-10-04'),
+('Javier', 'Torres', '0801199905555', '9999-8888', 'javier.torres@example.com', '/fotos/aspirante5.jpg', '/fotos/dni5.jpg', 'SOL005', 4, 5, 5, '/certificados/cert5.pdf', 'PENDIENTE', '2023-10-05');
+
+INSERT INTO AspiranteCarrera (aspirante_id, carrera_id, estado_aprobacion) VALUES
+(1, 1, 'APROBADO'),  -- Juan Pérez - Licenciatura en Matemáticas
+(2, 3, 'APROBADO'),  -- María Gómez - Licenciatura en Física
+(3, 5, 'NO_APROBADO'),  -- Carlos López - Ingeniería Civil
+(4, 2, 'NO_APROBADO'),  -- Ana Martínez - Medicina General
+(5, 4, 'NO_APROBADO');  -- Luis Hernández - Licenciatura en Bellas Artes
+
+INSERT INTO Revisor (estudiante_id, fecha_aprobacion, usuario_id) VALUES
+(1, '2023-10-01', 2),  -- Juan Pérez aprobado como revisor
+(2, '2023-10-02', 3),  -- María Gómez aprobada como revisor
+(3, '2023-10-03', 4),  -- Carlos López aprobado como revisor
+(4, '2023-10-04', 5),  -- Ana Martínez aprobada como revisor
+(5, '2023-10-05', 6);  -- Luis Hernández aprobado como revisor
+
+INSERT INTO AplicanteRevisor (estudiante_id, carrera_id, fecha_solicitud, estado_solicitud) VALUES
+(1, 1, '2023-10-01', 'PENDIENTE'),  -- Juan Pérez solicita ser revisor para Licenciatura en Matemáticas
+(2, 2, '2023-10-02', 'APROBADO'),   -- María Gómez solicita ser revisor para Licenciatura en Física
+(3, 3, '2023-10-03', 'RECHAZADO'),   -- Carlos López solicita ser revisor para Ingeniería Civil
+(4, 4, '2023-10-04', 'PENDIENTE'),   -- Ana Martínez solicita ser revisor para Medicina General
+(5, 5, '2023-10-05', 'APROBADO');    -- Luis Hernández solicita ser revisor para Licenciatura en Bellas Artes
+
+INSERT INTO RevisionAspirante (aspirante_id, revisor_usuario_id, fecha_revision) VALUES
+(1, 1, '2023-10-05 10:00:00'),  -- Revisión de Pedro Sánchez por el revisor 1
+(2, 2, '2023-10-06 11:00:00'),  -- Revisión de Lucía González por el revisor 2
+(3, 3, '2023-10-07 12:00:00'),  -- Revisión de Mario Ramírez por el revisor 3
+(4, 4, '2023-10-08 13:00:00'),  -- Revisión de Carmen Díaz por el revisor 4
+(5, 5, '2023-10-09 14:00:00');  -- Revisión de Javier Torres por el revisor 5
+
+INSERT INTO MotivoRechazoAspirante (tipo_rechazo, descripcion) VALUES
+('FOTO', 'La foto no cumple con los requisitos de tamaño o formato.'),
+('DNI', 'El documento de identidad no es legible o está vencido.'),
+('CERTIFICADO', 'El certificado de secundaria no es válido o está incompleto.'),
+('NOMBRES', 'Los nombres no coinciden con los documentos presentados.');
+
+INSERT INTO AspiranteMotivoRechazo (revision_id, motivo_id, fecha_rechazo) VALUES
+(3, 1, '2023-10-07'),  -- Mario Ramírez rechazado por problema con la foto
+(3, 2, '2023-10-07'),  -- Mario Ramírez rechazado por problema con el DNI
+(4, 3, '2023-10-08'),  -- Carmen Díaz rechazada por problema con el certificado
+(5, 4, '2023-10-09');  -- Javier Torres rechazado por problema con los nombres
+
+INSERT INTO TipoExamen (nombre, nota_minima) VALUES
+('Examen de Matemáticas', 60.00),
+('Examen de Física', 65.00),
+('Examen de Inglés', 70.00),
+('Examen de Biología', 75.00),
+('Examen de Arte', 80.00);
+
+INSERT INTO CarreraExamen (carrera_id, tipo_examen_id) VALUES
+(1, 1),  -- Licenciatura en Matemáticas requiere Examen de Matemáticas
+(2, 2),  -- Licenciatura en Física requiere Examen de Física
+(3, 3),  -- Ingeniería Civil requiere Examen de Inglés
+(4, 4),  -- Medicina General requiere Examen de Biología
+(5, 5);  -- Licenciatura en Bellas Artes requiere Examen de Arte
+
+INSERT INTO ResultadoExamen (aspirante_id, tipo_examen_id, fecha_examen, calificacion, resultado) VALUES
+(1, 1, '2023-10-10', 85.00, 'APROBO'),  -- Pedro Sánchez - Examen de Matemáticas
+(2, 2, '2023-10-11', 70.00, 'APROBO'),  -- Lucía González - Examen de Física
+(3, 3, '2023-10-12', 65.00, 'NO_APROBO'),  -- Mario Ramírez - Examen de Inglés
+(4, 4, '2023-10-13', 80.00, 'APROBO'),  -- Carmen Díaz - Examen de Biología
+(5, 5, '2023-10-14', 90.00, 'APROBO');  -- Javier Torres - Examen de Arte
+
+INSERT INTO Seccion (clase_id, docente_id, periodo_academico_id, hora_inicio, hora_fin, aula_id, estado, video_url, motivo_cancelacion, cupos) VALUES
+(1, 1, 1, '08:00:00', '10:00:00', 1, 'ACTIVA', NULL, NULL, 30),  -- Álgebra Lineal - Docente 1
+(2, 2, 1, '10:00:00', '12:00:00', 2, 'ACTIVA', NULL, NULL, 25),  -- Física General - Docente 2
+(3, 3, 1, '14:00:00', '16:00:00', 3, 'CANCELADA', NULL, 'Falta de estudiantes', 20),  -- Mecánica de Materiales - Docente 3
+(4, 4, 1, '16:00:00', '18:00:00', 4, 'ACTIVA', NULL, NULL, 35),  -- Anatomía Humana - Docente 4
+(5, 5, 1, '18:00:00', '20:00:00', 5, 'ACTIVA', NULL, NULL, 15);  -- Pintura al Óleo - Docente 5
+
+INSERT INTO SeccionDia (seccion_id, dia) VALUES
+(1, 'Lunes'),  -- Álgebra Lineal - Lunes
+(1, 'Miércoles'),  -- Álgebra Lineal - Miércoles
+(2, 'Martes'),  -- Física General - Martes
+(2, 'Jueves'),  -- Física General - Jueves
+(3, 'Viernes');  -- Mecánica de Materiales - Viernes
+
+INSERT INTO Laboratorio (clase_id, codigo_laboratorio, periodo_academico_id, hora_inicio, hora_fin, aula_id, estado, motivo_cancelacion) VALUES
+(2, 'LAB101', 1, '08:00:00', '10:00:00', 2, 'ACTIVO', NULL),  -- Física General - Laboratorio 101
+(3, 'LAB201', 1, '10:00:00', '12:00:00', 3, 'ACTIVO', NULL),  -- Mecánica de Materiales - Laboratorio 201
+(4, 'LAB301', 1, '14:00:00', '16:00:00', 4, 'CANCELADO', 'Falta de materiales'),  -- Anatomía Humana - Laboratorio 301
+(5, 'LAB401', 1, '16:00:00', '18:00:00', 5, 'ACTIVO', NULL),  -- Pintura al Óleo - Laboratorio 401
+(1, 'LAB501', 1, '18:00:00', '20:00:00', 1, 'ACTIVO', NULL);  -- Álgebra Lineal - Laboratorio 501
+
+INSERT INTO LaboratorioDia (laboratorio_id, dia) VALUES
+(1, 'Lunes'),  -- Laboratorio 101 - Lunes
+(2, 'Martes'),  -- Laboratorio 201 - Martes
+(3, 'Miércoles'),  -- Laboratorio 301 - Miércoles
+(4, 'Jueves'),  -- Laboratorio 401 - Jueves
+(5, 'Viernes');  -- Laboratorio 501 - Viernes
+
+INSERT INTO ProcesoMatricula (periodo_academico_id, tipo_proceso, fecha_inicio, fecha_fin, estado) VALUES
+(1, 'MATRICULA', '2023-10-01 00:00:00', '2023-10-15 23:59:59', 'ACTIVO'),  -- Proceso de matrícula para el período 1
+(1, 'ADICIONES_CANCELACIONES', '2023-10-16 00:00:00', '2023-10-20 23:59:59', 'INACTIVO'),  -- Proceso de adiciones y cancelaciones para el período 1
+(2, 'MATRICULA', '2024-01-15 00:00:00', '2024-01-30 23:59:59', 'INACTIVO'),  -- Proceso de matrícula para el período 2
+(2, 'ADICIONES_CANCELACIONES', '2024-02-01 00:00:00', '2024-02-05 23:59:59', 'INACTIVO'),  -- Proceso de adiciones y cancelaciones para el período 2
+(3, 'MATRICULA', '2024-06-03 00:00:00', '2024-06-17 23:59:59', 'INACTIVO');  -- Proceso de matrícula para el período 3
+
+INSERT INTO ProcesosExcepcionales (periodo_academico_id, tipo_proceso, fecha_inicio, fecha_fin, estado) VALUES
+(1, 'PAGO_REPOSICION', '2023-10-21 00:00:00', '2023-10-25 23:59:59', 'ACTIVO'),  -- Proceso de pago de reposición para el período 1
+(1, 'CANCELACION_EXCEPCIONAL', '2023-10-26 00:00:00', '2023-10-30 23:59:59', 'INACTIVO'),  -- Proceso de cancelaciones excepcionales para el período 1
+(2, 'CAMBIO_CARRERA', '2024-02-06 00:00:00', '2024-02-10 23:59:59', 'INACTIVO'),  -- Proceso de cambio de carrera para el período 2
+(3, 'PAGO_REPOSICION', '2024-06-18 00:00:00', '2024-06-22 23:59:59', 'INACTIVO'),  -- Proceso de pago de reposición para el período 3
+(3, 'CANCELACION_EXCEPCIONAL', '2024-06-23 00:00:00', '2024-06-27 23:59:59', 'INACTIVO');  -- Proceso de cancelaciones excepcionales para el período 3
+
+INSERT INTO Libro (titulo, editorial, libro_url, fecha_publicacion, descripcion, estado) VALUES
+('Álgebra Lineal', 'Pearson', '/libros/algebra_lineal.pdf', '2020-01-01', 'Libro introductorio de Álgebra Lineal.', 'ACTIVO'),
+('Física General', 'Pearson', '/libros/fisica_general.pdf', '2019-05-15', 'Libro de Física para estudiantes de ingeniería.', 'ACTIVO'),
+('Mecánica de Materiales', 'Pearson', '/libros/mecanica_materiales.pdf', '2018-09-20', 'Libro avanzado de Mecánica de Materiales.', 'ACTIVO'),
+('Anatomía Humana', 'Pearson', '/libros/anatomia_humana.pdf', '2021-03-10', 'Libro de Anatomía para estudiantes de medicina.', 'ACTIVO'),
+('Pintura al Óleo', 'Pearson', '/libros/pintura_oleo.pdf', '2022-07-25', 'Guía práctica de Pintura al Óleo.', 'ACTIVO');
+
+INSERT INTO Tag (tag_nombre) VALUES
+('Matemáticas'),
+('Física'),
+('Ingeniería'),
+('Medicina'),
+('Arte');
+
+INSERT INTO TagLibro (libro_id, tag_id) VALUES
+(1, 1),  -- Álgebra Lineal - Matemáticas
+(2, 2),  -- Física General - Física
+(3, 3),  -- Mecánica de Materiales - Ingeniería
+(4, 4),  -- Anatomía Humana - Medicina
+(5, 5);  -- Pintura al Óleo - Arte
+
+INSERT INTO Autor (nombre, apellido) VALUES
+('Carlos', 'Gómez'),
+('María', 'López'),
+('Juan', 'Martínez'),
+('Ana', 'Fernández'),
+('Luis', 'Rodríguez');
+
+INSERT INTO LibroAutor (libro_id, autor_id) VALUES
+(1, 1),  -- Álgebra Lineal - Carlos Gómez
+(2, 2),  -- Física General - María López
+(3, 3),  -- Mecánica de Materiales - Juan Martínez
+(4, 4),  -- Anatomía Humana - Ana Fernández
+(5, 5);  -- Pintura al Óleo - Luis Rodríguez
+
+INSERT INTO ClaseLibro (clase_id, libro_id) VALUES
+(1, 1),  -- Álgebra Lineal - Libro de Álgebra Lineal
+(2, 2),  -- Física General - Libro de Física General
+(3, 3),  -- Mecánica de Materiales - Libro de Mecánica de Materiales
+(4, 4),  -- Anatomía Humana - Libro de Anatomía Humana
+(5, 5);  -- Pintura al Óleo - Libro de Pintura al Óleo
+
+INSERT INTO Matricula (estudiante_id, seccion_id, fecha, observacion, estado, orden_inscripcion) VALUES
+(1, 1, '2023-10-01', 'Matriculado en Álgebra Lineal', 'MATRICULADO', 1),  -- Juan Pérez matriculado en Álgebra Lineal
+(2, 2, '2023-10-02', 'Matriculado en Física General', 'MATRICULADO', 2),  -- María Gómez matriculada en Física General
+(3, 3, '2023-10-03', 'Matriculado en Mecánica de Materiales', 'EN_ESPERA', 3),  -- Carlos López en lista de espera para Mecánica de Materiales
+(4, 4, '2023-10-04', 'Matriculado en Anatomía Humana', 'MATRICULADO', 4),  -- Ana Martínez matriculada en Anatomía Humana
+(5, 5, '2023-10-05', 'Matriculado en Pintura al Óleo', 'MATRICULADO', 5);  -- Luis Hernández matriculado en Pintura al Óleo
+
+INSERT INTO HistorialEstudiante (estudiante_id, seccion_id, calificacion, observacion, fecha, estado_curso) VALUES
+(1, 1, 85.00, 'Aprobado con buena calificación', '2023-12-15', 'APROBADA'),  -- Juan Pérez aprobó Álgebra Lineal
+(2, 2, 70.00, 'Aprobado', '2023-12-16', 'APROBADA'),  -- María Gómez aprobó Física General
+(3, 3, 60.00, 'Aprobado justo', '2023-12-17', 'APROBADA'),  -- Carlos López aprobó Mecánica de Materiales
+(4, 4, 90.00, 'Excelente desempeño', '2023-12-18', 'APROBADA'),  -- Ana Martínez aprobó Anatomía Humana
+(5, 5, 95.00, 'Sobresaliente', '2023-12-19', 'APROBADA');  -- Luis Hernández aprobó Pintura al Óleo
+
+INSERT INTO MotivoRechazoSolicitud (descripcion) VALUES
+('Falta de documentación requerida.'),
+('El estudiante no cumple con los requisitos académicos.'),
+('La solicitud fue enviada fuera del plazo establecido.'),
+('El estudiante ya ha realizado esta solicitud previamente.'),
+('El estudiante no tiene el índice académico requerido.');
+
+INSERT INTO Solicitud (estudiante_id, tipo_solicitud, estado, motivo_id, fecha_solicitud, archivo_pdf) VALUES
+(1, 'CAMBIO_CENTRO', 'PENDIENTE', NULL, '2023-10-01', '/solicitudes/cambio_centro1.pdf'),  -- Juan Pérez solicita cambio de centro
+(2, 'CANCELACION_EXCEPCIONAL', 'APROBADA', NULL, '2023-10-02', '/solicitudes/cancelacion1.pdf'),  -- María Gómez solicita cancelación excepcional
+(3, 'CAMBIO_CARRERA', 'DENEGADA', 1, '2023-10-03', '/solicitudes/cambio_carrera1.pdf'),  -- Carlos López solicita cambio de carrera (denegada por falta de documentación)
+(4, 'PAGO_REPOSICION', 'PENDIENTE', NULL, '2023-10-04', '/solicitudes/pago_reposicion1.pdf'),  -- Ana Martínez solicita pago de reposición
+(5, 'CAMBIO_CENTRO', 'APROBADA', NULL, '2023-10-05', '/solicitudes/cambio_centro2.pdf');  -- Luis Hernández solicita cambio de centro
+
+INSERT INTO PreguntaEvaluacion (texto) VALUES
+('¿El docente explica claramente los temas?'),
+('¿El docente está disponible para resolver dudas fuera de clase?'),
+('¿El material de apoyo es adecuado y útil?'),
+('¿El docente fomenta la participación en clase?'),
+('¿El docente cumple con los horarios establecidos?');
+
+
+INSERT INTO EvaluacionDocente (docente_id, estudiante_id, periodo_academico_id, fecha) VALUES
+(1, 1, 1, '2023-12-20 10:00:00'),  -- Evaluación de Juan Pérez al docente 1
+(2, 2, 1, '2023-12-21 11:00:00'),  -- Evaluación de María Gómez al docente 2
+(3, 3, 1, '2023-12-22 12:00:00'),  -- Evaluación de Carlos López al docente 3
+(4, 4, 1, '2023-12-23 13:00:00'),  -- Evaluación de Ana Martínez al docente 4
+(5, 5, 1, '2023-12-24 14:00:00');  -- Evaluación de Luis Hernández al docente 5
+
+INSERT INTO RespuestaEvaluacion (evaluacion_id, pregunta_id, respuesta) VALUES
+(1, 1, 'Sí, el docente explica claramente los temas.'),  -- Respuesta a la pregunta 1 en la evaluación 1
+(1, 2, 'Sí, el docente está disponible para resolver dudas.'),  -- Respuesta a la pregunta 2 en la evaluación 1
+(2, 3, 'El material de apoyo es adecuado y útil.'),  -- Respuesta a la pregunta 3 en la evaluación 2
+(3, 4, 'El docente fomenta la participación en clase.'),  -- Respuesta a la pregunta 4 en la evaluación 3
+(4, 5, 'El docente cumple con los horarios establecidos.');  -- Respuesta a la pregunta 5 en la evaluación 4
+
+INSERT INTO ClaseRequisito (clase_id, requisito_id) VALUES 
+(1, 2),
+(2, 3),
+(3, 4),
+(4, 5),
+(5, 1);
+
+
+
+

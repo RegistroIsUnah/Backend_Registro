@@ -3,7 +3,7 @@
  * API para obtener las clases de un departamento.
  *
  * Permite filtrar las clases mediante el parámetro GET 'dept_id'.
- * servidor:puerto/api/get/clases?dept_id=1
+ * servidor:puerto/api/get/clases_depto?dept_id=1
  *
  * Respuestas HTTP:
  * - 200 OK: Retorna la lista de clases en formato JSON.

@@ -31,17 +31,18 @@ BEGIN
     INSERT INTO Aspirante (
          nombre, apellido, identidad, telefono, correo, foto, fotodni, numSolicitud,
          carrera_principal_id, carrera_secundaria_id, centro_id, certificado_url,
-         estado, revisor_usuario_id, fecha_solicitud
+         estado, fecha_solicitud
     ) VALUES (
          p_nombre, p_apellido, p_identidad, p_telefono, p_correo, p_foto, p_fotodni, v_numSolicitud,
          p_carrera_principal_id, p_carrera_secundaria_id, p_centro_id, p_certificado_url,
-         'PENDIENTE', NULL, CURDATE()
+         'PENDIENTE', CURDATE()
     );
     
     SELECT v_numSolicitud AS numSolicitud;
 END //
 
 DELIMITER ;
+
 
 
 
@@ -267,10 +268,6 @@ CREATE PROCEDURE SP_matricular_estudiante(
     IN p_lab_seccion_id INT  -- ID del laboratorio seleccionado (debe ser no nulo si la clase tiene laboratorio)
 )
 BEGIN
-    -- Verificar que el tipo de proceso sea MATRICULA
-    IF UPPER(p_tipo_proceso) <> 'MATRICULA' THEN
-       SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El tipo de proceso debe ser MATRICULA';
-    END IF;
 
     -- Declaración de variables para la matrícula principal
     DECLARE v_proceso_id INT;
@@ -299,6 +296,11 @@ BEGIN
     DECLARE v_lab_clase_id INT;
     DECLARE v_seccion_clase_id INT;
     DECLARE v_tiene_lab INT;
+    
+     -- Verificar que el tipo de proceso sea MATRICULA
+    IF UPPER(p_tipo_proceso) <> 'MATRICULA' THEN
+       SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El tipo de proceso debe ser MATRICULA';
+    END IF;
 
     -- -------------------------
     -- 1. Obtener proceso activo para MATRICULA
@@ -525,10 +527,6 @@ CREATE PROCEDURE SP_matricular_estudiante_adiciones_cancelaciones(
     IN p_lab_seccion_id INT  -- ID del laboratorio seleccionado (debe ser no nulo si la clase tiene laboratorio)
 )
 BEGIN
-    -- Verificar que el tipo de proceso sea ADICIONES_CANCELACIONES
-    IF UPPER(p_tipo_proceso) <> 'ADICIONES_CANCELACIONES' THEN
-       SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El tipo de proceso debe ser ADICIONES_CANCELACIONES';
-    END IF;
 
     -- Declaración de variables para la matrícula principal
     DECLARE v_proceso_id INT;
@@ -551,6 +549,11 @@ BEGIN
     DECLARE v_lab_clase_id INT;
     DECLARE v_seccion_clase_id INT;
     DECLARE v_tiene_lab INT;
+    
+ -- Verificar que el tipo de proceso sea ADICIONES_CANCELACIONES
+    IF UPPER(p_tipo_proceso) <> 'ADICIONES_CANCELACIONES' THEN
+       SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El tipo de proceso debe ser ADICIONES_CANCELACIONES';
+    END IF;
 
     -- -------------------------
     -- 1. Obtener proceso activo para ADICIONES_CANCELACIONES
@@ -740,5 +743,5 @@ Expresion regular validacion Identidades
 Expresion regular validacion Numeros de telefono
 
 /*
-(\+504|504|\(\+504\))?[-]?([369][0-9]{3})[-]?([0-9]{4})
+(\+504|504|\(\+504\)|\+\(504\))?[-]?([369][0-9]{3})[-]?([0-9]{4})
 */

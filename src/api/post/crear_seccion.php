@@ -3,6 +3,9 @@
  * API para crear una sección.
  *
  * Este endpoint recibe datos en formato JSON, valida la información y llama al controlador para crear la sección.
+ * 
+ * Ejemplo de URL:
+ * servidor:puerto/api/post/crear_seccion
  *
  * Ejemplo de JSON de entrada:
  * {
