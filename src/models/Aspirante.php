@@ -239,6 +239,134 @@ class Aspirante {
         fclose($output);
     }
 
+    public function evaluarAspirante($aspiranteId) {
+        // Obtener notas y datos del aspirante
+        $sql = "SELECT 
+                    a.aspirante_id,
+                    a.carrera_principal_id,
+                    a.carrera_secundaria_id,
+                    c_principal.nombre AS carrera_principal,
+                    c_secundaria.nombre AS carrera_secundaria,
+                    re.calificacion,
+                    t.nombre AS tipo_examen,
+                    t.nota_minima
+                FROM Aspirante a
+                LEFT JOIN ResultadoExamen re ON a.aspirante_id = re.aspirante_id
+                LEFT JOIN TipoExamen t ON re.tipo_examen_id = t.tipo_examen_id
+                LEFT JOIN Carrera c_principal ON a.carrera_principal_id = c_principal.carrera_id
+                LEFT JOIN Carrera c_secundaria ON a.carrera_secundaria_id = c_secundaria.carrera_id
+                WHERE a.aspirante_id = ?";
+        
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param("i", $aspiranteId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+    
+        if ($result->num_rows === 0) {
+            throw new Exception("Aspirante no encontrado");
+        }
+    
+        $datos = [
+            'principal' => [],
+            'secundaria' => []
+        ];
+    
+        while ($row = $result->fetch_assoc()) {
+            $datos['info_general'] = [
+                'aspirante_id' => $row['aspirante_id'],
+                'carrera_principal' => $row['carrera_principal'],
+                'carrera_secundaria' => $row['carrera_secundaria']
+            ];
+    
+            if ($row['calificacion']) {
+                $datos['examenes'][] = [
+                    'tipo' => $row['tipo_examen'],
+                    'calificacion' => $row['calificacion'],
+                    'nota_minima' => $row['nota_minima']
+                ];
+            }
+        }
+    
+        // Obtener requisitos por carrera
+        $requisitos = $this->obtenerRequisitosCarreras(
+            $datos['info_general']['carrera_principal_id'],
+            $datos['info_general']['carrera_secundaria_id']
+        );
+    
+        // Realizar evaluación
+        return $this->procesarEvaluacion($datos, $requisitos);
+    }
+    
+    private function obtenerRequisitosCarreras($principalId, $secundariaId) {
+        $sql = "SELECT carrera_id, GROUP_CONCAT(tipo_examen_id) AS examenes_requeridos 
+                FROM CarreraExamen 
+                WHERE carrera_id IN (?, ?)
+                GROUP BY carrera_id";
+        
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param("ii", $principalId, $secundariaId);
+        $stmt->execute();
+        
+        $result = $stmt->get_result();
+        $requisitos = [];
+        
+        while ($row = $result->fetch_assoc()) {
+            $requisitos[$row['carrera_id']] = explode(',', $row['examenes_requeridos']);
+        }
+        
+        return $requisitos;
+    }
+    
+    private function procesarEvaluacion($datos, $requisitos) {
+        $resultado = [
+            'decision' => 'RECHAZADO',
+            'carrera_asignada' => null,
+            'detalles' => []
+        ];
+    
+        // Evaluar carrera principal
+        if ($this->cumpleRequisitos($datos, $requisitos[$datos['info_general']['carrera_principal_id']])) {
+            $resultado['decision'] = 'ADMITIDO';
+            $resultado['carrera_asignada'] = $datos['info_general']['carrera_principal'];
+            $this->actualizarEstadoAspirante($datos['info_general']['aspirante_id'], 'ADMITIDO');
+            return $resultado;
+        }
+    
+        // Evaluar carrera secundaria
+        if ($datos['info_general']['carrera_secundaria'] && 
+            $this->cumpleRequisitos($datos, $requisitos[$datos['info_general']['carrera_secundaria_id']])) {
+            $resultado['decision'] = 'ADMITIDO';
+            $resultado['carrera_asignada'] = $datos['info_general']['carrera_secundaria'];
+            $this->actualizarEstadoAspirante($datos['info_general']['aspirante_id'], 'ADMITIDO');
+            return $resultado;
+        }
+    
+        $this->actualizarEstadoAspirante($datos['info_general']['aspirante_id'], 'RECHAZADO');
+        return $resultado;
+    }
+    
+    private function cumpleRequisitos($datos, $examenesRequeridos) {
+        foreach ($examenesRequeridos as $examenId) {
+            $aprobado = false;
+            foreach ($datos['examenes'] as $examen) {
+                if ($examen['tipo_examen_id'] == $examenId && 
+                    $examen['calificacion'] >= $examen['nota_minima']) {
+                    $aprobado = true;
+                    break;
+                }
+            }
+            if (!$aprobado) return false;
+        }
+        return true;
+    }
+    
+    private function actualizarEstadoAspirante($aspiranteId, $estado) {
+        $sql = "UPDATE Aspirante SET estado = ? WHERE aspirante_id = ?";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param("si", $estado, $aspiranteId);
+        $stmt->execute();
+    }
+
     
     /**
      * Obtiene una solicitud pendiente o corregida y la asigna al revisor.

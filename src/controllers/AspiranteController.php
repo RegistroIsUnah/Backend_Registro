@@ -273,6 +273,43 @@ class AspiranteController {
         }
     }
 
+
+    /*
+
+    @author Jose Vargas
+    @Version 1.0
+    */
+    public function evaluarAspirante() {
+        header('Content-Type: application/json');
+        
+        try {
+            // Validar entrada
+            $input = json_decode(file_get_contents('php://input'), true);
+            
+            if (empty($input['aspirante_id'])) {
+                http_response_code(400);
+                echo json_encode(['error' => 'ID de aspirante requerido']);
+                return;
+            }
+    
+            // Procesar evaluación
+            $resultado = $this->modelo->evaluarAspirante($input['aspirante_id']);
+            
+            echo json_encode([
+                'success' => true,
+                'resultado' => $resultado
+            ]);
+    
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode([
+                'success' => false,
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+ 
+
     /**
      * Procesa la revisión de una solicitud de aspirante.
      *

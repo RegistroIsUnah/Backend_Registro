@@ -7,6 +7,7 @@
  *
  * Se espera recibir en la solicitud (multipart/form-data):
  *   - titulo: string
+ *   - editorial: string 
  *   - fecha_publicacion: string (YYYY-MM-DD)
  *   - descripcion: string
  *   - tags: JSON (por ejemplo: '["Tag1","Tag2"]')
