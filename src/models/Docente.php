@@ -27,7 +27,7 @@ class Docente {
         $this->conn = $database->getConnection();
     }
 
-    /**
+    /** EN DESHUSO
      * Asigna un usuario a un docente utilizando el procedimiento almacenado SP_asignarUsuarioDocente.
      *
      * @param int $docente_id

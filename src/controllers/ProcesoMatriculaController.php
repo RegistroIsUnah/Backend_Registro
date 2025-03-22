@@ -13,7 +13,7 @@
 require_once __DIR__ . '/../models/ProcesoMatricula.php';
 
 class ProcesoMatriculaController {
-    /**
+     /**
      * Valida y procesa la creación de un proceso de matrícula.
      *
      * Se esperan los siguientes campos en $data:
@@ -62,6 +62,7 @@ class ProcesoMatriculaController {
         }
         
         try {
+            // Instanciamos el modelo y creamos el proceso de matrícula
             $procesoModel = new ProcesoMatricula();
             $id = $procesoModel->crearProcesoMatricula($periodo_academico_id, $tipo_proceso, $fecha_inicio, $fecha_fin);
         } catch (Exception $e) {

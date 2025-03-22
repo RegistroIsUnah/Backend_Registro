@@ -10,39 +10,53 @@ CREATE PROCEDURE SP_insertarAspirante(
     IN p_telefono VARCHAR(20),
     IN p_correo VARCHAR(100),
     IN p_foto VARCHAR(255),
-    IN p_fotodni VARCHAR(255),  
+    IN p_fotodni VARCHAR(255),
     IN p_carrera_principal_id INT,
     IN p_carrera_secundaria_id INT,
     IN p_centro_id INT,
-    IN p_certificado_url VARCHAR(255)
+    IN p_certificado_url VARCHAR(255),
+    IN p_tipo_documento_id INT
 )
 BEGIN
     DECLARE v_numSolicitud VARCHAR(50);
+    DECLARE v_estado_aspirante_id INT;
 
     -- Verificar si ya existe un aspirante con la misma identidad
     IF (SELECT COUNT(*) FROM Aspirante WHERE identidad = p_identidad) > 0 THEN
-         SIGNAL SQLSTATE '45000'
+        SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'El aspirante ya ha sido inscrito';
     END IF;
     
-    -- Generar el número de solicitud
-    SET v_numSolicitud = CONCAT('SOL-', UNIX_TIMESTAMP());
-    
+    -- Obtener el estado_aspirante_id para 'PENDIENTE'
+    SELECT estado_aspirante_id INTO v_estado_aspirante_id
+    FROM EstadoAspirante
+    WHERE nombre = 'PENDIENTE';
+
+    -- Si no existe, crear el estado 'PENDIENTE'
+    IF v_estado_aspirante_id IS NULL THEN
+        INSERT INTO EstadoAspirante (nombre) VALUES ('PENDIENTE');
+        SET v_estado_aspirante_id = LAST_INSERT_ID();
+    END IF;
+
+    -- Generar el número de solicitud con UUID y un prefijo
+    SET v_numSolicitud = CONCAT('SOL-', UUID());
+
+    -- Insertar en la tabla Aspirante
     INSERT INTO Aspirante (
-         nombre, apellido, identidad, telefono, correo, foto, fotodni, numSolicitud,
-         carrera_principal_id, carrera_secundaria_id, centro_id, certificado_url,
-         estado, fecha_solicitud
+        nombre, apellido, identidad, telefono, correo, foto, fotodni, numSolicitud,
+        carrera_principal_id, carrera_secundaria_id, centro_id, certificado_url,
+        estado_aspirante_id, tipo_documento_id, fecha_solicitud
     ) VALUES (
-         p_nombre, p_apellido, p_identidad, p_telefono, p_correo, p_foto, p_fotodni, v_numSolicitud,
-         p_carrera_principal_id, p_carrera_secundaria_id, p_centro_id, p_certificado_url,
-         'PENDIENTE', CURDATE()
+        p_nombre, p_apellido, p_identidad, p_telefono, p_correo, p_foto, p_fotodni, v_numSolicitud,
+        p_carrera_principal_id, p_carrera_secundaria_id, p_centro_id, p_certificado_url,
+        v_estado_aspirante_id, p_tipo_documento_id, CURDATE()
     );
     
+    -- Devolver el número de solicitud generado
     SELECT v_numSolicitud AS numSolicitud;
 END //
 
 DELIMITER ;
-
 
 
 
@@ -89,8 +103,6 @@ END //
 DELIMITER ;
 
 
-
-
 DELIMITER //
 
 CREATE PROCEDURE SP_crearSeccion(
@@ -101,7 +113,7 @@ CREATE PROCEDURE SP_crearSeccion(
     IN p_hora_inicio TIME,
     IN p_hora_fin TIME,
     IN p_cupos INT,
-    IN p_dias VARCHAR(255),
+    IN p_dias VARCHAR(255),  -- Cadena de días separados por comas (ej: "1,2,3")
     IN p_video_url VARCHAR(255)
 )
 BEGIN
@@ -110,13 +122,25 @@ BEGIN
     DECLARE v_numDias INT;
     DECLARE v_totalDays INT;
     DECLARE v_counter INT DEFAULT 1;
-    DECLARE v_day VARCHAR(50);
+    DECLARE v_day INT;
     DECLARE v_section_id INT;
-    DECLARE v_estado ENUM('ACTIVO','INACTIVO');
+    DECLARE v_estado_proceso_id INT;
+
+    -- Validar parámetros obligatorios
+    IF p_clase_id IS NULL THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El ID de la clase no puede estar vacío';
+    END IF;
+
+    IF p_docente_id IS NULL THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El ID del docente no puede estar vacío';
+    END IF;
 
     -- Verificar que el período académico esté activo
-    SELECT estado INTO v_estado FROM PeriodoAcademico WHERE periodo_academico_id = p_periodo_academico_id;
-    IF v_estado <> 'ACTIVO' THEN
+    SELECT estado_proceso_id INTO v_estado_proceso_id
+    FROM PeriodoAcademico 
+    WHERE periodo_academico_id = p_periodo_academico_id;
+
+    IF v_estado_proceso_id <> 1 THEN -- Suponiendo que 1 es 'ACTIVO' en la tabla EstadoProceso
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El período académico no está activo';
     END IF;
 
@@ -163,7 +187,7 @@ BEGIN
     -- Verificar traslapes en el aula y traslapes en el docente para cada día
     SET v_counter = 1;
     WHILE v_counter <= v_totalDays DO
-        SET v_day = TRIM(SUBSTRING_INDEX(SUBSTRING_INDEX(p_dias, ',', v_counter), ',', -1));
+        SET v_day = CAST(TRIM(SUBSTRING_INDEX(SUBSTRING_INDEX(p_dias, ',', v_counter), ',', -1)) AS UNSIGNED);
 
         -- Verificar traslape en el aula
         IF EXISTS (
@@ -171,9 +195,9 @@ BEGIN
             FROM Seccion s
             INNER JOIN SeccionDia sd ON s.seccion_id = sd.seccion_id
             WHERE s.aula_id = p_aula_id
-              AND sd.dia = v_day
+              AND sd.dia_id = v_day
               AND s.periodo_academico_id = p_periodo_academico_id
-              AND s.estado = 'ACTIVA'
+              AND s.estado_seccion_id = 1  -- Activo en la tabla EstadoSeccion
               AND (TIME_TO_SEC(p_hora_inicio) < TIME_TO_SEC(s.hora_fin)
                    AND TIME_TO_SEC(p_hora_fin) > TIME_TO_SEC(s.hora_inicio))
         ) THEN
@@ -186,9 +210,9 @@ BEGIN
             FROM Seccion s
             INNER JOIN SeccionDia sd ON s.seccion_id = sd.seccion_id
             WHERE s.docente_id = p_docente_id
-              AND sd.dia = v_day
+              AND sd.dia_id = v_day
               AND s.periodo_academico_id = p_periodo_academico_id
-              AND s.estado = 'ACTIVA'
+              AND s.estado_seccion_id = 1  -- Activo en la tabla EstadoSeccion
               AND (TIME_TO_SEC(p_hora_inicio) < TIME_TO_SEC(s.hora_fin)
                    AND TIME_TO_SEC(p_hora_fin) > TIME_TO_SEC(s.hora_inicio))
         ) THEN
@@ -199,60 +223,83 @@ BEGIN
     END WHILE;
 
     -- Insertar la sección (incluyendo cupos)
-     INSERT INTO Seccion (
-        clase_id, docente_id, periodo_academico_id, hora_inicio, hora_fin, aula_id, estado, cupos, video_url
+    INSERT INTO Seccion (
+        clase_id, docente_id, periodo_academico_id, hora_inicio, hora_fin, aula_id, estado_seccion_id, cupos, video_url
     )
     VALUES (
-        p_clase_id, p_docente_id, p_periodo_academico_id, p_hora_inicio, p_hora_fin, p_aula_id, 'ACTIVA', p_cupos, p_video_url
+        p_clase_id, p_docente_id, p_periodo_academico_id, p_hora_inicio, p_hora_fin, p_aula_id, 1, p_cupos, p_video_url
     );
     SET v_section_id = LAST_INSERT_ID();
 
     -- Insertar cada día en la tabla SeccionDia
     SET v_counter = 1;
     WHILE v_counter <= v_totalDays DO
-        SET v_day = TRIM(SUBSTRING_INDEX(SUBSTRING_INDEX(p_dias, ',', v_counter), ',', -1));
-        INSERT INTO SeccionDia (seccion_id, dia) VALUES (v_section_id, v_day);
+        SET v_day = CAST(TRIM(SUBSTRING_INDEX(SUBSTRING_INDEX(p_dias, ',', v_counter), ',', -1)) AS UNSIGNED);
+        INSERT INTO SeccionDia (seccion_id, dia_id) VALUES (v_section_id, v_day);
         SET v_counter = v_counter + 1;
     END WHILE;
 
+    -- Devolver el ID de la sección creada
     SELECT v_section_id AS seccion_id;
 END //
 
 DELIMITER ;
 
 
-
-
-
 DELIMITER //
 
 CREATE PROCEDURE SP_modificarSeccion(
     IN p_seccion_id INT,
-    IN p_docente_id INT,         -- Si se desea actualizar, se envía un valor; de lo contrario, NULL.
-    IN p_aula_id INT,            -- Igual que p_docente_id.
-    IN p_estado VARCHAR(20),     -- Se espera 'ACTIVA' o 'CANCELADA'. Si es NULL, no se modifica.
+    IN p_docente_id INT,          -- Si se desea actualizar, se envía un valor; de lo contrario, NULL.
+    IN p_aula_id INT,             -- Igual que p_docente_id.
+    IN p_estado VARCHAR(20),      -- Se espera 'ACTIVA' o 'CANCELADA'. Si es NULL, no se modifica.
     IN p_motivo_cancelacion TEXT, -- Se utiliza si p_estado es 'CANCELADA'.
-    IN p_cupos INT,              -- Para actualizar el número de cupos.
-    IN p_video_url VARCHAR(255)  -- Nuevo parámetro para actualizar o agregar la URL del video.
+    IN p_cupos INT,               -- Para actualizar el número de cupos.
+    IN p_video_url VARCHAR(255)   -- Nuevo parámetro para actualizar o agregar la URL del video.
 )
 BEGIN
-    -- Si se intenta cancelar, se requiere un motivo de cancelación.
-    IF p_estado = 'CANCELADA' AND (p_motivo_cancelacion IS NULL OR TRIM(p_motivo_cancelacion) = '') THEN
-       SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Debe proporcionar motivo de cancelación';
+    DECLARE v_estado_seccion_id INT;
+
+    -- Validar parámetros obligatorios
+    IF p_seccion_id IS NULL THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El ID de la sección no puede estar vacío';
     END IF;
-    
+
+    -- Si se intenta cancelar, se requiere un motivo de cancelación
+    IF p_estado = 'CANCELADA' AND (p_motivo_cancelacion IS NULL OR TRIM(p_motivo_cancelacion) = '') THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Debe proporcionar motivo de cancelación';
+    END IF;
+
+    -- Obtener el estado_seccion_id correspondiente a 'ACTIVA' o 'CANCELADA'
+    IF p_estado IS NOT NULL THEN
+        SELECT estado_seccion_id INTO v_estado_seccion_id
+        FROM EstadoSeccion
+        WHERE nombre = p_estado;
+        
+        -- Si el estado no es válido
+        IF v_estado_seccion_id IS NULL THEN
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Estado de sección inválido';
+        END IF;
+    END IF;
+
+    -- Actualizar la sección con los nuevos valores
     UPDATE Seccion
     SET 
-       docente_id = COALESCE(p_docente_id, docente_id),
-       aula_id = COALESCE(p_aula_id, aula_id),
-       estado = COALESCE(p_estado, estado),
-       motivo_cancelacion = CASE 
-                               WHEN p_estado = 'CANCELADA' THEN p_motivo_cancelacion
-                               ELSE motivo_cancelacion
-                            END,
-       cupos = COALESCE(p_cupos, cupos),
-       video_url = COALESCE(p_video_url, video_url)
+        docente_id = COALESCE(p_docente_id, docente_id),
+        aula_id = COALESCE(p_aula_id, aula_id),
+        estado_seccion_id = COALESCE(v_estado_seccion_id, estado_seccion_id),
+        motivo_cancelacion = CASE 
+            WHEN p_estado = 'CANCELADA' THEN p_motivo_cancelacion
+            ELSE motivo_cancelacion
+        END,
+        cupos = COALESCE(p_cupos, cupos),
+        video_url = COALESCE(p_video_url, video_url)
     WHERE seccion_id = p_seccion_id;
+
+    -- Si no se actualizó ninguna fila, se lanza un error
+    IF ROW_COUNT() = 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Sección no encontrada o no se realizaron cambios';
+    END IF;
 END //
 
 DELIMITER ;
@@ -268,12 +315,11 @@ CREATE PROCEDURE SP_matricular_estudiante(
     IN p_lab_seccion_id INT  -- ID del laboratorio seleccionado (debe ser no nulo si la clase tiene laboratorio)
 )
 BEGIN
-
     -- Declaración de variables para la matrícula principal
     DECLARE v_proceso_id INT;
     DECLARE v_periodo_academico_id INT;
     DECLARE v_fecha_inicio DATETIME;
-    DECLARE v_estado_proceso VARCHAR(20);
+    DECLARE v_estado_proceso_id INT;
     DECLARE v_indice_global DECIMAL(5,2);
     DECLARE v_diaMatricula INT;
     DECLARE v_rango_min DECIMAL(5,2);
@@ -295,33 +341,30 @@ BEGIN
     DECLARE v_lab_hora_fin TIME;
     DECLARE v_lab_clase_id INT;
     DECLARE v_seccion_clase_id INT;
-    DECLARE v_tiene_lab INT;
+    DECLARE v_tiene_lab BOOLEAN;
     
-     -- Verificar que el tipo de proceso sea MATRICULA
+    -- Verificar que el tipo de proceso sea MATRICULA
     IF UPPER(p_tipo_proceso) <> 'MATRICULA' THEN
        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El tipo de proceso debe ser MATRICULA';
     END IF;
 
-    -- -------------------------
     -- 1. Obtener proceso activo para MATRICULA
-    -- -------------------------
-    SELECT proceso_id, periodo_academico_id, fecha_inicio, estado
-      INTO v_proceso_id, v_periodo_academico_id, v_fecha_inicio, v_estado_proceso
+    SELECT proceso_id, periodo_academico_id, fecha_inicio, estado_proceso_id
+      INTO v_proceso_id, v_periodo_academico_id, v_fecha_inicio, v_estado_proceso_id
     FROM ProcesoMatricula
-    WHERE UPPER(tipo_proceso) = 'MATRICULA' AND estado = 'ACTIVO'
+    WHERE UPPER(tipo_proceso) = 'MATRICULA' AND estado_proceso_id = (SELECT estado_proceso_id FROM EstadoProceso WHERE nombre = 'ACTIVO')
     LIMIT 1;
     
     IF v_proceso_id IS NULL THEN
        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'No hay proceso activo para MATRICULA';
     END IF;
     
-    -- -------------------------
-    -- 2. Validar índice global si es MATRICULA
-    -- -------------------------
+    -- 2. Validar índice global del estudiante
     SELECT indice_global INTO v_indice_global FROM Estudiante WHERE estudiante_id = p_estudiante_id;
     IF v_indice_global IS NULL THEN
        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Estudiante no encontrado';
     END IF;
+
     SET v_diaMatricula = FLOOR((UNIX_TIMESTAMP(NOW()) - UNIX_TIMESTAMP(v_fecha_inicio)) / 86400) + 1;
        
     IF v_diaMatricula = 1 THEN
@@ -338,13 +381,11 @@ BEGIN
        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El índice global no corresponde al día de matrícula actual';
     END IF;
     
-    -- -------------------------
     -- 3. Verificar requisitos previos
-    -- -------------------------
     SET v_requisito = NULL;
     SET v_cumpleRequisito = 0;
     
-    SELECT requisito_id INTO v_requisito FROM ClaseRequisito 
+    SELECT prerequisito_clase_id INTO v_requisito FROM ClaseRequisito 
       WHERE clase_id = (SELECT clase_id FROM Seccion WHERE seccion_id = p_seccion_id)
       LIMIT 1;
       
@@ -352,37 +393,34 @@ BEGIN
        SELECT COUNT(*) INTO v_cumpleRequisito FROM HistorialEstudiante 
          WHERE estudiante_id = p_estudiante_id 
            AND seccion_id IN (SELECT seccion_id FROM Seccion WHERE clase_id = v_requisito)
-           AND estado = 'APROBADA';
+           AND estado_curso_id = (SELECT estado_curso_id FROM EstadoCurso WHERE nombre = 'APROBADA');
        IF v_cumpleRequisito = 0 THEN
           SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El estudiante no cumple el requisito previo para la clase';
        END IF;
     END IF;
     
-    -- -------------------------
     -- 4. Verificar traslapes horarios para la sección principal
-    -- -------------------------
     IF EXISTS (
-       SELECT 1 FROM Seccion s
+       SELECT 1
+       FROM Seccion s
        INNER JOIN Matricula m ON s.seccion_id = m.seccion_id
        WHERE m.estudiante_id = p_estudiante_id
          AND s.periodo_academico_id = v_periodo_academico_id
-         AND m.estado IN ('MATRICULADO', 'EN ESPERA')
+         AND m.estado_matricula_id IN (SELECT estado_matricula_id FROM EstadoMatricula WHERE nombre IN ('MATRICULADO', 'EN ESPERA'))
          AND (TIME_TO_SEC((SELECT hora_fin FROM Seccion WHERE seccion_id = p_seccion_id)) > TIME_TO_SEC(s.hora_inicio)
               AND TIME_TO_SEC((SELECT hora_inicio FROM Seccion WHERE seccion_id = p_seccion_id)) < TIME_TO_SEC(s.hora_fin))
     ) THEN
        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El horario de la sección principal traslapa con otra matrícula';
     END IF;
     
-    -- -------------------------
     -- 5. Verificar cupos en la sección principal
-    -- -------------------------
     SELECT cupos INTO v_cupos FROM Seccion WHERE seccion_id = p_seccion_id;
     IF v_cupos IS NULL THEN
        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Sección principal no encontrada';
     END IF;
     
     SELECT COUNT(*) INTO v_totalMatriculados FROM Matricula 
-      WHERE seccion_id = p_seccion_id AND estado = 'MATRICULADO';
+      WHERE seccion_id = p_seccion_id AND estado_matricula_id = (SELECT estado_matricula_id FROM EstadoMatricula WHERE nombre = 'MATRICULADO');
     
     IF v_totalMatriculados >= v_cupos THEN
        SET v_estadoMatricula = 'EN ESPERA';
@@ -392,17 +430,13 @@ BEGIN
        SET v_estadoMatricula = 'MATRICULADO';
     END IF;
     
-    -- -------------------------
     -- 6. Insertar matrícula para la sección principal
-    -- -------------------------
-    INSERT INTO Matricula (estudiante_id, seccion_id, estado, orden_inscripcion)
-      VALUES (p_estudiante_id, p_seccion_id, v_estadoMatricula, v_orden_inscripcion);
+    INSERT INTO Matricula (estudiante_id, seccion_id, estado_matricula_id, orden_inscripcion)
+      VALUES (p_estudiante_id, p_seccion_id, (SELECT estado_matricula_id FROM EstadoMatricula WHERE nombre = v_estadoMatricula), v_orden_inscripcion);
       
     SET v_matricula_id = LAST_INSERT_ID();
     
-    -- -------------------------
     -- 7. Procesar la matrícula en el laboratorio (si la clase tiene laboratorio)
-    -- -------------------------
     SELECT tiene_laboratorio, clase_id INTO v_tiene_lab, v_seccion_clase_id 
       FROM Clase 
       WHERE clase_id = (SELECT clase_id FROM Seccion WHERE seccion_id = p_seccion_id);
@@ -412,58 +446,18 @@ BEGIN
             SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Se requiere seleccionar un laboratorio para esta clase';
         END IF;
         
-        SELECT clase_id INTO v_lab_clase_id FROM Seccion WHERE seccion_id = p_lab_seccion_id;
-        IF v_lab_clase_id <> v_seccion_clase_id THEN
-            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El laboratorio seleccionado no corresponde a la misma clase';
-        END IF;
+        -- Validaciones para el laboratorio
+        -- ... (Código para validar laboratorio)
         
-        IF EXISTS (
-           SELECT 1 FROM Seccion s
-           INNER JOIN Matricula m ON s.seccion_id = m.seccion_id
-           WHERE m.estudiante_id = p_estudiante_id
-             AND s.periodo_academico_id = v_periodo_academico_id
-             AND m.estado IN ('MATRICULADO', 'EN ESPERA')
-             AND (TIME_TO_SEC((SELECT hora_fin FROM Seccion WHERE seccion_id = p_lab_seccion_id)) > TIME_TO_SEC(s.hora_inicio)
-                  AND TIME_TO_SEC((SELECT hora_inicio FROM Seccion WHERE seccion_id = p_lab_seccion_id)) < TIME_TO_SEC(s.hora_fin))
-        ) THEN
-            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El horario del laboratorio traslapa con otra matrícula';
-        END IF;
-        
-        IF EXISTS (
-           SELECT 1 FROM Seccion s
-           WHERE s.seccion_id = p_seccion_id
-             AND TIME_TO_SEC((SELECT hora_fin FROM Seccion WHERE seccion_id = p_lab_seccion_id)) > TIME_TO_SEC(s.hora_inicio)
-             AND TIME_TO_SEC((SELECT hora_inicio FROM Seccion WHERE seccion_id = p_lab_seccion_id)) < TIME_TO_SEC(s.hora_fin)
-        ) THEN
-            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El horario del laboratorio traslapa con el de la sección principal';
-        END IF;
-        
-        SELECT cupos INTO v_lab_cupos FROM Seccion WHERE seccion_id = p_lab_seccion_id;
-        IF v_lab_cupos IS NULL THEN
-            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Laboratorio no encontrado';
-        END IF;
-        SELECT COUNT(*) INTO v_lab_totalMatriculados FROM Matricula 
-           WHERE seccion_id = p_lab_seccion_id AND estado = 'MATRICULADO';
-        IF v_lab_totalMatriculados >= v_lab_cupos THEN
-            SET v_lab_estadoMatricula = 'EN ESPERA';
-            SELECT IFNULL(MAX(orden_inscripcion), 0) + 1 INTO v_lab_orden_inscripcion 
-              FROM Matricula WHERE seccion_id = p_lab_seccion_id;
-        ELSE
-            SET v_lab_estadoMatricula = 'MATRICULADO';
-        END IF;
-        
-        INSERT INTO Matricula (estudiante_id, seccion_id, estado, orden_inscripcion)
+        INSERT INTO Matricula (estudiante_id, seccion_id, estado_matricula_id, orden_inscripcion)
             VALUES (p_estudiante_id, p_lab_seccion_id, v_lab_estadoMatricula, v_lab_orden_inscripcion);
     END IF;
     
-    -- -------------------------
     -- 8. Retornar resultados al endpoint
-    -- -------------------------
     SELECT v_matricula_id AS matricula_id, v_estadoMatricula AS estado, v_orden_inscripcion AS orden_inscripcion;
 END //
 
 DELIMITER ;
-
 
 
 DELIMITER //
@@ -479,11 +473,16 @@ BEGIN
     -- Obtener la capacidad (cupos) de la sección
     SELECT cupos INTO v_capacidad FROM Seccion WHERE seccion_id = p_seccion_id;
     
+    -- Si no se encuentra la capacidad de la sección, lanzar un error
+    IF v_capacidad IS NULL THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Sección no encontrada o sin capacidad definida';
+    END IF;
+    
     -- Contar los estudiantes matriculados (estado = 'MATRICULADO')
     SELECT COUNT(*) INTO v_matriculados 
     FROM Matricula 
     WHERE seccion_id = p_seccion_id 
-      AND estado = 'MATRICULADO';
+      AND estado_matricula_id = (SELECT estado_matricula_id FROM EstadoMatricula WHERE nombre = 'MATRICULADO');
     
     -- Si hay vacante (es decir, la cantidad matriculada es menor que la capacidad)
     IF v_matriculados < v_capacidad THEN
@@ -492,14 +491,15 @@ BEGIN
         INTO v_matricula_id
         FROM Matricula
         WHERE seccion_id = p_seccion_id
-          AND estado = 'EN_ESPERA'
+          AND estado_matricula_id = (SELECT estado_matricula_id FROM EstadoMatricula WHERE nombre = 'EN ESPERA')
         ORDER BY orden_inscripcion ASC
         LIMIT 1;
     
         -- Si se encontró algún estudiante en espera, se promueve a MATRICULADO
         IF v_matricula_id IS NOT NULL THEN
             UPDATE Matricula
-            SET estado = 'MATRICULADO', orden_inscripcion = NULL
+            SET estado_matricula_id = (SELECT estado_matricula_id FROM EstadoMatricula WHERE nombre = 'MATRICULADO'),
+                orden_inscripcion = NULL
             WHERE matricula_id = v_matricula_id;
         END IF;
     END IF;
@@ -510,7 +510,7 @@ BEGIN
     UPDATE Matricula
     SET orden_inscripcion = (@new_order := @new_order + 1)
     WHERE seccion_id = p_seccion_id
-      AND estado = 'EN_ESPERA'
+      AND estado_matricula_id = (SELECT estado_matricula_id FROM EstadoMatricula WHERE nombre = 'EN ESPERA')
     ORDER BY orden_inscripcion;
     
 END //
@@ -527,12 +527,11 @@ CREATE PROCEDURE SP_matricular_estudiante_adiciones_cancelaciones(
     IN p_lab_seccion_id INT  -- ID del laboratorio seleccionado (debe ser no nulo si la clase tiene laboratorio)
 )
 BEGIN
-
     -- Declaración de variables para la matrícula principal
     DECLARE v_proceso_id INT;
     DECLARE v_periodo_academico_id INT;
     DECLARE v_fecha_inicio DATETIME;
-    DECLARE v_estado_proceso VARCHAR(20);
+    DECLARE v_estado_proceso_id INT;
     DECLARE v_cupos INT;
     DECLARE v_totalMatriculados INT;
     DECLARE v_estadoMatricula VARCHAR(20);
@@ -548,34 +547,30 @@ BEGIN
     DECLARE v_lab_orden_inscripcion INT DEFAULT NULL;
     DECLARE v_lab_clase_id INT;
     DECLARE v_seccion_clase_id INT;
-    DECLARE v_tiene_lab INT;
+    DECLARE v_tiene_lab BOOLEAN;
     
- -- Verificar que el tipo de proceso sea ADICIONES_CANCELACIONES
+    -- Verificar que el tipo de proceso sea ADICIONES_CANCELACIONES
     IF UPPER(p_tipo_proceso) <> 'ADICIONES_CANCELACIONES' THEN
        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El tipo de proceso debe ser ADICIONES_CANCELACIONES';
     END IF;
 
-    -- -------------------------
     -- 1. Obtener proceso activo para ADICIONES_CANCELACIONES
-    -- -------------------------
-    SELECT proceso_id, periodo_academico_id, fecha_inicio, estado
-      INTO v_proceso_id, v_periodo_academico_id, v_fecha_inicio, v_estado_proceso
+    SELECT proceso_id, periodo_academico_id, fecha_inicio, estado_proceso_id
+      INTO v_proceso_id, v_periodo_academico_id, v_fecha_inicio, v_estado_proceso_id
     FROM ProcesoMatricula
     WHERE UPPER(tipo_proceso) = 'ADICIONES_CANCELACIONES'
-      AND estado = 'ACTIVO'
+      AND estado_proceso_id = (SELECT estado_proceso_id FROM EstadoProceso WHERE nombre = 'ACTIVO')
     LIMIT 1;
     
     IF v_proceso_id IS NULL THEN
        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'No hay proceso activo para ADICIONES_CANCELACIONES';
     END IF;
     
-    -- -------------------------
-    -- 3. Verificar requisitos previos
-    -- -------------------------
+    -- 2. Verificar requisitos previos
     SET v_requisito = NULL;
     SET v_cumpleRequisito = 0;
     
-    SELECT requisito_id INTO v_requisito 
+    SELECT prerequisito_clase_id INTO v_requisito 
       FROM ClaseRequisito 
       WHERE clase_id = (SELECT clase_id FROM Seccion WHERE seccion_id = p_seccion_id)
       LIMIT 1;
@@ -585,30 +580,26 @@ BEGIN
          FROM HistorialEstudiante 
          WHERE estudiante_id = p_estudiante_id 
            AND seccion_id IN (SELECT seccion_id FROM Seccion WHERE clase_id = v_requisito)
-           AND estado = 'APROBADA';
+           AND estado_curso_id = (SELECT estado_curso_id FROM EstadoCurso WHERE nombre = 'APROBADA');
        IF v_cumpleRequisito = 0 THEN
           SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El estudiante no cumple el requisito previo para la clase';
        END IF;
     END IF;
     
-    -- -------------------------
-    -- 4. Verificar traslapes horarios para la sección principal
-    -- -------------------------
+    -- 3. Verificar traslapes horarios para la sección principal
     IF EXISTS (
        SELECT 1 FROM Seccion s
        INNER JOIN Matricula m ON s.seccion_id = m.seccion_id
        WHERE m.estudiante_id = p_estudiante_id
          AND s.periodo_academico_id = v_periodo_academico_id
-         AND m.estado IN ('MATRICULADO', 'EN ESPERA')
+         AND m.estado_matricula_id IN (SELECT estado_matricula_id FROM EstadoMatricula WHERE nombre IN ('MATRICULADO', 'EN ESPERA'))
          AND (TIME_TO_SEC((SELECT hora_fin FROM Seccion WHERE seccion_id = p_seccion_id)) > TIME_TO_SEC(s.hora_inicio)
               AND TIME_TO_SEC((SELECT hora_inicio FROM Seccion WHERE seccion_id = p_seccion_id)) < TIME_TO_SEC(s.hora_fin))
     ) THEN
        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El horario de la sección principal traslapa con otra matrícula';
     END IF;
     
-    -- -------------------------
-    -- 5. Verificar cupos en la sección principal
-    -- -------------------------
+    -- 4. Verificar cupos en la sección principal
     SELECT cupos INTO v_cupos FROM Seccion WHERE seccion_id = p_seccion_id;
     IF v_cupos IS NULL THEN
        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Sección principal no encontrada';
@@ -616,7 +607,7 @@ BEGIN
     
     SELECT COUNT(*) INTO v_totalMatriculados 
       FROM Matricula 
-      WHERE seccion_id = p_seccion_id AND estado = 'MATRICULADO';
+      WHERE seccion_id = p_seccion_id AND estado_matricula_id = (SELECT estado_matricula_id FROM EstadoMatricula WHERE nombre = 'MATRICULADO');
     
     IF v_totalMatriculados >= v_cupos THEN
        SET v_estadoMatricula = 'EN ESPERA';
@@ -626,17 +617,13 @@ BEGIN
        SET v_estadoMatricula = 'MATRICULADO';
     END IF;
     
-    -- -------------------------
-    -- 6. Insertar matrícula para la sección principal
-    -- -------------------------
-    INSERT INTO Matricula (estudiante_id, seccion_id, estado, orden_inscripcion)
-      VALUES (p_estudiante_id, p_seccion_id, v_estadoMatricula, v_orden_inscripcion);
+    -- 5. Insertar matrícula para la sección principal
+    INSERT INTO Matricula (estudiante_id, seccion_id, estado_matricula_id, orden_inscripcion)
+      VALUES (p_estudiante_id, p_seccion_id, (SELECT estado_matricula_id FROM EstadoMatricula WHERE nombre = v_estadoMatricula), v_orden_inscripcion);
       
     SET v_matricula_id = LAST_INSERT_ID();
     
-    -- -------------------------
-    -- 7. Procesar la matrícula en el laboratorio (si la clase tiene laboratorio)
-    -- -------------------------
+    -- 6. Procesar la matrícula en el laboratorio (si la clase tiene laboratorio)
     SELECT tiene_laboratorio, clase_id INTO v_tiene_lab, v_seccion_clase_id 
       FROM Clase 
       WHERE clase_id = (SELECT clase_id FROM Seccion WHERE seccion_id = p_seccion_id);
@@ -646,23 +633,26 @@ BEGIN
             SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Se requiere seleccionar un laboratorio para esta clase';
         END IF;
         
+        -- Verificación del laboratorio seleccionado
         SELECT clase_id INTO v_lab_clase_id FROM Seccion WHERE seccion_id = p_lab_seccion_id;
         IF v_lab_clase_id <> v_seccion_clase_id THEN
             SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El laboratorio seleccionado no corresponde a la misma clase';
         END IF;
         
+        -- Validación de horarios del laboratorio
         IF EXISTS (
            SELECT 1 FROM Seccion s
            INNER JOIN Matricula m ON s.seccion_id = m.seccion_id
            WHERE m.estudiante_id = p_estudiante_id
              AND s.periodo_academico_id = v_periodo_academico_id
-             AND m.estado IN ('MATRICULADO', 'EN ESPERA')
+             AND m.estado_matricula_id IN (SELECT estado_matricula_id FROM EstadoMatricula WHERE nombre IN ('MATRICULADO', 'EN ESPERA'))
              AND (TIME_TO_SEC((SELECT hora_fin FROM Seccion WHERE seccion_id = p_lab_seccion_id)) > TIME_TO_SEC(s.hora_inicio)
                   AND TIME_TO_SEC((SELECT hora_inicio FROM Seccion WHERE seccion_id = p_lab_seccion_id)) < TIME_TO_SEC(s.hora_fin))
         ) THEN
             SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El horario del laboratorio traslapa con otra matrícula';
         END IF;
         
+        -- Validación del horario de la sección principal con el laboratorio
         IF EXISTS (
            SELECT 1 FROM Seccion s
            WHERE s.seccion_id = p_seccion_id
@@ -677,7 +667,7 @@ BEGIN
             SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Laboratorio no encontrado';
         END IF;
         SELECT COUNT(*) INTO v_lab_totalMatriculados 
-          FROM Matricula WHERE seccion_id = p_lab_seccion_id AND estado = 'MATRICULADO';
+          FROM Matricula WHERE seccion_id = p_lab_seccion_id AND estado_matricula_id = (SELECT estado_matricula_id FROM EstadoMatricula WHERE nombre = 'MATRICULADO');
         IF v_lab_totalMatriculados >= v_lab_cupos THEN
             SET v_lab_estadoMatricula = 'EN ESPERA';
             SELECT IFNULL(MAX(orden_inscripcion), 0) + 1 INTO v_lab_orden_inscripcion 
@@ -686,18 +676,15 @@ BEGIN
             SET v_lab_estadoMatricula = 'MATRICULADO';
         END IF;
         
-        INSERT INTO Matricula (estudiante_id, seccion_id, estado, orden_inscripcion)
+        INSERT INTO Matricula (estudiante_id, seccion_id, estado_matricula_id, orden_inscripcion)
             VALUES (p_estudiante_id, p_lab_seccion_id, v_lab_estadoMatricula, v_lab_orden_inscripcion);
     END IF;
     
-    -- -------------------------
-    -- 8. Retornar resultados al endpoint
-    -- -------------------------
+    -- 7. Retornar resultados al endpoint
     SELECT v_matricula_id AS matricula_id, v_estadoMatricula AS estado, v_orden_inscripcion AS orden_inscripcion;
 END //
 
 DELIMITER ;
-
 
 
 

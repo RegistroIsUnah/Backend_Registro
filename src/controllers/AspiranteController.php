@@ -39,6 +39,7 @@ class AspiranteController {
      *      - carrera_principal_id
      *      - carrera_secundaria_id (opcional)
      *      - centro_id
+     *      - tipo_documento_id
      * @return void Envía la respuesta en formato JSON.
      */
     public function insertarAspirante($data) {
@@ -59,38 +60,18 @@ class AspiranteController {
             exit;
         }
 
-         /*
-        if (!isset($data['identidad']) || !preg_match('/^((01(0[1-8]))|(02(0[1-9]|10))|(03(0[1-9]|1[0-9]|2[01]))|
-        (04(0[1-9]|1[0-9]|2[0-3]))|(05(0[1-9]|1[0-2]))|(06(0[1-9]|1[0-6]))|(07(0[1-9]|1[0-9]))|
-        (08(0[1-9]|1[0-9]|2[0-8]))|(09(0[1-6]))|(10(0[1-9]|1[0-7]))|(11(0[1-4]))|(12(0[1-9]|1[0-9]))|
-        (13(0[1-9]|1[0-9]|2[0-8]))|(14(0[1-9]|1[0-6]))|(15(0[1-9]|1[0-9]|2[0-3]))|(16(0[1-9]|1[0-9]|2[0-8]))|
-        (17(0[1-9]))|(18(0[1-9]|1[0-1])))-((19[4-9][0-9])|(20[0-9]{2}))-([0-9]{5})$/', $data['identidad'])) {
-        http_response_code(400);
-        echo json_encode(['error' => 'Identidad inválida']);
-        exit;
-        }
-        */
-
         if (!isset($data['telefono']) || !preg_match('/^[0-9\+\-\s]+$/', $data['telefono'])) {
             http_response_code(400);
             echo json_encode(['error' => 'Teléfono inválido']);
             exit;
         }
 
-         /*
-        if (!isset($data['telefono']) || !preg_match('/^(\+504|504|\(\+504\))?[-]?([369][0-9]{3})[-]?([0-9]{4})+$/', 
-        $data['telefono'])) {
-            http_response_code(400);
-            echo json_encode(['error' => 'Teléfono inválido']);
-            exit;
-        }
-        */
-
         if (!isset($data['correo']) || !filter_var($data['correo'], FILTER_VALIDATE_EMAIL)) {
             http_response_code(400);
             echo json_encode(['error' => 'Correo inválido']);
             exit;
         }
+
         if (!isset($data['carrera_principal_id']) || !is_numeric($data['carrera_principal_id'])) {
             http_response_code(400);
             echo json_encode(['error' => 'Carrera principal inválida']);
@@ -100,12 +81,21 @@ class AspiranteController {
         $carrera_secundaria_id = (isset($data['carrera_secundaria_id']) && is_numeric($data['carrera_secundaria_id']))
             ? intval($data['carrera_secundaria_id'])
             : null;
+
         if (!isset($data['centro_id']) || !is_numeric($data['centro_id'])) {
             http_response_code(400);
             echo json_encode(['error' => 'Centro inválido']);
             exit;
         }
         $centro_id = intval($data['centro_id']);
+
+        // Validar el tipo de documento
+        if (!isset($data['tipo_documento_id']) || !is_numeric($data['tipo_documento_id'])) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Tipo de documento inválido']);
+            exit;
+        }
+        $tipo_documento_id = intval($data['tipo_documento_id']);
         
         // Procesar la foto del aspirante.
         if (!isset($_FILES['foto']) || $_FILES['foto']['error'] !== UPLOAD_ERR_OK) {
@@ -199,7 +189,8 @@ class AspiranteController {
                 $carrera_principal_id,
                 $carrera_secundaria_id,
                 $centro_id,
-                $certificadoRuta
+                $certificadoRuta,
+                $tipo_documento_id  // Se pasa el tipo_documento_id al modelo
             );
         } catch (Exception $e) {
             http_response_code(500);
@@ -221,34 +212,34 @@ class AspiranteController {
             echo json_encode(['error' => 'Método no permitido']);
             exit;
         }
-    
+
         // Validar permisos (opcional, dependiendo de tu sistema de autenticación)
         if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'admin') {
             http_response_code(403); // Prohibido
             echo json_encode(['error' => 'No tienes permisos para realizar esta acción']);
             exit;
         }
-    
+
         // Intentar generar el CSV
         try {
             // Configurar headers para descarga
             header('Content-Type: text/csv; charset=utf-8');
             header('Content-Disposition: attachment; filename="aspirantes_admitidos.csv"');
-    
+
             // Verificar que el método exista en el modelo
             if (!method_exists($this->modelo, 'exportarAspirantesAdmitidosCSV')) {
                 throw new Exception("El método exportarAspirantesAdmitidosCSV no existe en el modelo.");
             }
-    
+
             // Llamar al método del modelo para generar el CSV
             $this->modelo->exportarAspirantesAdmitidosCSV();
-    
+
             exit; // Terminar ejecución después de enviar el archivo
-    
+
         } catch (Exception $e) {
             // Registrar el error en el log
             error_log("Error generando CSV: " . $e->getMessage());
-    
+
             // Devolver error en formato JSON
             http_response_code(500);
             echo json_encode(['error' => 'Error al generar el archivo CSV: ' . $e->getMessage()]);
@@ -256,7 +247,7 @@ class AspiranteController {
         }
     }
   
-     /**
+    /**
      * Obtiene una solicitud pendiente o corregida y la asigna al revisor que realiza la petición.
      *
      * Se espera recibir el ID del revisor y se retorna la solicitud asignada.
@@ -268,6 +259,7 @@ class AspiranteController {
         try {
             $solicitudModel = new Aspirante();
             $solicitud = $solicitudModel->obtenerYAsignarSolicitud($revisor_id);
+            
             if ($solicitud === null) {
                 http_response_code(200);
                 echo json_encode(['mensaje' => 'No hay solicitudes pendientes']);
@@ -310,11 +302,11 @@ class AspiranteController {
             echo json_encode(['error' => 'Parámetro accion es requerido']);
             return;
         }
-        
+
         $aspirante_id = (int)$data['aspirante_id'];
         $revisor_id   = (int)$data['revisor_id'];
         $accion      = strtolower(trim($data['accion']));
-        
+
         $motivos = null;
         if ($accion === 'rechazar') {
             if (empty($data['motivos'])) {
@@ -338,10 +330,12 @@ class AspiranteController {
                 $motivos[] = (int)$motivo_id;
             }
         }
-        
+
         try {
             $revisionModel = new Aspirante();
             $resultado = $revisionModel->procesarRevision($aspirante_id, $revisor_id, $accion, $motivos);
+
+            // Aquí la respuesta será más clara ahora que se está utilizando estado_aspirante_id
             http_response_code(200);
             echo json_encode($resultado);
         } catch (Exception $e) {
@@ -349,5 +343,43 @@ class AspiranteController {
             echo json_encode(['error' => $e->getMessage()]);
         }
     }
+
+     /**
+     * Obtiene los detalles de un aspirante por su documento.
+     *
+     * Se espera recibir en $data el siguiente parámetro:
+     * - documento: Documento del aspirante.
+     *
+     * @param array $data Datos recibidos del endpoint.
+     * @return void
+     */
+    public function obtenerAspirantePorDocumento($data) {
+        if (!isset($data['documento']) || empty($data['documento'])) {
+            http_response_code(400);
+            echo json_encode(['error' => 'El parámetro documento es requerido']);
+            exit;
+        }
+        
+        $documento = trim($data['documento']);
+        
+        try {
+            $aspiranteModel = new Aspirante();
+            $aspirante = $aspiranteModel->obtenerAspirantePorDocumento($documento);
+
+            if ($aspirante === null) {
+                http_response_code(404);
+                echo json_encode(['error' => 'Aspirante no encontrado']);
+                exit;
+            }
+
+            http_response_code(200);
+            echo json_encode($aspirante);
+
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => $e->getMessage()]);
+        }
+    }
+
 }
 ?>

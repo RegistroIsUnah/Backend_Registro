@@ -28,101 +28,115 @@ class Libro {
         $this->conn = $database->getConnection();
     }
     
-    /**
-     * Registra un libro y sus asociaciones.
-     *
-     * @param string $titulo Título del libro.
-     * @param string $editorial Editorial del libro.
-     * @param string $libro_url Ruta donde se guarda el archivo.
-     * @param string $fecha_publicacion Fecha de publicación (YYYY-MM-DD).
-     * @param string $descripcion Descripción del libro.
-     * @param string $estado Estado del libro ('ACTIVO' o 'INACTIVO').
-     * @param array $tags Array de tag IDs.
-     * @param array $autores Array de arrays con claves 'nombre' y 'apellido'.
-     * @param int $clase_id ID de la clase a asociar (0 si no se asocia).
-     * @return int ID del libro insertado.
-     * @throws Exception Si ocurre un error en la transacción.
-     */
-    public function registrarLibro($titulo, $editorial, $libro_url, $fecha_publicacion, $descripcion, $estado, $tags, $autores, $clase_id) {
-        $this->conn->begin_transaction();
-        try {
-            // Insertar en la tabla Libro incluyendo el campo editorial
-            $stmt = $this->conn->prepare("INSERT INTO Libro (titulo, editorial, libro_url, fecha_publicacion, descripcion, estado) VALUES (?, ?, ?, ?, ?, ?)");
-            if (!$stmt) {
-                throw new Exception("Error preparando inserción en Libro: " . $this->conn->error);
-            }
-            $stmt->bind_param("ssssss", $titulo, $editorial, $libro_url, $fecha_publicacion, $descripcion, $estado);
-            if (!$stmt->execute()) {
-                throw new Exception("Error insertando en Libro: " . $stmt->error);
-            }
-            $libro_id = $stmt->insert_id;
-            $stmt->close();
-            
-            // Procesar Tags (se espera un array de tag IDs)
-            if (!empty($tags) && is_array($tags)) {
-                foreach ($tags as $tagId) {
-                    $tagId = (int)$tagId;
-                    $stmt = $this->conn->prepare("INSERT INTO TagLibro (libro_id, tag_id) VALUES (?, ?)");
-                    $stmt->bind_param("ii", $libro_id, $tagId);
-                    if (!$stmt->execute()) {
-                        throw new Exception("Error insertando en TagLibro: " . $stmt->error);
-                    }
-                    $stmt->close();
-                }
-            }
-            
-            // Procesar Autores
-            if (!empty($autores) && is_array($autores)) {
-                foreach ($autores as $autor) {
-                    if (!isset($autor['nombre']) || !isset($autor['apellido'])) continue;
-                    $nombre = trim($autor['nombre']);
-                    $apellido = trim($autor['apellido']);
-                    if (empty($nombre) || empty($apellido)) continue;
-                    
-                    $stmt = $this->conn->prepare("SELECT autor_id FROM Autor WHERE nombre = ? AND apellido = ?");
-                    $stmt->bind_param("ss", $nombre, $apellido);
-                    $stmt->execute();
-                    $stmt->store_result();
-                    if ($stmt->num_rows > 0) {
-                        $stmt->bind_result($autor_id);
-                        $stmt->fetch();
-                    } else {
-                        $stmt->close();
-                        $stmt = $this->conn->prepare("INSERT INTO Autor (nombre, apellido) VALUES (?, ?)");
-                        $stmt->bind_param("ss", $nombre, $apellido);
-                        if (!$stmt->execute()) {
-                            throw new Exception("Error insertando Autor: " . $stmt->error);
-                        }
-                        $autor_id = $stmt->insert_id;
-                    }
-                    $stmt->close();
-                    
-                    $stmt = $this->conn->prepare("INSERT INTO LibroAutor (libro_id, autor_id) VALUES (?, ?)");
-                    $stmt->bind_param("ii", $libro_id, $autor_id);
-                    if (!$stmt->execute()) {
-                        throw new Exception("Error insertando en LibroAutor: " . $stmt->error);
-                    }
-                    $stmt->close();
-                }
-            }
-            
-            // Asociar el libro a una clase (si se proporciona)
-            if ($clase_id > 0) {
-                $stmt = $this->conn->prepare("INSERT INTO ClaseLibro (clase_id, libro_id) VALUES (?, ?)");
-                $stmt->bind_param("ii", $clase_id, $libro_id);
+  /**
+ * Registra un libro y sus asociaciones.
+ *
+ * @param string $titulo Título del libro.
+ * @param string $editorial Editorial del libro.
+ * @param string $libro_url Ruta donde se guarda el archivo.
+ * @param string $fecha_publicacion Fecha de publicación (YYYY-MM-DD).
+ * @param string $descripcion Descripción del libro.
+ * @param string $estado Estado del libro ('ACTIVO' o 'INACTIVO').
+ * @param array $tags Array de tag IDs.
+ * @param array $autores Array de arrays con claves 'nombre' y 'apellido'.
+ * @param int $clase_id ID de la clase a asociar (0 si no se asocia).
+ * @return int ID del libro insertado.
+ * @throws Exception Si ocurre un error en la transacción.
+ */
+public function registrarLibro($titulo, $editorial, $libro_url, $fecha_publicacion, $descripcion, $estado, $tags, $autores, $clase_id) {
+    $this->conn->begin_transaction();
+    try {
+        // Obtener el estado_libro_id para el estado proporcionado (ACTIVO o INACTIVO)
+        $stmt = $this->conn->prepare("SELECT estado_libro_id FROM EstadoLibro WHERE nombre = ?");
+        $stmt->bind_param("s", $estado);
+        if (!$stmt->execute()) {
+            throw new Exception("Error obteniendo estado del libro: " . $stmt->error);
+        }
+        $result = $stmt->get_result();
+        if ($result->num_rows == 0) {
+            throw new Exception("Estado de libro no válido.");
+        }
+        $row = $result->fetch_assoc();
+        $estado_libro_id = $row['estado_libro_id'];
+        $stmt->close();
+
+        // Insertar en la tabla Libro
+        $stmt = $this->conn->prepare("INSERT INTO Libro (titulo, editorial, libro_url, fecha_publicacion, descripcion, estado_libro_id) VALUES (?, ?, ?, ?, ?, ?)");
+        if (!$stmt) {
+            throw new Exception("Error preparando inserción en Libro: " . $this->conn->error);
+        }
+        $stmt->bind_param("sssssi", $titulo, $editorial, $libro_url, $fecha_publicacion, $descripcion, $estado_libro_id);
+        if (!$stmt->execute()) {
+            throw new Exception("Error insertando en Libro: " . $stmt->error);
+        }
+        $libro_id = $stmt->insert_id;
+        $stmt->close();
+        
+        // Procesar Tags (se espera un array de tag IDs)
+        if (!empty($tags) && is_array($tags)) {
+            foreach ($tags as $tagId) {
+                $tagId = (int)$tagId;
+                $stmt = $this->conn->prepare("INSERT INTO TagLibro (libro_id, tag_id) VALUES (?, ?)");
+                $stmt->bind_param("ii", $libro_id, $tagId);
                 if (!$stmt->execute()) {
-                    throw new Exception("Error insertando en ClaseLibro: " . $stmt->error);
+                    throw new Exception("Error insertando en TagLibro: " . $stmt->error);
                 }
                 $stmt->close();
             }
-            
-            $this->conn->commit();
-            return $libro_id;
-        } catch (Exception $e) {
-            $this->conn->rollback();
-            throw $e;
         }
+
+        // Procesar Autores
+        if (!empty($autores) && is_array($autores)) {
+            foreach ($autores as $autor) {
+                if (!isset($autor['nombre']) || !isset($autor['apellido'])) continue;
+                $nombre = trim($autor['nombre']);
+                $apellido = trim($autor['apellido']);
+                if (empty($nombre) || empty($apellido)) continue;
+                
+                $stmt = $this->conn->prepare("SELECT autor_id FROM Autor WHERE nombre = ? AND apellido = ?");
+                $stmt->bind_param("ss", $nombre, $apellido);
+                $stmt->execute();
+                $stmt->store_result();
+                if ($stmt->num_rows > 0) {
+                    $stmt->bind_result($autor_id);
+                    $stmt->fetch();
+                } else {
+                    $stmt->close();
+                    $stmt = $this->conn->prepare("INSERT INTO Autor (nombre, apellido) VALUES (?, ?)");
+                    $stmt->bind_param("ss", $nombre, $apellido);
+                    if (!$stmt->execute()) {
+                        throw new Exception("Error insertando Autor: " . $stmt->error);
+                    }
+                    $autor_id = $stmt->insert_id;
+                }
+                $stmt->close();
+                
+                $stmt = $this->conn->prepare("INSERT INTO LibroAutor (libro_id, autor_id) VALUES (?, ?)");
+                $stmt->bind_param("ii", $libro_id, $autor_id);
+                if (!$stmt->execute()) {
+                    throw new Exception("Error insertando en LibroAutor: " . $stmt->error);
+                }
+                $stmt->close();
+            }
+        }
+
+        // Asociar el libro a una clase (si se proporciona)
+        if ($clase_id > 0) {
+            $stmt = $this->conn->prepare("INSERT INTO ClaseLibro (clase_id, libro_id) VALUES (?, ?)");
+            $stmt->bind_param("ii", $clase_id, $libro_id);
+            if (!$stmt->execute()) {
+                throw new Exception("Error insertando en ClaseLibro: " . $stmt->error);
+            }
+            $stmt->close();
+        }
+
+        $this->conn->commit();
+        return $libro_id;
+    } catch (Exception $e) {
+        $this->conn->rollback();
+        throw $e;
     }
+}
 
     /**
      * Actualiza un libro y sus asociaciones de forma parcial.
@@ -146,7 +160,23 @@ class Libro {
     public function actualizarLibro($libro_id, $titulo = null, $editorial = null, $libro_url = null, $fecha_publicacion = null, $descripcion = null, $tags = null, $autores = null, $clase_id = null, $estado = null) {
         $this->conn->begin_transaction();
         try {
-            // 1. Actualizar la tabla Libro (solo los campos proporcionados)
+            // 1. Obtener estado_libro_id para el estado proporcionado
+            $estado_libro_id = null;
+            if ($estado !== null) {
+                $stmt = $this->conn->prepare("SELECT estado_libro_id FROM EstadoLibro WHERE nombre = ?");
+                $stmt->bind_param("s", $estado);
+                $stmt->execute();
+                $result = $stmt->get_result();
+                if ($result->num_rows > 0) {
+                    $row = $result->fetch_assoc();
+                    $estado_libro_id = $row['estado_libro_id'];
+                } else {
+                    throw new Exception("Estado del libro no válido.");
+                }
+                $stmt->close();
+            }
+
+            // 2. Actualizar la tabla Libro (solo los campos proporcionados)
             $updateFields = [];
             $params = [];
             $paramTypes = "";
@@ -175,10 +205,10 @@ class Libro {
                 $params[] = $descripcion;
                 $paramTypes .= "s";
             }
-            if ($estado !== null && ($estado === 'ACTIVO' || $estado === 'INACTIVO')) {
-                $updateFields[] = "estado = ?";
-                $params[] = $estado;
-                $paramTypes .= "s";
+            if ($estado_libro_id !== null) {
+                $updateFields[] = "estado_libro_id = ?";
+                $params[] = $estado_libro_id;
+                $paramTypes .= "i";
             }
             if (!empty($updateFields)) {
                 $sql = "UPDATE Libro SET " . implode(", ", $updateFields) . " WHERE libro_id = ?";
@@ -195,7 +225,7 @@ class Libro {
                 $stmt->close();
             }
             
-            // 2. Actualizar Tags si se proporcionan (se espera array de tag IDs)
+            // 3. Actualizar Tags si se proporcionan (se espera array de tag IDs)
             if ($tags !== null && is_array($tags)) {
                 // Eliminar asociaciones previas
                 $stmt = $this->conn->prepare("DELETE FROM TagLibro WHERE libro_id = ?");
@@ -216,8 +246,8 @@ class Libro {
                     $stmt->close();
                 }
             }
-            
-            // 3. Actualizar Autores si se proporcionan
+
+            // 4. Actualizar Autores si se proporcionan
             if ($autores !== null && is_array($autores)) {
                 // Eliminar asociaciones previas
                 $stmt = $this->conn->prepare("DELETE FROM LibroAutor WHERE libro_id = ?");
@@ -257,8 +287,8 @@ class Libro {
                     $stmt->close();
                 }
             }
-            
-            // 4. Actualizar ClaseLibro si se proporciona clase_id
+
+            // 5. Actualizar ClaseLibro si se proporciona clase_id
             if ($clase_id !== null && $clase_id > 0) {
                 // Eliminar asociación previa (asumimos una sola asociación)
                 $stmt = $this->conn->prepare("DELETE FROM ClaseLibro WHERE libro_id = ?");
@@ -273,7 +303,7 @@ class Libro {
                 }
                 $stmt->close();
             }
-            
+
             $this->conn->commit();
             return true;
         } catch (Exception $e) {
@@ -281,24 +311,39 @@ class Libro {
             throw $e;
         }
     }
+
         
     /**
-     * Obtiene los detalles de un libro, incluidos sus autores y tags.
+     * Obtiene los detalles de un libro, incluidos sus autores y tags para Estudiante.
      *
      * @param int $libro_id ID del libro.
      * @return array Detalles del libro con sus autores y tags.
      * @throws Exception Si el libro no se encuentra o está inactivo.
      */
     public function obtenerLibro($libro_id) {
-        // 1. Obtener los datos principales del libro (solo si está ACTIVO)
-        $sql = "SELECT libro_id, titulo, editorial, libro_url, fecha_publicacion, descripcion, estado 
-                FROM Libro 
-                WHERE libro_id = ? AND estado = 'ACTIVO'";
+        // 1. Obtener estado_libro_id para 'ACTIVO'
+        $stmt = $this->conn->prepare("SELECT estado_libro_id FROM EstadoLibro WHERE nombre = 'ACTIVO'");
+        if (!$stmt) {
+            throw new Exception("Error preparando la consulta de estado: " . $this->conn->error);
+        }
+        $stmt->execute();
+        $result = $stmt->get_result();
+        if ($result->num_rows == 0) {
+            throw new Exception("Estado 'ACTIVO' no encontrado en la base de datos.");
+        }
+        $row = $result->fetch_assoc();
+        $estado_libro_id = $row['estado_libro_id'];
+        $stmt->close();
+
+        // 2. Obtener los datos principales del libro (solo si está ACTIVO)
+        $sql = "SELECT libro_id, titulo, editorial, libro_url, fecha_publicacion, descripcion, estado_libro_id
+                FROM Libro
+                WHERE libro_id = ? AND estado_libro_id = ?";
         $stmt = $this->conn->prepare($sql);
         if (!$stmt) {
             throw new Exception("Error preparando la consulta: " . $this->conn->error);
         }
-        $stmt->bind_param("i", $libro_id);
+        $stmt->bind_param("ii", $libro_id, $estado_libro_id);
         $stmt->execute();
         $result = $stmt->get_result();
         $libro = $result->fetch_assoc();
@@ -308,10 +353,10 @@ class Libro {
             throw new Exception("Libro no encontrado o inactivo.");
         }
         
-        // 2. Obtener los autores asociados al libro
-        $sqlAuthors = "SELECT a.autor_id, a.nombre, a.apellido 
-                    FROM LibroAutor la 
-                    INNER JOIN Autor a ON la.autor_id = a.autor_id 
+        // 3. Obtener los autores asociados al libro
+        $sqlAuthors = "SELECT a.autor_id, a.nombre, a.apellido
+                    FROM LibroAutor la
+                    INNER JOIN Autor a ON la.autor_id = a.autor_id
                     WHERE la.libro_id = ?";
         $stmt = $this->conn->prepare($sqlAuthors);
         $stmt->bind_param("i", $libro_id);
@@ -321,10 +366,10 @@ class Libro {
         $stmt->close();
         $libro['autores'] = $autores;
         
-        // 3. Obtener los tags asociados al libro
-        $sqlTags = "SELECT t.tag_id, t.tag_nombre 
-                    FROM TagLibro tl 
-                    INNER JOIN Tag t ON tl.tag_id = t.tag_id 
+        // 4. Obtener los tags asociados al libro
+        $sqlTags = "SELECT t.tag_id, t.tag_nombre
+                    FROM TagLibro tl
+                    INNER JOIN Tag t ON tl.tag_id = t.tag_id
                     WHERE tl.libro_id = ?";
         $stmt = $this->conn->prepare($sqlTags);
         $stmt->bind_param("i", $libro_id);
@@ -337,6 +382,7 @@ class Libro {
         return $libro;
     }
 
+
     /**
      * Obtiene los detalles de un libro, incluidos sus autores y tags, sin filtrar por estado.
      *
@@ -346,7 +392,7 @@ class Libro {
      */
     public function obtenerLibroCompleto($libro_id) {
         // 1. Obtener los datos principales del libro (sin filtrar por estado)
-        $sql = "SELECT libro_id, titulo, editorial, libro_url, fecha_publicacion, descripcion, estado 
+        $sql = "SELECT libro_id, titulo, editorial, libro_url, fecha_publicacion, descripcion, estado_libro_id
                 FROM Libro 
                 WHERE libro_id = ?";
         $stmt = $this->conn->prepare($sql);
@@ -364,9 +410,9 @@ class Libro {
         }
         
         // 2. Obtener los autores asociados al libro
-        $sqlAuthors = "SELECT a.autor_id, a.nombre, a.apellido 
-                    FROM LibroAutor la 
-                    INNER JOIN Autor a ON la.autor_id = a.autor_id 
+        $sqlAuthors = "SELECT a.autor_id, a.nombre, a.apellido
+                    FROM LibroAutor la
+                    INNER JOIN Autor a ON la.autor_id = a.autor_id
                     WHERE la.libro_id = ?";
         $stmt = $this->conn->prepare($sqlAuthors);
         $stmt->bind_param("i", $libro_id);
@@ -377,9 +423,9 @@ class Libro {
         $libro['autores'] = $autores;
         
         // 3. Obtener los tags asociados al libro
-        $sqlTags = "SELECT t.tag_id, t.tag_nombre 
-                    FROM TagLibro tl 
-                    INNER JOIN Tag t ON tl.tag_id = t.tag_id 
+        $sqlTags = "SELECT t.tag_id, t.tag_nombre
+                    FROM TagLibro tl
+                    INNER JOIN Tag t ON tl.tag_id = t.tag_id
                     WHERE tl.libro_id = ?";
         $stmt = $this->conn->prepare($sqlTags);
         $stmt->bind_param("i", $libro_id);
@@ -391,6 +437,7 @@ class Libro {
         
         return $libro;
     }
+
 
     /**
      * Obtiene todas las clases de un departamento y los libros asociados a cada clase.
@@ -466,8 +513,7 @@ class Libro {
         return array_values($clases);
     }
 
-
-   /**
+    /**
      * Obtiene todos los libros (estado ACTIVO) asociados a las clases en las que el estudiante está matriculado o que ya cursó.
      *
      * Se obtiene el conjunto de secciones en las que el estudiante aparece en la tabla Matricula o en HistorialEstudiante,
@@ -489,44 +535,58 @@ class Libro {
      * @throws Exception Si ocurre un error en la consulta.
      */
     public function obtenerLibrosPorEstudiante($estudiante_id) {
+        // Obtener el estado_libro_id para 'ACTIVO'
+        $stmt = $this->conn->prepare("SELECT estado_libro_id FROM EstadoLibro WHERE nombre = 'ACTIVO'");
+        if (!$stmt) {
+            throw new Exception("Error preparando la consulta de estado: " . $this->conn->error);
+        }
+        $stmt->execute();
+        $result = $stmt->get_result();
+        if ($result->num_rows == 0) {
+            throw new Exception("Estado 'ACTIVO' no encontrado en la base de datos.");
+        }
+        $row = $result->fetch_assoc();
+        $estado_libro_id = $row['estado_libro_id'];
+        $stmt->close();
+
         // La subconsulta obtiene todos los seccion_id en los que el estudiante está (matrícula o historial)
-        $sql = "SELECT 
-                    c.clase_id,
-                    c.nombre AS clase_nombre,
-                    l.libro_id,
-                    l.titulo,
-                    l.editorial,
-                    l.libro_url,
-                    l.fecha_publicacion,
-                    l.descripcion,
-                    l.estado
-                FROM Clase c
-                INNER JOIN Seccion s ON c.clase_id = s.clase_id
-                INNER JOIN ClaseLibro cl ON c.clase_id = cl.clase_id
-                INNER JOIN Libro l ON cl.libro_id = l.libro_id
-                WHERE l.estado = 'ACTIVO'
-                AND s.seccion_id IN (
-                        SELECT seccion_id FROM (
-                            SELECT seccion_id FROM Matricula WHERE estudiante_id = ?
-                            UNION
-                            SELECT seccion_id FROM HistorialEstudiante WHERE estudiante_id = ?
-                        ) AS t
-                )
-                ORDER BY c.clase_id, l.libro_id";
+        $sql = "
+            SELECT 
+                c.clase_id,
+                c.nombre AS clase_nombre,
+                l.libro_id,
+                l.titulo,
+                l.editorial,
+                l.libro_url,
+                l.fecha_publicacion,
+                l.descripcion,
+                l.estado_libro_id
+            FROM Clase c
+            INNER JOIN Seccion s ON c.clase_id = s.clase_id
+            INNER JOIN ClaseLibro cl ON c.clase_id = cl.clase_id
+            INNER JOIN Libro l ON cl.libro_id = l.libro_id
+            WHERE l.estado_libro_id = ?
+            AND s.seccion_id IN (
+                    SELECT seccion_id FROM (
+                        SELECT seccion_id FROM Matricula WHERE estudiante_id = ?
+                        UNION
+                        SELECT seccion_id FROM HistorialEstudiante WHERE estudiante_id = ?
+                    ) AS t
+            )
+            ORDER BY c.clase_id, l.libro_id";
         
         $stmt = $this->conn->prepare($sql);
         if (!$stmt) {
             throw new Exception("Error preparando la consulta: " . $this->conn->error);
         }
-        $stmt->bind_param("ii", $estudiante_id, $estudiante_id);
-        if (!$stmt->execute()) {
-            throw new Exception("Error ejecutando la consulta: " . $stmt->error);
-        }
+        $stmt->bind_param("iii", $estado_libro_id, $estudiante_id, $estudiante_id);
+        $stmt->execute();
+        
         $result = $stmt->get_result();
         $data = $result->fetch_all(MYSQLI_ASSOC);
         $stmt->close();
         
-        // Agrupar resultados por clase
+        // Agrupar los resultados por clase
         $clases = [];
         foreach ($data as $row) {
             $clase_id = $row['clase_id'];
@@ -545,7 +605,7 @@ class Libro {
                 'libro_url'         => $row['libro_url'],
                 'fecha_publicacion' => $row['fecha_publicacion'],
                 'descripcion'       => $row['descripcion'],
-                'estado'            => $row['estado']
+                'estado_libro_id'   => $row['estado_libro_id']
             ];
         }
         
@@ -554,7 +614,7 @@ class Libro {
     }
 
 
-    /**
+     /**
      * Elimina (desasocia) ciertos tags y autores de un libro.
      *
      * @param int $libro_id ID del libro.
@@ -611,5 +671,6 @@ class Libro {
             throw $e;
         }
     }
+
 }
 ?>

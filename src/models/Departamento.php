@@ -49,8 +49,8 @@ class Departamento {
         return $departamentos;
     }
 
-    /*
-     Obtiene clases y secciones activas por departamento, año y período
+    /**
+     * Obtiene clases y secciones activas por departamento, año y período.
      */
     public function obtenerClasesYSecciones($deptId, $anio, $periodo) {
         $sql = "
@@ -70,18 +70,20 @@ class Departamento {
             INNER JOIN PeriodoAcademico p ON s.periodo_academico_id = p.periodo_academico_id
             INNER JOIN Aula a ON s.aula_id = a.aula_id
             INNER JOIN Docente d ON s.docente_id = d.docente_id
+            INNER JOIN EstadoSeccion es ON s.estado_seccion_id = es.estado_seccion_id
             WHERE c.dept_id = ?
             AND p.anio = ?
             AND p.numero_periodo = ?
-            AND s.estado = 'ACTIVA'
+            AND es.nombre = 'ACTIVA'  -- Aquí se filtra por el estado 'ACTIVA' de la sección
             ORDER BY c.nombre, s.codigo";
 
         $stmt = $this->conn->prepare($sql);
         $stmt->bind_param('iis', $deptId, $anio, $periodo);
         $stmt->execute();
-        
+
         $result = $stmt->get_result();
         return $result->fetch_all(MYSQLI_ASSOC);
     }
+
 }
 ?>

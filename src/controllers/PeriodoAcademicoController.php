@@ -13,18 +13,6 @@
 require_once __DIR__ . '/../models/PeriodoAcademico.php';
 
 class PeriodoAcademicoController {
-    /**
-     * Valida los datos recibidos y crea un nuevo período académico.
-     *
-     * Se esperan los siguientes campos en $data:
-     * - anio (numérico)
-     * - numero_periodo (cadena)
-     * - fecha_inicio (cadena en formato "YYYY-MM-DD HH:MM:SS")
-     * - fecha_fin (cadena en formato "YYYY-MM-DD HH:MM:SS")
-     *
-     * @param array $data Datos recibidos del endpoint.
-     * @return void
-     */
     public function crearPeriodoAcademico($data) {
         // Validar que se hayan enviado los campos requeridos.
         $required = ['anio', 'numero_periodo', 'fecha_inicio', 'fecha_fin'];
@@ -54,9 +42,22 @@ class PeriodoAcademicoController {
             exit;
         }
 
+        // Determinar el estado del período (ACTIVO o INACTIVO)
+        $estado_nombre = (strtotime($fecha_fin) < time()) ? 'INACTIVO' : 'ACTIVO';
+
+        // Llamar al modelo para obtener el estado_periodo_id
         try {
             $periodoModel = new PeriodoAcademico();
-            $id = $periodoModel->crearPeriodoAcademico($anio, $numero_periodo, $fecha_inicio, $fecha_fin);
+            $estado_periodo_id = $periodoModel->obtenerEstadoPeriodoId($estado_nombre);
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => $e->getMessage()]);
+            exit;
+        }
+
+        // Llamar al modelo para crear el periodo académico, pasando el estado_periodo_id
+        try {
+            $id = $periodoModel->crearPeriodoAcademico($anio, $numero_periodo, $fecha_inicio, $fecha_fin, $estado_periodo_id);
         } catch (Exception $e) {
             http_response_code(500);
             echo json_encode(['error' => $e->getMessage()]);

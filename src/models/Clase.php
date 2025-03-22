@@ -72,29 +72,33 @@ class Clase {
             FROM Clase c
             INNER JOIN ClaseCarrera cc ON c.clase_id = cc.clase_id
             WHERE c.dept_id = ?
-              AND cc.carrera_id IN (
-                  SELECT carrera_id FROM EstudianteCarrera WHERE estudiante_id = ?
-              )
-              AND (
+            AND cc.carrera_id IN (
+                SELECT carrera_id FROM EstudianteCarrera WHERE estudiante_id = ?
+            )
+            AND (
                 NOT EXISTS (
-                  SELECT 1 FROM ClaseRequisito cr WHERE cr.clase_id = c.clase_id
+                    -- Si la clase no tiene prerequisitos
+                    SELECT 1 FROM ClaseRequisito cr WHERE cr.clase_id = c.clase_id
                 )
                 OR EXISTS (
-                  SELECT 1
-                  FROM HistorialEstudiante he 
-                  INNER JOIN Seccion s ON he.seccion_id = s.seccion_id
-                  WHERE he.estudiante_id = ? 
+                    -- Si la clase tiene prerequisitos, se verifica si el estudiante ha aprobado alguna de ellas
+                    SELECT 1
+                    FROM ClaseRequisito cr
+                    INNER JOIN HistorialEstudiante he ON cr.prerequisito_clase_id = he.clase_id
+                    INNER JOIN Seccion s ON he.seccion_id = s.seccion_id
+                    WHERE he.estudiante_id = ? 
                     AND s.clase_id = c.clase_id
                     AND he.estado_curso = 'APROBADA'
                 )
-              )
+            )
         ";
-        
+
         $stmt = $this->conn->prepare($sql);
         if (!$stmt) {
             throw new Exception("Error preparando la consulta: " . $this->conn->error);
         }
-        // Se requieren 3 parámetros: departamento_id y dos veces estudiante_id.
+
+        // Se requieren 3 parámetros: departamento_id, estudiante_id y estudiante_id nuevamente.
         $stmt->bind_param("iii", $departamento_id, $estudiante_id, $estudiante_id);
         if (!$stmt->execute()) {
             throw new Exception("Error ejecutando la consulta: " . $stmt->error);
@@ -107,6 +111,7 @@ class Clase {
         $stmt->close();
         return $clases;
     }
+
 
     /**
      * Obtiene la lista de laboratorios asociados a una clase.
