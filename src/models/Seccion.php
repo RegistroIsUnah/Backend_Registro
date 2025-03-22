@@ -29,7 +29,7 @@ class Seccion {
         $this->conn = $database->getConnection();
     }
 
-     /**
+    /**
      * Crea una sección utilizando el procedimiento almacenado SP_crearSeccion.
      *
      * @param int    $clase_id
@@ -45,30 +45,31 @@ class Seccion {
      * @throws Exception Si ocurre un error durante la creación.
      */
     public function crearSeccion($clase_id, $docente_id, $periodo_academico_id, $aula_id, $hora_inicio, $hora_fin, $cupos, $dias, $video_url) {
+        // Llamar al procedimiento almacenado SP_crearSeccion
         $stmt = $this->conn->prepare("CALL SP_crearSeccion(?, ?, ?, ?, ?, ?, ?, ?, ?)");
         if (!$stmt) {
             throw new Exception("Error preparando la consulta: " . $this->conn->error);
         }
-        // 8 primeros parámetros + 1 para video_url = 9 marcadores
-        $bind = $stmt->bind_param("iiiississ", 
-            $clase_id,
-            $docente_id,
-            $periodo_academico_id,
-            $aula_id,
-            $hora_inicio,
-            $hora_fin,
-            $cupos,
-            $dias,
+
+        // Vincular parámetros (9 marcadores)
+        $stmt->bind_param("iiiississ", 
+            $clase_id, 
+            $docente_id, 
+            $periodo_academico_id, 
+            $aula_id, 
+            $hora_inicio, 
+            $hora_fin, 
+            $cupos, 
+            $dias, 
             $video_url
         );
-        if (!$bind) {
-            throw new Exception("Error vinculando parámetros: " . $stmt->error);
-        }
 
+        // Ejecutar la consulta
         if (!$stmt->execute()) {
             throw new Exception("Error ejecutando la consulta: " . $stmt->error);
         }
 
+        // Obtener el resultado (ID de la sección)
         $result = $stmt->get_result();
         $seccion_id = null;
         if ($result) {
@@ -76,20 +77,21 @@ class Seccion {
             $seccion_id = $row['seccion_id'] ?? null;
             $result->free();
         }
+
         $stmt->close();
 
+        // Si no se pudo obtener el ID de la sección, lanzar un error
         if (!$seccion_id) {
             throw new Exception("No se pudo crear la sección");
         }
+
         return $seccion_id;
     }
 
-     /**
-     * Modifica una sección utilizando el procedimiento almacenado SP_modificar_seccion.
+    /**
+     * Modifica una sección utilizando el procedimiento almacenado SP_modificarSeccion.
      *
-     * Actualiza los campos de docente, aula, estado, motivo de cancelación, cupos y video_url.
-     *
-     * @param int $seccion_id ID de la sección a modificar.
+     * @param int|null $seccion_id ID de la sección a modificar.
      * @param int|null $docente_id Nuevo ID de docente (o NULL para no modificar).
      * @param int|null $aula_id Nuevo ID de aula (o NULL para no modificar).
      * @param string|null $estado Nuevo estado ('ACTIVA' o 'CANCELADA') o NULL para no modificar.
@@ -100,22 +102,26 @@ class Seccion {
      * @throws Exception Si ocurre un error durante la modificación.
      */
     public function modificarSeccion($seccion_id, $docente_id, $aula_id, $estado, $motivo_cancelacion, $cupos, $video_url) {
-        $stmt = $this->conn->prepare("CALL SP_modificarSeccion(?, ?, ?, ?, ?, ?, ?)");
+        // Llamar al procedimiento almacenado SP_modificarSeccion
+        $stmt = $this->conn->prepare("CALL SP_modificarSeccion(?, ?, ?, ?, ?, ?, ?, ?)");
         if (!$stmt) {
             throw new Exception("Error preparando la consulta: " . $this->conn->error);
         }
+
         // "iiissi s": 3 enteros, 2 strings, 1 entero, 1 string
-        if (!$stmt->bind_param("iiissis", $seccion_id, $docente_id, $aula_id, $estado, $motivo_cancelacion, $cupos, $video_url)) {
+        if (!$stmt->bind_param("iiississ", $seccion_id, $docente_id, $aula_id, $estado, $motivo_cancelacion, $cupos, $video_url)) {
             throw new Exception("Error vinculando parámetros: " . $stmt->error);
         }
+
         if (!$stmt->execute()) {
             throw new Exception("Error ejecutando la consulta: " . $stmt->error);
         }
+
         $stmt->close();
         return "Sección modificada exitosamente";
     }
 
-     /**
+   /**
      * Obtiene las secciones de una clase con los detalles del docente, aula y edificio.
      *
      * @param int $clase_id ID de la clase.
@@ -123,12 +129,19 @@ class Seccion {
      * @throws Exception Si ocurre un error en la consulta.
      */
     public function obtenerSeccionesPorClase($clase_id) {
+        // Validar que el ID de clase sea un número válido.
+        if (!is_numeric($clase_id)) {
+            throw new Exception("El ID de clase debe ser un número válido.");
+        }
+
+        // Consulta SQL para obtener las secciones con detalles del docente, aula, edificio y estado
         $query = "
             SELECT 
                 s.seccion_id,
                 s.hora_inicio,
                 s.hora_fin,
-                s.estado,
+                s.estado_seccion_id,
+                es.nombre AS estado_seccion,  -- Obtenemos el nombre del estado
                 s.video_url,
                 s.motivo_cancelacion,
                 s.cupos,
@@ -140,19 +153,35 @@ class Seccion {
             LEFT JOIN Docente d ON s.docente_id = d.docente_id
             LEFT JOIN Aula a ON s.aula_id = a.aula_id
             LEFT JOIN Edificio e ON a.edificio_id = e.edificio_id
+            LEFT JOIN EstadoSeccion es ON s.estado_seccion_id = es.estado_seccion_id  -- Relación con EstadoSeccion
             WHERE s.clase_id = ?
         ";
+
         $stmt = $this->conn->prepare($query);
         if (!$stmt) {
             throw new Exception("Error preparando la consulta: " . $this->conn->error);
         }
+
+        // Vinculamos el parámetro
         $stmt->bind_param("i", $clase_id);
-        $stmt->execute();
+        if (!$stmt->execute()) {
+            throw new Exception("Error ejecutando la consulta: " . $stmt->error);
+        }
+
+        // Obtener los resultados
         $result = $stmt->get_result();
         $secciones = [];
+
+        // Recorrer los resultados y almacenarlos en el array
         while ($row = $result->fetch_assoc()) {
             $secciones[] = $row;
         }
+
+        // Si no se encontraron secciones, retornar un mensaje más claro
+        if (empty($secciones)) {
+            return ['message' => 'No se encontraron secciones para esta clase.'];
+        }
+
         $stmt->close();
         return $secciones;
     }
