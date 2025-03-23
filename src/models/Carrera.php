@@ -134,5 +134,46 @@ class Carrera {
 
         return $carreras;
     }
+
+    /**
+     * Obtiene los detalles de una carrera, su coordinador, el departamento al que pertence y su jefe de departamento.
+     *
+     * @param int $carrera_id ID de la carrera.
+     * @return array Detalles de la carrera, coordinador y jefe de departamento.
+     * @throws Exception Si ocurre un error en la consulta.
+     */
+    public function obtenerDetallesCarrera($carrera_id) {
+        $sql = "
+           SELECT 
+                c.carrera_id,
+                c.nombre AS carrera_nombre,
+                CONCAT(d.nombre, ' ', d.apellido) AS coordinador_nombre_completo,
+                dept.nombre AS departamento_nombre,
+                CONCAT(jefe.nombre, ' ', jefe.apellido) AS jefe_departamento_nombre_completo
+            FROM Carrera c
+            LEFT JOIN Docente d ON c.coordinador_docente_id = d.docente_id
+            LEFT JOIN Departamento dept ON c.dept_id = dept.dept_id
+            LEFT JOIN Docente jefe ON dept.jefe_docente_id = jefe.docente_id
+            WHERE c.carrera_id = ?
+        ";
+
+        $stmt = $this->conn->prepare($sql);
+        if (!$stmt) {
+            throw new Exception("Error preparando la consulta: " . $this->conn->error);
+        }
+
+        $stmt->bind_param('i', $carrera_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        if ($result->num_rows === 0) {
+            return null; // Si no se encuentra la carrera
+        }
+
+        $carrera = $result->fetch_assoc();
+        $stmt->close();
+
+        return $carrera;
+    }
 }
 ?>
