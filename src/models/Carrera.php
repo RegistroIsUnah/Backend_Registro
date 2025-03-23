@@ -147,14 +147,16 @@ class Carrera {
            SELECT 
                 c.carrera_id,
                 c.nombre AS carrera_nombre,
+                c.coordinador_docente_id AS coordinador_id,
                 CONCAT(d.nombre, ' ', d.apellido) AS coordinador_nombre_completo,
                 dept.nombre AS departamento_nombre,
+                dept.jefe_docente_id AS jefe_docente_id,
                 CONCAT(jefe.nombre, ' ', jefe.apellido) AS jefe_departamento_nombre_completo
             FROM Carrera c
             LEFT JOIN Docente d ON c.coordinador_docente_id = d.docente_id
             LEFT JOIN Departamento dept ON c.dept_id = dept.dept_id
             LEFT JOIN Docente jefe ON dept.jefe_docente_id = jefe.docente_id
-            WHERE c.carrera_id = ?
+            WHERE c.carrera_id = ?;
         ";
 
         $stmt = $this->conn->prepare($sql);
