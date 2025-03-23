@@ -7,6 +7,9 @@
  *   - revisor_id: int (requerido)
  *   - accion: string ('aceptar' o 'rechazar') (requerido)
  *   - motivos: JSON string (opcional, array de motivo_id; requerido si la acción es 'rechazar')
+ * 
+ * Metodos soportados:
+ *  POST
  *
  * Ejemplo para rechazar:
  * {

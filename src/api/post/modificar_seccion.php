@@ -6,6 +6,9 @@
  *
  * Ejemplo de URL 
  * servidor:puerto/api/post/modificar_seccion
+ * 
+ * Metodos soportados:
+ *  POST
  *
  * Ejemplo de JSON de entrada:
  * {

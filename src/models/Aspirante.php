@@ -580,5 +580,184 @@ class Aspirante {
         return $aspirante;
     }
 
+    /**
+     * Obtiene los datos de un aspirante por su número de solicitud.
+     *
+     * @param string $numSolicitud Número de solicitud del aspirante.
+     * @return array|null Datos del aspirante o null si no se encuentra.
+     * @throws Exception Si ocurre un error en la consulta.
+     */
+    public function obtenerAspirantePorSolicitud($numSolicitud) {
+        $sql = "
+            SELECT 
+                a.aspirante_id,
+                a.nombre AS aspirante_nombre,
+                a.apellido AS aspirante_apellido,
+                a.documento,
+                a.telefono,
+                a.correo,
+                a.foto,
+                a.fotodni,
+                a.numSolicitud,
+                td.nombre AS tipo_documento,
+                c.nombre AS carrera_principal,
+                c2.nombre AS carrera_secundaria,
+                e.nombre AS estado_aspirante,
+                a.fecha_solicitud,
+                r.fecha_revision,
+                tr.nombre AS tipo_rechazo,
+                mr.descripcion AS motivo_rechazo
+            FROM Aspirante a
+            LEFT JOIN TipoDocumento td ON a.tipo_documento_id = td.tipo_documento_id
+            LEFT JOIN Carrera c ON a.carrera_principal_id = c.carrera_id
+            LEFT JOIN Carrera c2 ON a.carrera_secundaria_id = c2.carrera_id
+            LEFT JOIN EstadoAspirante e ON a.estado_aspirante_id = e.estado_aspirante_id
+            LEFT JOIN RevisionAspirante r ON a.aspirante_id = r.aspirante_id
+            LEFT JOIN AspiranteMotivoRechazo amr ON r.revision_id = amr.revision_id
+            LEFT JOIN MotivoRechazoAspirante mr ON amr.motivo_id = mr.motivo_id
+            LEFT JOIN TipoRechazoSolicitudAspirante tr ON mr.tipo_rechazo_id = tr.tipo_rechazo_id
+            WHERE a.numSolicitud = ?
+            ORDER BY tr.nombre, mr.descripcion;
+        ";
+
+        $stmt = $this->conn->prepare($sql);
+        if (!$stmt) {
+            throw new Exception("Error preparando la consulta: " . $this->conn->error);
+        }
+
+        $stmt->bind_param('s', $numSolicitud);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        if ($result->num_rows === 0) {
+            return null; // Si no se encuentra el aspirante
+        }
+
+        $aspirante = $result->fetch_assoc();
+        $stmt->close();
+
+        // Agrupar los motivos de rechazo por tipo de rechazo
+        $rechazos = [];
+        while ($row = $result->fetch_assoc()) {
+            $rechazos[$row['tipo_rechazo']][] = $row['motivo_rechazo'];
+        }
+
+        // Asignamos la lista de rechazos agrupados
+        $aspirante['rechazos'] = [];
+        foreach ($rechazos as $tipo => $motivos) {
+            $aspirante['rechazos'][] = [
+                'tipo_rechazo' => $tipo,
+                'motivos' => $motivos
+            ];
+
+        }
+
+        return $aspirante;
+    }
+
+     /**
+     * Actualiza los detalles de un aspirante por su número de solicitud.
+     * También cambia el estado a CORREGIDO_PENDIENTE si el estado actual es RECHAZADO.
+     *
+     * @param string $numSolicitud Número de solicitud del aspirante.
+     * @param array $data Datos a actualizar (campos a actualizar y archivos si es necesario).
+     * @return bool Verdadero si la actualización fue exitosa, falso de lo contrario.
+     * @throws Exception Si ocurre un error en la consulta.
+     */
+    public function actualizarAspirantePorSolicitud($numSolicitud, $data) {
+        $setClause = [];
+        $params = [];
+    
+        if (isset($data['aspirante_nombre'])) {
+            $setClause[] = "nombre = ?";
+            $params[] = $data['aspirante_nombre'];
+        }
+        
+        if (isset($data['aspirante_apellido'])) {
+            $setClause[] = "apellido = ?";
+            $params[] = $data['aspirante_apellido'];
+        }
+    
+        if (isset($data['documento'])) {
+            $setClause[] = "documento = ?";
+            $params[] = $data['documento'];
+        }
+    
+        if (isset($data['telefono'])) {
+            $setClause[] = "telefono = ?";
+            $params[] = $data['telefono'];
+        }
+    
+        if (isset($data['correo'])) {
+            $setClause[] = "correo = ?";
+            $params[] = $data['correo'];
+        }
+    
+        // Aquí se actualizan los campos de archivos usando el valor ya procesado en el controlador
+        if (isset($data['foto'])) {
+            $setClause[] = "foto = ?";
+            $params[] = $data['foto'];
+        }
+    
+        if (isset($data['fotodni'])) {
+            $setClause[] = "fotodni = ?";
+            $params[] = $data['fotodni'];
+        }
+    
+        if (isset($data['certificado_url'])) {
+            $setClause[] = "certificado_url = ?";
+            $params[] = $data['certificado_url'];
+        }
+    
+        if (isset($data['tipo_documento'])) {
+            $setClause[] = "tipo_documento_id = (SELECT tipo_documento_id FROM TipoDocumento WHERE nombre = ?)";
+            $params[] = $data['tipo_documento'];
+        }
+    
+        if (empty($setClause)) {
+            throw new Exception('No hay datos para actualizar');
+        }
+    
+        $sql = "UPDATE Aspirante SET " . implode(", ", $setClause) . " WHERE numSolicitud = ?";
+        $params[] = $numSolicitud;
+    
+        $stmt = $this->conn->prepare($sql);
+        if (!$stmt) {
+            throw new Exception("Error preparando la consulta: " . $this->conn->error);
+        }
+    
+        $types = str_repeat('s', count($params));
+        $stmt->bind_param($types, ...$params);
+        $stmt->execute();
+        $affectedRows = $stmt->affected_rows;
+        $stmt->close();
+    
+        // Se actualiza el estado si el aspirante estaba en RECHAZADO
+        $this->actualizarEstadoSiRechazado($numSolicitud);
+    
+        return $affectedRows > 0;
+    }
+
+    /**
+     * Cambia el estado del aspirante de RECHAZADO a CORREGIDO_PENDIENTE.
+     *
+     * @param string $numSolicitud Número de solicitud del aspirante.
+     * @return void
+     * @throws Exception Si ocurre un error en la consulta.
+     */
+    public function actualizarEstadoSiRechazado($numSolicitud) {
+        $sql = "UPDATE Aspirante 
+                SET estado_aspirante_id = (SELECT estado_aspirante_id FROM EstadoAspirante WHERE nombre = 'CORREGIDO_PENDIENTE') 
+                WHERE numSolicitud = ? AND estado_aspirante_id = (SELECT estado_aspirante_id FROM EstadoAspirante WHERE nombre = 'RECHAZADO')";
+
+        $stmt = $this->conn->prepare($sql);
+        if (!$stmt) {
+            throw new Exception("Error preparando la consulta: " . $this->conn->error);
+        }
+
+        $stmt->bind_param('s', $numSolicitud);
+        $stmt->execute();
+        $stmt->close();
+    }
 }
 ?>

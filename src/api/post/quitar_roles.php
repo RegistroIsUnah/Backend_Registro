@@ -4,6 +4,9 @@
  * 
  * Ejemplo de URL 
  * servidor:puerto/api/post/quitar_roles
+ * 
+ * Metodos soportados:
+ *  POST
  *
  * Se espera recibir vía POST:
  *   - usuario_id: int

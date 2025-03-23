@@ -149,6 +149,7 @@ class Carrera {
                 c.nombre AS carrera_nombre,
                 c.coordinador_docente_id AS coordinador_id,
                 CONCAT(d.nombre, ' ', d.apellido) AS coordinador_nombre_completo,
+                dept.dept_id AS departamento_id,
                 dept.nombre AS departamento_nombre,
                 dept.jefe_docente_id AS jefe_docente_id,
                 CONCAT(jefe.nombre, ' ', jefe.apellido) AS jefe_departamento_nombre_completo

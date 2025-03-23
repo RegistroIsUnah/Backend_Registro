@@ -418,5 +418,119 @@ class AspiranteController {
         }
     }
 
+   /**
+     * Obtiene los detalles de un aspirante por su número de solicitud.
+     *
+     * Se espera recibir en $data el siguiente parámetro:
+     * - numSolicitud: Número de solicitud del aspirante.
+     *
+     * @param array $data Datos recibidos del endpoint.
+     * @return void
+     */
+    public function obtenerAspirantePorSolicitud($data) {
+        if (!isset($data['numSolicitud']) || empty($data['numSolicitud'])) {
+            http_response_code(400);
+            echo json_encode(['error' => 'El parámetro numSolicitud es requerido']);
+            exit;
+        }
+
+        $numSolicitud = trim($data['numSolicitud']);
+        
+        try {
+            $aspiranteModel = new Aspirante();
+            $aspirante = $aspiranteModel->obtenerAspirantePorSolicitud($numSolicitud);
+
+            if ($aspirante === null) {
+                http_response_code(404);
+                echo json_encode(['error' => 'Aspirante no encontrado']);
+                exit;
+            }
+
+            http_response_code(200);
+            echo json_encode($aspirante);
+
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Actualiza los detalles de un aspirante por su número de solicitud.
+     *
+     * Se espera recibir en $data el siguiente parámetro:
+     * - numSolicitud: Número de solicitud del aspirante.
+     * - datos (aspirante_nombre, aspirante_apellido, etc.): Datos a actualizar.
+     * - foto, fotodni, certificado_url: Archivos a actualizar.
+     *
+     * @param array $data Datos recibidos del endpoint (POST y FILES).
+     * @return void
+     */
+    public function actualizarAspirante($data) {
+        // Verificar que el parámetro numSolicitud esté presente
+        if (!isset($data['numSolicitud']) || empty($data['numSolicitud'])) {
+            http_response_code(400);
+            echo json_encode(['error' => 'El parámetro numSolicitud es requerido']);
+            exit;
+        }
+    
+        // Extraemos el numSolicitud y lo removemos de $data
+        $numSolicitud = trim($data['numSolicitud']);
+        unset($data['numSolicitud']);
+    
+        // Procesamos los archivos, subiéndolos y guardando la ruta
+        if (isset($data['foto'])) {
+            $data['foto'] = $this->subirArchivo($data['foto'], 'fotos');
+        }
+    
+        if (isset($data['fotodni'])) {
+            $data['fotodni'] = $this->subirArchivo($data['fotodni'], 'fotodni');
+        }
+    
+        if (isset($data['certificado_url'])) {
+            $data['certificado_url'] = $this->subirArchivo($data['certificado_url'], 'certificados');
+        }
+    
+        try {
+            // Llamamos al modelo para actualizar el aspirante
+            $aspiranteModel = new Aspirante();
+            $updated = $aspiranteModel->actualizarAspirantePorSolicitud($numSolicitud, $data);
+    
+            if (!$updated) {
+                http_response_code(404);
+                echo json_encode(['error' => 'No se encontró el aspirante o no se realizaron cambios']);
+                exit;
+            }
+    
+            http_response_code(200);
+            echo json_encode(['message' => 'Aspirante actualizado exitosamente']);
+    
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => $e->getMessage()]);
+        }
+    }
+    
+    /**
+     * Función para subir archivos a una carpeta específica y devolver la ruta del archivo.
+     *
+     * @param array $file El archivo que se está subiendo.
+     * @param string $folder La carpeta donde se guardará el archivo.
+     * @return string Ruta del archivo subido.
+     * @throws Exception Si ocurre un error al subir el archivo.
+     */
+    private function subirArchivo($file, $folder) {
+        $uploadsDir = __DIR__ . "/../../uploads/{$folder}/";
+        if (!is_dir($uploadsDir)) {
+            mkdir($uploadsDir, 0755, true);
+        }
+        $fileExt = pathinfo($file['name'], PATHINFO_EXTENSION);
+        $fileName = uniqid() . '.' . $fileExt;
+        $filePath = $uploadsDir . $fileName;
+        if (!move_uploaded_file($file['tmp_name'], $filePath)) {
+            throw new Exception('Error al subir el archivo');
+        }
+        return 'uploads/' . $folder . '/' . $fileName;
+    }
 }
 ?>

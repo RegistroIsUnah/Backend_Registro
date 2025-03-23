@@ -4,6 +4,9 @@
  * 
  * Ejemplo de URL 
  * servidor:puerto/api/post/registrar_libro
+ * 
+ * Metodos soportados:
+ *  POST
  *
  * Se espera recibir en la solicitud (multipart/form-data):
  *   - titulo: string
