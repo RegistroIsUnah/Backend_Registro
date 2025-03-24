@@ -6,7 +6,7 @@ DELIMITER //
 CREATE PROCEDURE SP_insertarAspirante(
     IN p_nombre VARCHAR(100),
     IN p_apellido VARCHAR(100),
-    IN p_identidad VARCHAR(50),
+    IN p_documento VARCHAR(50),
     IN p_telefono VARCHAR(20),
     IN p_correo VARCHAR(100),
     IN p_foto VARCHAR(255),
@@ -21,8 +21,8 @@ BEGIN
     DECLARE v_numSolicitud VARCHAR(50);
     DECLARE v_estado_aspirante_id INT;
 
-    -- Verificar si ya existe un aspirante con la misma identidad
-    IF (SELECT COUNT(*) FROM Aspirante WHERE identidad = p_identidad) > 0 THEN
+    -- Verificar si ya existe un aspirante con el mismo documento
+    IF (SELECT COUNT(*) FROM Aspirante WHERE documento = p_documento) > 0 THEN
         SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'El aspirante ya ha sido inscrito';
     END IF;
@@ -43,11 +43,11 @@ BEGIN
 
     -- Insertar en la tabla Aspirante
     INSERT INTO Aspirante (
-        nombre, apellido, identidad, telefono, correo, foto, fotodni, numSolicitud,
+        nombre, apellido, documento, telefono, correo, foto, fotodni, numSolicitud,
         carrera_principal_id, carrera_secundaria_id, centro_id, certificado_url,
         estado_aspirante_id, tipo_documento_id, fecha_solicitud
     ) VALUES (
-        p_nombre, p_apellido, p_identidad, p_telefono, p_correo, p_foto, p_fotodni, v_numSolicitud,
+        p_nombre, p_apellido, p_documento, p_telefono, p_correo, p_foto, p_fotodni, v_numSolicitud,
         p_carrera_principal_id, p_carrera_secundaria_id, p_centro_id, p_certificado_url,
         v_estado_aspirante_id, p_tipo_documento_id, CURDATE()
     );
