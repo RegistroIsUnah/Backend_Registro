@@ -13,7 +13,7 @@ INSERT INTO Edificio (centro_id, nombre) VALUES
 (3, 'Edificio de Medicina'),
 (4, 'Edificio de Derecho'),
 (5, 'Edificio de Bellas Artes');
-S
+
 INSERT INTO Facultad (edificio_id, nombre) VALUES 
 (1, 'Facultad de Matemáticas'),
 (2, 'Facultad de Ingeniería Civil'),
@@ -325,7 +325,7 @@ INSERT INTO ProcesoMatricula (periodo_academico_id, tipo_proceso_id, fecha_inici
 INSERT INTO TipoProcesoExcepcional (nombre) VALUES 
 ('PAGO_REPOSICION'),
 ('CANCELACION_EXCEPCIONAL'),
-('CAMBIO_CARRERA''),
+('CAMBIO_CARRERA'),
 ('Aplazamiento'),
 ('Reingreso');
 

@@ -32,7 +32,7 @@ class Aspirante {
      *
      * @param string $nombre
      * @param string $apellido
-     * @param string $identidad
+     * @param string $documento
      * @param string $telefono
      * @param string $correo
      * @param string $fotoRuta Ruta de la foto del aspirante.
@@ -45,7 +45,7 @@ class Aspirante {
      * @return string Número de solicitud generado.
      * @throws Exception Si ocurre un error durante la inserción.
      */
-    public function insertarAspirante($nombre, $apellido, $identidad, $telefono, $correo, $fotoRuta, $fotodniRuta, $carrera_principal_id, $carrera_secundaria_id, $centro_id, $certificadoRuta, $tipo_documento_id) {
+    public function insertarAspirante($nombre, $apellido, $documento, $telefono, $correo, $fotoRuta, $fotodniRuta, $carrera_principal_id, $carrera_secundaria_id, $centro_id, $certificadoRuta, $tipo_documento_id) {
         // Se esperan 12 parámetros, por lo tanto 12 marcadores
         $stmt = $this->conn->prepare("CALL SP_insertarAspirante(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
         if (!$stmt) {
@@ -55,7 +55,7 @@ class Aspirante {
         if (!$stmt->bind_param("sssssssiiisi", 
             $nombre, 
             $apellido, 
-            $identidad, 
+            $documento, 
             $telefono, 
             $correo, 
             $fotoRuta,
@@ -91,7 +91,7 @@ class Aspirante {
      * @return string JSON con la lista de los aspirantes admitidos.
      * LOS CAMPOS QUE SE MUESTRAN SON:
      * aspirante_id
-     * identidad
+     * documento
      * nombre
      * apellido
      * correo
@@ -110,7 +110,7 @@ class Aspirante {
             "data": [
                 {
                     "aspirante_id": 1,
-                    "identidad": "0801199901234",
+                    "documento": "0801199901234",
                     "nombre": "Juan",
                     "apellido": "Pérez",
                     "correo": "juan@example.com",
@@ -122,7 +122,7 @@ class Aspirante {
                 },
                 {
                     "aspirante_id": 2,
-                    "identidad": "0801199905678",
+                    "documento": "0801199905678",
                     "nombre": "María",
                     "apellido": "García",
                     "correo": "maria@example.com",
@@ -140,7 +140,7 @@ class Aspirante {
         // SQL actualizado para usar estado_aspirante_id y tipo_documento_id
         $sql = "SELECT 
                     A.aspirante_id,
-                    A.identidad,
+                    A.documento,
                     A.nombre,
                     A.apellido,
                     A.correo,
@@ -191,7 +191,7 @@ class Aspirante {
         // Consulta SQL para obtener los aspirantes admitidos con estado_aspirante_id
         $sql = "SELECT 
                     A.aspirante_id,
-                    A.identidad,
+                    A.documento,
                     A.nombre,
                     A.apellido,
                     A.correo,
@@ -219,7 +219,7 @@ class Aspirante {
         // Escribir la cabecera del CSV
         fputcsv($output, [
             'aspirante_id',
-            'identidad',
+            'documento',
             'nombre',
             'apellido',
             'correo',
@@ -385,7 +385,7 @@ class Aspirante {
         $this->conn->begin_transaction();
         try {
             // Seleccionar una solicitud que esté pendiente o corregida (ahora filtramos por estado_aspirante_id)
-            $sql = "SELECT A.aspirante_id, A.nombre, A.apellido, A.identidad, A.telefono, A.correo, A.foto, A.fotodni, A.numSolicitud, 
+            $sql = "SELECT A.aspirante_id, A.nombre, A.apellido, A.documento, A.telefono, A.correo, A.foto, A.fotodni, A.numSolicitud, 
                             A.carrera_principal_id, A.carrera_secundaria_id, A.centro_id, A.certificado_url, A.estado_aspirante_id, A.fecha_solicitud
                     FROM Aspirante A
                     INNER JOIN EstadoAspirante E ON A.estado_aspirante_id = E.estado_aspirante_id

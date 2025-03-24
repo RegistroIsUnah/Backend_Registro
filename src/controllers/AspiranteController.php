@@ -33,7 +33,7 @@ class AspiranteController {
      * @param array $data Datos de texto del aspirante (de $_POST). Se espera:
      *      - nombre
      *      - apellido
-     *      - identidad
+     *      - documento
      *      - telefono
      *      - correo
      *      - carrera_principal_id
@@ -54,9 +54,9 @@ class AspiranteController {
             echo json_encode(['error' => 'Apellido inválido']);
             exit;
         }
-        if (!isset($data['identidad']) || !preg_match('/^[0-9\-]+$/', $data['identidad'])) {
+        if (!isset($data['documento']) || !preg_match('/^[0-9\-]+$/', $data['documento'])) {
             http_response_code(400);
-            echo json_encode(['error' => 'Identidad inválida']);
+            echo json_encode(['error' => 'Documento inválida']);
             exit;
         }
 
@@ -181,7 +181,7 @@ class AspiranteController {
             $numSolicitud = $aspiranteModel->insertarAspirante(
                 $data['nombre'],
                 $data['apellido'],
-                $data['identidad'],
+                $data['documento'],
                 $data['telefono'],
                 $data['correo'],
                 $fotoRuta,
