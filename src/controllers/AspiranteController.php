@@ -59,19 +59,19 @@ class AspiranteController {
             echo json_encode(['error' => 'Documento inválida']);
             exit;
         }
-
+    
         if (!isset($data['telefono']) || !preg_match('/^[0-9\+\-\s]+$/', $data['telefono'])) {
             http_response_code(400);
             echo json_encode(['error' => 'Teléfono inválido']);
             exit;
         }
-
+    
         if (!isset($data['correo']) || !filter_var($data['correo'], FILTER_VALIDATE_EMAIL)) {
             http_response_code(400);
             echo json_encode(['error' => 'Correo inválido']);
             exit;
         }
-
+    
         if (!isset($data['carrera_principal_id']) || !is_numeric($data['carrera_principal_id'])) {
             http_response_code(400);
             echo json_encode(['error' => 'Carrera principal inválida']);
@@ -81,14 +81,14 @@ class AspiranteController {
         $carrera_secundaria_id = (isset($data['carrera_secundaria_id']) && is_numeric($data['carrera_secundaria_id']))
             ? intval($data['carrera_secundaria_id'])
             : null;
-
+    
         if (!isset($data['centro_id']) || !is_numeric($data['centro_id'])) {
             http_response_code(400);
             echo json_encode(['error' => 'Centro inválido']);
             exit;
         }
         $centro_id = intval($data['centro_id']);
-
+    
         // Validar el tipo de documento
         if (!isset($data['tipo_documento_id']) || !is_numeric($data['tipo_documento_id'])) {
             http_response_code(400);
@@ -175,7 +175,7 @@ class AspiranteController {
         }
         $certificadoRuta = 'uploads/certificados/' . $fileNameCert;
         
-        // Llamar al modelo para insertar el aspirante.
+        // Llamar al modelo para insertar el aspirante y enviar correo
         try {
             $aspiranteModel = new Aspirante();
             $numSolicitud = $aspiranteModel->insertarAspirante(
@@ -192,15 +192,16 @@ class AspiranteController {
                 $certificadoRuta,
                 $tipo_documento_id  // Se pasa el tipo_documento_id al modelo
             );
+            
+            // Enviar respuesta de éxito
+            http_response_code(200);
+            echo json_encode(['numSolicitud' => $numSolicitud, 'message' => 'Aspirante ingresado exitosamente']);
         } catch (Exception $e) {
+            // Manejo de errores
             http_response_code(500);
             echo json_encode(['error' => $e->getMessage()]);
-            exit;
         }
-        
-        http_response_code(200);
-        echo json_encode(['numSolicitud' => $numSolicitud, 'message' => 'Aspirante ingresado exitosamente']);
-    }
+    }    
 
     /**
      * Genera un CSV con los aspirantes admitidos y fuerza la descarga.

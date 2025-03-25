@@ -38,8 +38,21 @@ BEGIN
         SET v_estado_aspirante_id = LAST_INSERT_ID();
     END IF;
 
-    -- Generar el número de solicitud con UUID y un prefijo
-    SET v_numSolicitud = CONCAT('SOL-', UUID());
+    -- Generar el número de solicitud con prefijo 'SOL-' y 10 caracteres aleatorios
+    SET v_numSolicitud = CONCAT('SOL-', 
+        UPPER(CONCAT(
+            SUBSTRING('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', FLOOR(RAND() * 36) + 1, 1),
+            SUBSTRING('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', FLOOR(RAND() * 36) + 1, 1),
+            SUBSTRING('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', FLOOR(RAND() * 36) + 1, 1),
+            SUBSTRING('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', FLOOR(RAND() * 36) + 1, 1),
+            SUBSTRING('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', FLOOR(RAND() * 36) + 1, 1),
+            SUBSTRING('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', FLOOR(RAND() * 36) + 1, 1),
+            SUBSTRING('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', FLOOR(RAND() * 36) + 1, 1),
+            SUBSTRING('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', FLOOR(RAND() * 36) + 1, 1),
+            SUBSTRING('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', FLOOR(RAND() * 36) + 1, 1),
+            SUBSTRING('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', FLOOR(RAND() * 36) + 1, 1)
+        ))
+    );
 
     -- Insertar en la tabla Aspirante
     INSERT INTO Aspirante (
@@ -57,6 +70,7 @@ BEGIN
 END //
 
 DELIMITER ;
+
 
 
 
