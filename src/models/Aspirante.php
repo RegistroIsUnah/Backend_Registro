@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../modules/config/DataBase.php';
+require_once __DIR__ . '/../mail/mail_sender.php';
 
 /**
  * Clase Aspirante
@@ -51,6 +52,7 @@ class Aspirante {
         if (!$stmt) {
             throw new Exception("Error preparando la consulta: " . $this->conn->error);
         }
+    
         // La cadena de tipos es: 7 strings, 3 enteros, 1 string = "sssssssiiisi"
         if (!$stmt->bind_param("sssssssiiisi", 
             $nombre, 
@@ -68,9 +70,11 @@ class Aspirante {
         )) {
             throw new Exception("Error vinculando parámetros: " . $stmt->error);
         }
+    
         if (!$stmt->execute()) {
             throw new Exception("Error ejecutando la consulta: " . $stmt->error);
         }
+    
         $result = $stmt->get_result();
         $numSolicitud = null;
         if ($result) {
@@ -78,11 +82,42 @@ class Aspirante {
             $numSolicitud = $row['numSolicitud'] ?? null;
             $result->free();
         }
+    
         $stmt->close();
+    
         if (!$numSolicitud) {
             throw new Exception("No se obtuvo el número de solicitud");
         }
+    
+        // Enviar correo de confirmación
+        $this->enviarCorreoDeConfirmacion($nombre, $apellido, $documento, $numSolicitud, $correo);
+    
         return $numSolicitud;
+    }
+    
+    /**
+     * Función para enviar el correo de confirmación al aspirante.
+     * 
+     * @param string $nombre
+     * @param string $apellido
+     * @param string $documento
+     * @param string $numSolicitud
+     * @param string $correo
+     */
+    private function enviarCorreoDeConfirmacion($nombre, $apellido, $documento, $numSolicitud, $correo) {
+        // Asunto y contenido del correo
+        $subject = 'Confirmación de Registro';
+        $message = "
+            <h3>Hola {$nombre} {$apellido},</h3>
+            <p>Tu registro ha sido exitoso. Aquí están los detalles:</p>
+            <p><strong>Documento:</strong> {$documento}</p>
+            <p><strong>Número de Solicitud:</strong> {$numSolicitud}</p>
+            <p>Por favor, guarda esta información ya que es importante para futuras consultas.</p>
+        ";
+        $altmess = "Hola {$nombre} {$apellido},\n\nTu registro ha sido exitoso. Aquí están los detalles:\nDocumento: {$documento}\nNúmero de Solicitud: {$numSolicitud}\nPor favor, guarda esta información.";
+    
+        // Llamamos a la función sendmail para enviar el correo
+        sendmail($correo, "{$nombre} {$apellido}", $subject, $message, $altmess);
     }
 
 
