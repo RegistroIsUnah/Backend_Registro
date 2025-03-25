@@ -470,10 +470,11 @@ public function registrarLibro($titulo, $editorial, $libro_url, $fecha_publicaci
                     l.libro_url,
                     l.fecha_publicacion,
                     l.descripcion,
-                    l.estado
+                    estl.nombre
                 FROM Clase c
                 INNER JOIN ClaseLibro cl ON c.clase_id = cl.clase_id
                 INNER JOIN Libro l ON cl.libro_id = l.libro_id
+                INNER JOIN EstadoLibro estl ON estl.estado_libro_id = l.estado_libro_id
                 WHERE c.dept_id = ?
                 ORDER BY c.clase_id";
         $stmt = $this->conn->prepare($sql);
