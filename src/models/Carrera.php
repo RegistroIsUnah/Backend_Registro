@@ -51,6 +51,8 @@ class Carrera {
             $stmt = $this->conn->prepare("
                 SELECT 
                     c.carrera_id, 
+                    c.dept_id AS dept_id,
+                    c.coordinador_docente_id AS coordinador_docente_id, 
                     c.nombre AS carrera_nombre,
                     te.tipo_examen_id,
                     te.nombre AS examen_nombre,
@@ -77,6 +79,8 @@ class Carrera {
                 if (!isset($carreras[$carrera_id])) {
                     $carreras[$carrera_id] = [
                         'carrera_id' => $carrera_id,
+                        'dept_id' => $row['dept_id'],
+                        'coordinador_docente_id' => $row['coordinador_docente_id'],
                         'carrera_nombre' => $row['carrera_nombre'],
                         'examenes' => []
                     ];
@@ -94,7 +98,9 @@ class Carrera {
             // Si no se proporciona un centro_id, obtenemos todas las carreras y sus exámenes
             $sql = "
                 SELECT 
-                    c.carrera_id, 
+                    c.carrera_id,
+                    c.dept_id AS dept_id,
+                    c.coordinador_docente_id AS coordinador_docente_id,
                     c.nombre AS carrera_nombre,
                     te.tipo_examen_id,
                     te.nombre AS examen_nombre,
@@ -117,6 +123,8 @@ class Carrera {
                 if (!isset($carreras[$carrera_id])) {
                     $carreras[$carrera_id] = [
                         'carrera_id' => $carrera_id,
+                        'dept_id' => $row['dept_id'],
+                        'coordinador_docente_id' => $row['coordinador_docente_id'],
                         'carrera_nombre' => $row['carrera_nombre'],
                         'examenes' => []
                     ];
