@@ -3,10 +3,10 @@
  * Endpoint para actualizar un libro.
  * 
  * Ejemplo de URL 
- * servidor:puerto/api/put o patch/modificar_libro
+ * servidor:puerto/api/post/modificar_libro
  *
  * Metodos soportados:
- *  PUT O PATCH
+ *  POST
  * 
  * Se espera recibir (multipart/form-data) los siguientes parámetros:
  *   - libro_id: int (requerido)
