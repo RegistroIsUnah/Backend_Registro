@@ -533,5 +533,55 @@ class AspiranteController {
         }
         return 'uploads/' . $folder . '/' . $fileName;
     }
+
+     /**
+     * Acción para reenviar el correo (endpoint).
+     * 
+     * Maneja errores específicos y valida el formato del número de solicitud.
+     * 
+     * @return void Envía respuesta JSON.
+     */
+    public function reenviarCorreoAction() {
+         // Obtener datos del cuerpo (soporta JSON y form-data)
+        $data = json_decode(file_get_contents('php://input'), true) ?? $_POST;
+        
+        // Validar entrada
+        if (empty($data['numSolicitud'])) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Campo "numSolicitud" es requerido']);
+            return;
+        }
+
+        $numSolicitud = trim($data['numSolicitud']);
+
+        //Validar formato del número de solicitud (ej: SOL-XXXXX)
+        if (!preg_match('/^SOL-[A-Z0-9]{10}$/', $numSolicitud)) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Formato de número de solicitud inválido']);
+            return;
+        }
+
+        try {
+            //Procesar
+            $this->modelo->reenviarCorreoPorSolicitud($numSolicitud);
+            
+            //Respuesta exitosa
+            echo json_encode([
+                'success' => true,
+                'message' => 'Correo reenviado exitosamente',
+                'numSolicitud' => $numSolicitud
+            ]);
+
+        } catch (Exception $e) {
+            //Manejo preciso de errores
+            $statusCode = (strpos($e->getMessage(), 'No se encontró') !== false) ? 404 : 500;
+            http_response_code($statusCode);
+            echo json_encode([
+                'error' => $e->getMessage(),
+                'numSolicitud' => $numSolicitud
+            ]);
+        }    
+    }
+
 }
 ?>

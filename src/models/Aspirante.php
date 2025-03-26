@@ -90,7 +90,7 @@ class Aspirante {
         }
     
         // Enviar correo de confirmación
-        $this->enviarCorreoDeConfirmacion($nombre, $apellido, $documento, $numSolicitud, $correo);
+        $this->enviarCorreo($nombre, $apellido, $documento, $numSolicitud, $correo);
     
         return $numSolicitud;
     }
@@ -104,8 +104,9 @@ class Aspirante {
      * @param string $numSolicitud
      * @param string $correo
      */
+    /*
     private function enviarCorreoDeConfirmacion($nombre, $apellido, $documento, $numSolicitud, $correo) {
-        // Asunto y contenido del correo
+        // Guardar el contenido del correo en variables
         $subject = 'Confirmación de Registro';
         $message = "
             <h3>Hola {$nombre} {$apellido},</h3>
@@ -114,12 +115,39 @@ class Aspirante {
             <p><strong>Número de Solicitud:</strong> {$numSolicitud}</p>
             <p>Por favor, guarda esta información ya que es importante para futuras consultas.</p>
         ";
-        $altmess = "Hola {$nombre} {$apellido},\n\nTu registro ha sido exitoso. Aquí están los detalles:\nDocumento: {$documento}\nNúmero de Solicitud: {$numSolicitud}\nPor favor, guarda esta información.";
+        $altmess = "Hola {$nombre} {$apellido},\n\nTu registro ha sido exitoso. Aquí están los detalles:\nDocumento: 
+        {$documento}\nNúmero de Solicitud: {$numSolicitud}\nPor favor, guarda esta información.";
     
-        // Llamamos a la función sendmail para enviar el correo
-        sendmail($correo, "{$nombre} {$apellido}", $subject, $message, $altmess);
-    }
+        // Ejecutar en segundo plano después de la respuesta
+        register_shutdown_function(function() use ($correo, $nombre, $apellido, $subject, $message, $altmess) {
+            sendmail($correo, "{$nombre} {$apellido}", $subject, $message, $altmess);
+        });
+    }*/
 
+    private function enviarCorreo($nombre, $apellido, $documento, $numSolicitud, $correo) {
+        // Guardar el contenido del correo en variables
+        $subject = 'Confirmación de Registro';
+        $message = "
+            <h3>Hola {$nombre} {$apellido},</h3>
+            <p>Tu registro ha sido exitoso. Aquí están los detalles:</p>
+            <p><strong>Documento:</strong> {$documento}</p>
+            <p><strong>Número de Solicitud:</strong> {$numSolicitud}</p>
+            <p>Por favor, guarda esta información ya que es importante para futuras consultas.</p>
+            <br>
+            <p>Puede revisar el estado de su solicitud en esta pagina</p>
+            <br>
+            <a href=\"https://registroisunah.xyz/admisiones.php\">Ver solicitud</a>
+        ";
+        $altmess = "Hola {$nombre} {$apellido},\n\nTu registro ha sido exitoso. Aquí están los detalles:\nDocumento: 
+        {$documento}\nNúmero de Solicitud: {$numSolicitud}\nPor favor, guarda esta información.";
+    
+        // Usar register_shutdown_function para ejecutar después de la respuesta
+        register_shutdown_function(function() use ($correo, $nombre, $apellido, $subject, $message, $altmess) {
+            // Pequeña pausa para asegurar que la respuesta se envió primero
+           // usleep(100000); // 100ms (opcional)
+            sendmail($correo, "{$nombre} {$apellido}", $subject, $message, $altmess);
+        });
+    }
 
      /**
      * Obtiene la lista de los aspirantes admitidos 
@@ -793,6 +821,47 @@ class Aspirante {
         $stmt->bind_param('s', $numSolicitud);
         $stmt->execute();
         $stmt->close();
+    }
+
+    /**
+     * Reenvía el correo de confirmación a un aspirante.
+     * 
+     * @param string $numSolicitud Número de solicitud (formato: SOL-XXXXX).
+     * @return bool True si el correo se envió correctamente.
+     * @throws Exception Si no se encuentra el aspirante o falla el envío.
+     */
+    public function reenviarCorreoPorSolicitud($numSolicitud) {
+        // 1. Buscar al aspirante
+        $query = "SELECT nombre, apellido, documento, correo FROM Aspirante WHERE numSolicitud = ?";
+        $stmt = $this->conn->prepare($query);
+        
+        if (!$stmt) {
+            throw new Exception("Error al preparar la consulta: " . $this->conn->error);
+        }
+
+        $stmt->bind_param("s", $numSolicitud);
+        
+        if (!$stmt->execute()) {
+            throw new Exception("Error al ejecutar la consulta: " . $stmt->error);
+        }
+
+        $result = $stmt->get_result();
+        
+        if ($result->num_rows === 0) {
+            throw new Exception("No se encontró el aspirante con número de solicitud: $numSolicitud");
+        }
+        
+        $aspirante = $result->fetch_assoc();
+        $stmt->close();
+        
+        // 2. Enviar correo
+        return $this->enviarCorreo(
+            $aspirante['nombre'],
+            $aspirante['apellido'],
+            $aspirante['documento'],
+            $numSolicitud,
+            $aspirante['correo']
+        );
     }
 }
 ?>
