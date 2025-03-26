@@ -35,7 +35,7 @@
 *        ]
 *    }
 *]
- * 
+ * @author Jose Vargas
  * 
  */
 header('Content-Type: application/json');

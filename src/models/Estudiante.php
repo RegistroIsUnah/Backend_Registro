@@ -115,5 +115,58 @@ class Estudiante {
         
         return $result->fetch_assoc();
     }
+
+    /**
+ * Actualiza los datos del perfil del estudiante
+ * 
+ * @param int $estudianteId
+ * @param array $datosActualizados
+ * @return bool
+ * @throws Exception
+ * @author Jose Vargas
+ * @version 1.0
+ */
+public function actualizarPerfil($estudianteId, $datosActualizados) {
+    // Validar campos permitidos para actualización
+    $camposPermitidos = [
+        'telefono', 
+        'direccion', 
+        'correo_personal'
+    ];
+    
+    $camposActualizar = [];
+    $valores = [];
+    $tipos = '';
+    
+    foreach ($datosActualizados as $campo => $valor) {
+        if (in_array($campo, $camposPermitidos)) {
+            $camposActualizar[] = "$campo = ?";
+            $valores[] = $valor;
+            $tipos .= 's'; // Todos los campos permitidos son strings
+        }
+    }
+    
+    if (empty($camposActualizar)) {
+        throw new Exception("No hay campos válidos para actualizar");
+    }
+    
+    // Construir la consulta SQL
+    $sql = "UPDATE Estudiante SET " . implode(', ', $camposActualizar) . " WHERE estudiante_id = ?";
+    $valores[] = $estudianteId;
+    $tipos .= 'i';
+    
+    $stmt = $this->conn->prepare($sql);
+    $stmt->bind_param($tipos, ...$valores);
+    
+    if (!$stmt->execute()) {
+        throw new Exception("Error al actualizar perfil: " . $stmt->error);
+    }
+    
+    return true;
+}
+
+
+
+
 }
 ?>
