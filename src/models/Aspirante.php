@@ -687,34 +687,50 @@ class Aspirante {
         if (!$stmt) {
             throw new Exception("Error preparando la consulta: " . $this->conn->error);
         }
-
+    
         $stmt->bind_param('s', $numSolicitud);
         $stmt->execute();
         $result = $stmt->get_result();
-
+    
         if ($result->num_rows === 0) {
-            return null; // Si no se encuentra el aspirante
+            return null;
         }
-
-        $aspirante = $result->fetch_assoc();
+    
+        // Procesar todas las filas primero
+        $rows = $result->fetch_all(MYSQLI_ASSOC);
         $stmt->close();
-
-        // Agrupar los motivos de rechazo por tipo de rechazo
-        $rechazos = [];
-        while ($row = $result->fetch_assoc()) {
-            $rechazos[$row['tipo_rechazo']][] = $row['motivo_rechazo'];
-        }
-
-        // Asignamos la lista de rechazos agrupados
+    
+        // Extraer datos básicos del aspirante (primera fila)
+        $aspirante = $rows[0];
+        
+        // Limpiar campos de rechazo del objeto principal
+        unset($aspirante['tipo_rechazo']);
+        unset($aspirante['motivo_rechazo']);
+    
+        // Agrupar rechazos
         $aspirante['rechazos'] = [];
-        foreach ($rechazos as $tipo => $motivos) {
-            $aspirante['rechazos'][] = [
-                'tipo_rechazo' => $tipo,
-                'motivos' => $motivos
-            ];
-
+        foreach ($rows as $row) {
+            if (!empty($row['tipo_rechazo'])) {
+                $tipo = $row['tipo_rechazo'];
+                $motivo = $row['motivo_rechazo'];
+                
+                // Buscar si ya existe el tipo de rechazo
+                $index = array_search($tipo, array_column($aspirante['rechazos'], 'tipo_rechazo'));
+                
+                if ($index === false) {
+                    // Nuevo tipo de rechazo
+                    $aspirante['rechazos'][] = [
+                        'tipo_rechazo' => $tipo,
+                        'motivos' => [$motivo]
+                    ];
+                } else {
+                    // Agregar motivo al tipo existente
+                    if (!in_array($motivo, $aspirante['rechazos'][$index]['motivos'])) {
+                        $aspirante['rechazos'][$index]['motivos'][] = $motivo;
+                    }
+                }
+            }
         }
-
         return $aspirante;
     }
 
