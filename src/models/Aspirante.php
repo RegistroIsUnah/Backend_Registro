@@ -431,66 +431,56 @@ class Aspirante {
     }
 
     
+    
     /**
-     * Obtiene una solicitud pendiente o corregida y la asigna al revisor.
-     *
-     * Se selecciona una solicitud de la tabla Aspirante en la que:
-     *   - estado IN ('PENDIENTE', 'CORREGIDO_PENDIENTE')
-     * Se ordena por fecha_solicitud ascendente y se toma la primera.
-     * Luego, se inserta un registro en RevisionAspirante con el ID del aspirante, el ID del revisor
-     * y la fecha de revisión (NOW()). Si no hay solicitudes disponibles, se retorna NULL.
-     *
-     * @param int $revisor_id ID del revisor que solicita la revisión.
-     * @return array|null Los datos de la solicitud asignada o NULL si no hay solicitudes pendientes.
-     * @throws Exception Si ocurre un error durante la transacción.
+     * Obtiene una solicitud pendiente o corregida SIN asignarla a ningún revisor
+     * 
+     * @return array|null Datos de la solicitud o NULL si no hay pendientes
+     * @throws Exception Si ocurre un error en la consulta
+     * @author Jose Vargas
+     * @version 1.2
      */
     public function obtenerYAsignarSolicitud($revisor_id) {
-        $this->conn->begin_transaction();
         try {
-            // Seleccionar una solicitud que esté pendiente o corregida (ahora filtramos por estado_aspirante_id)
-            $sql = "SELECT A.aspirante_id, A.nombre, A.apellido, A.documento, A.telefono, A.correo, A.foto, A.fotodni, A.numSolicitud, 
-                            A.carrera_principal_id, A.carrera_secundaria_id, A.centro_id, A.certificado_url, A.estado_aspirante_id, A.fecha_solicitud
-                    FROM Aspirante A
-                    INNER JOIN EstadoAspirante E ON A.estado_aspirante_id = E.estado_aspirante_id
-                    WHERE E.nombre IN ('PENDIENTE', 'CORREGIDO_PENDIENTE')
-                    ORDER BY A.fecha_solicitud ASC
+            // Consulta optimizada solo para lectura
+            $sql = "SELECT 
+                        aspirante_id, 
+                        nombre, 
+                        apellido, 
+                        identidad, 
+                        telefono, 
+                        correo, 
+                        foto, 
+                        fotodni, 
+                        numSolicitud, 
+                        carrera_principal_id, 
+                        carrera_secundaria_id, 
+                        centro_id, 
+                        certificado_url, 
+                        estado, 
+                        fecha_solicitud
+                    FROM Aspirante
+                    WHERE estado IN ('PENDIENTE','CORREGIDO_PENDIENTE')
+                    ORDER BY fecha_solicitud ASC
                     LIMIT 1";
-                    
+
             $stmt = $this->conn->prepare($sql);
             if (!$stmt) {
-                throw new Exception("Error preparando la consulta: " . $this->conn->error);
+                throw new Exception("Error en preparación de consulta: " . $this->conn->error);
             }
+
             $stmt->execute();
             $result = $stmt->get_result();
             $solicitud = $result->fetch_assoc();
             $stmt->close();
-    
-            if (!$solicitud) {
-                $this->conn->commit();
-                return null; // No hay solicitudes pendientes
-            }
-    
-            // Insertar la asignación de la revisión en RevisionAspirante
-            $sqlInsert = "INSERT INTO RevisionAspirante (aspirante_id, revisor_usuario_id, fecha_revision)
-                        VALUES (?, ?, NOW())";
-            $stmt = $this->conn->prepare($sqlInsert);
-            if (!$stmt) {
-                throw new Exception("Error preparando la inserción en RevisionAspirante: " . $this->conn->error);
-            }
-            $stmt->bind_param("ii", $solicitud['aspirante_id'], $revisor_id);
-            if (!$stmt->execute()) {
-                throw new Exception("Error insertando en RevisionAspirante: " . $stmt->error);
-            }
-            $stmt->close();
-    
-            $this->conn->commit();
-            return $solicitud;
+            return $solicitud ?: null;
+
+
         } catch (Exception $e) {
-            $this->conn->rollback();
-            throw $e;
+            throw new Exception("Error al obtener solicitud: " . $e->getMessage());
         }
     }
-    
+  
     /**
      * Procesa la revisión de una solicitud de aspirante.
      *
