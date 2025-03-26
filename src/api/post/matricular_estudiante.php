@@ -13,6 +13,9 @@
  * 
  * Ejemplo de URL 
  * servidor:puerto/api/post/matricular_estudiante
+ * 
+ * Metodos soportados:
+ *  POST
  *
  * Ejemplo de solicitud sin laboratorio:
  * {

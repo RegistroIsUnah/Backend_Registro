@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../modules/config/DataBase.php';
+require_once __DIR__ . '/../mail/mail_sender.php';
 
 /**
  * Clase Aspirante
@@ -32,7 +33,7 @@ class Aspirante {
      *
      * @param string $nombre
      * @param string $apellido
-     * @param string $identidad
+     * @param string $documento
      * @param string $telefono
      * @param string $correo
      * @param string $fotoRuta Ruta de la foto del aspirante.
@@ -41,20 +42,22 @@ class Aspirante {
      * @param int|null $carrera_secundaria_id
      * @param int $centro_id
      * @param string $certificadoRuta Ruta del certificado subido.
+     * @param int $tipo_documento_id ID del tipo de documento del aspirante.
      * @return string Número de solicitud generado.
      * @throws Exception Si ocurre un error durante la inserción.
      */
-    public function insertarAspirante($nombre, $apellido, $identidad, $telefono, $correo, $fotoRuta, $fotodniRuta, $carrera_principal_id, $carrera_secundaria_id, $centro_id, $certificadoRuta) {
-        // Se esperan 11 parámetros, por lo tanto 11 marcadores
-        $stmt = $this->conn->prepare("CALL SP_insertarAspirante(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    public function insertarAspirante($nombre, $apellido, $documento, $telefono, $correo, $fotoRuta, $fotodniRuta, $carrera_principal_id, $carrera_secundaria_id, $centro_id, $certificadoRuta, $tipo_documento_id) {
+        // Se esperan 12 parámetros, por lo tanto 12 marcadores
+        $stmt = $this->conn->prepare("CALL SP_insertarAspirante(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
         if (!$stmt) {
             throw new Exception("Error preparando la consulta: " . $this->conn->error);
         }
-        // La cadena de tipos es: 7 strings, 3 enteros, 1 string = "sssssssiiis"
-        if (!$stmt->bind_param("sssssssiiis", 
+    
+        // La cadena de tipos es: 7 strings, 3 enteros, 1 string = "sssssssiiisi"
+        if (!$stmt->bind_param("sssssssiiisi", 
             $nombre, 
             $apellido, 
-            $identidad, 
+            $documento, 
             $telefono, 
             $correo, 
             $fotoRuta,
@@ -62,13 +65,16 @@ class Aspirante {
             $carrera_principal_id, 
             $carrera_secundaria_id, 
             $centro_id, 
-            $certificadoRuta
+            $certificadoRuta,
+            $tipo_documento_id
         )) {
             throw new Exception("Error vinculando parámetros: " . $stmt->error);
         }
+    
         if (!$stmt->execute()) {
             throw new Exception("Error ejecutando la consulta: " . $stmt->error);
         }
+    
         $result = $stmt->get_result();
         $numSolicitud = null;
         if ($result) {
@@ -76,28 +82,89 @@ class Aspirante {
             $numSolicitud = $row['numSolicitud'] ?? null;
             $result->free();
         }
+    
         $stmt->close();
+    
         if (!$numSolicitud) {
             throw new Exception("No se obtuvo el número de solicitud");
         }
+    
+        // Enviar correo de confirmación
+        $this->enviarCorreo($nombre, $apellido, $documento, $numSolicitud, $correo);
+    
         return $numSolicitud;
     }
-
+    
     /**
-     *Obtiene la lista de los aspirantes admitidos 
+     * Función para enviar el correo de confirmación al aspirante.
+     * 
+     * @param string $nombre
+     * @param string $apellido
+     * @param string $documento
+     * @param string $numSolicitud
+     * @param string $correo
+     */
+    /*
+    private function enviarCorreoDeConfirmacion($nombre, $apellido, $documento, $numSolicitud, $correo) {
+        // Guardar el contenido del correo en variables
+        $subject = 'Confirmación de Registro';
+        $message = "
+            <h3>Hola {$nombre} {$apellido},</h3>
+            <p>Tu registro ha sido exitoso. Aquí están los detalles:</p>
+            <p><strong>Documento:</strong> {$documento}</p>
+            <p><strong>Número de Solicitud:</strong> {$numSolicitud}</p>
+            <p>Por favor, guarda esta información ya que es importante para futuras consultas.</p>
+        ";
+        $altmess = "Hola {$nombre} {$apellido},\n\nTu registro ha sido exitoso. Aquí están los detalles:\nDocumento: 
+        {$documento}\nNúmero de Solicitud: {$numSolicitud}\nPor favor, guarda esta información.";
+    
+        // Ejecutar en segundo plano después de la respuesta
+        register_shutdown_function(function() use ($correo, $nombre, $apellido, $subject, $message, $altmess) {
+            sendmail($correo, "{$nombre} {$apellido}", $subject, $message, $altmess);
+        });
+    }*/
+
+    private function enviarCorreo($nombre, $apellido, $documento, $numSolicitud, $correo) {
+        // Guardar el contenido del correo en variables
+        $subject = 'Confirmación de Registro';
+        $message = "
+            <h3>Hola {$nombre} {$apellido},</h3>
+            <p>Tu registro ha sido exitoso. Aquí están los detalles:</p>
+            <p><strong>Documento:</strong> {$documento}</p>
+            <p><strong>Número de Solicitud:</strong> {$numSolicitud}</p>
+            <p>Por favor, guarda esta información ya que es importante para futuras consultas.</p>
+            <br>
+            <p>Puede revisar el estado de su solicitud en esta pagina</p>
+            <br>
+            <a href=\"https://registroisunah.xyz/admisiones.php\">Ver solicitud</a>
+        ";
+        $altmess = "Hola {$nombre} {$apellido},\n\nTu registro ha sido exitoso. Aquí están los detalles:\nDocumento: 
+        {$documento}\nNúmero de Solicitud: {$numSolicitud}\nPor favor, guarda esta información.";
+    
+        // Usar register_shutdown_function para ejecutar después de la respuesta
+        register_shutdown_function(function() use ($correo, $nombre, $apellido, $subject, $message, $altmess) {
+            // Pequeña pausa para asegurar que la respuesta se envió primero
+           // usleep(100000); // 100ms (opcional)
+            sendmail($correo, "{$nombre} {$apellido}", $subject, $message, $altmess);
+        });
+    }
+
+     /**
+     * Obtiene la lista de los aspirantes admitidos 
      * @return string JSON con la lista de los aspirantes admitidos.
      * LOS CAMPOS QUE SE MUESTRAN SON:
      * aspirante_id
-     *identidad
-     *nombre
-     *apellido
-     *correo
-     *telefono
-     *numsolicitud
-     *carrera_principal
-     *carrera_secundaria
-     *centro
-     *Los datos despues de ser obtenidos se pasaron a un csv
+     * documento
+     * nombre
+     * apellido
+     * correo
+     * telefono
+     * numsolicitud
+     * carrera_principal
+     * carrera_secundaria
+     * centro
+     * tipo_documento
+     * Los datos después de ser obtenidos se pasaron a un CSV
      */
     /*
         Ejemplo de respuesta:
@@ -106,7 +173,7 @@ class Aspirante {
             "data": [
                 {
                     "aspirante_id": 1,
-                    "identidad": "0801199901234",
+                    "documento": "0801199901234",
                     "nombre": "Juan",
                     "apellido": "Pérez",
                     "correo": "juan@example.com",
@@ -118,7 +185,7 @@ class Aspirante {
                 },
                 {
                     "aspirante_id": 2,
-                    "identidad": "0801199905678",
+                    "documento": "0801199905678",
                     "nombre": "María",
                     "apellido": "García",
                     "correo": "maria@example.com",
@@ -132,11 +199,11 @@ class Aspirante {
             "error": ""
         }
      */
-
     public function obtenerAspirantesAdmitidos() {
+        // SQL actualizado para usar estado_aspirante_id y tipo_documento_id
         $sql = "SELECT 
                     A.aspirante_id,
-                    A.identidad,
+                    A.documento,
                     A.nombre,
                     A.apellido,
                     A.correo,
@@ -144,48 +211,50 @@ class Aspirante {
                     A.numSolicitud,
                     C_principal.nombre AS carrera_principal,
                     C_secundaria.nombre AS carrera_secundaria,
-                    Cen.nombre AS centro
+                    Cen.nombre AS centro,
+                    T.nombre AS tipo_documento
                 FROM Aspirante A
                 INNER JOIN Carrera C_principal ON A.carrera_principal_id = C_principal.carrera_id
                 LEFT JOIN Carrera C_secundaria ON A.carrera_secundaria_id = C_secundaria.carrera_id
                 INNER JOIN Centro Cen ON A.centro_id = Cen.centro_id
-                WHERE A.estado = 'ADMITIDO'";
+                INNER JOIN TipoDocumento T ON A.tipo_documento_id = T.tipo_documento_id
+                WHERE A.estado_aspirante_id = (SELECT estado_aspirante_id FROM EstadoAspirante WHERE nombre = 'ADMITIDO')";
         
         $result = $this->conn->query($sql);
-        
+
         $response = [
             'success' => false,
             'data' => [],
             'error' => ''
         ];
-        
+
         if (!$result) {
             $response['error'] = "Error en la consulta: " . $this->conn->error;
             return json_encode($response);
         }
-        
+
         $aspirantes = [];
         while ($row = $result->fetch_assoc()) {
             $aspirantes[] = $row;
         }
-        
+
         $response['success'] = true;
         $response['data'] = $aspirantes;
-        
+
         return json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
     }
+
 
     /**
      * Obtiene la lista de los aspirantes admitidos en formato CSV
      * Usando como base la funcion obtenerAspirantesAdmitidos
      * @return string CSV con la lista de los aspirantes admitidos.
      */
-
-     public function exportarAspirantesAdmitidosCSV() {
-        // Consulta SQL para obtener los aspirantes admitidos
+    public function exportarAspirantesAdmitidosCSV() {
+        // Consulta SQL para obtener los aspirantes admitidos con estado_aspirante_id
         $sql = "SELECT 
                     A.aspirante_id,
-                    A.identidad,
+                    A.documento,
                     A.nombre,
                     A.apellido,
                     A.correo,
@@ -198,22 +267,22 @@ class Aspirante {
                 INNER JOIN Carrera C_principal ON A.carrera_principal_id = C_principal.carrera_id
                 LEFT JOIN Carrera C_secundaria ON A.carrera_secundaria_id = C_secundaria.carrera_id
                 INNER JOIN Centro Cen ON A.centro_id = Cen.centro_id
-                WHERE A.estado = 'ADMITIDO'";
-    
+                WHERE A.estado_aspirante_id = (SELECT estado_aspirante_id FROM EstadoAspirante WHERE nombre = 'ADMITIDO')";
+
         // Ejecutar la consulta
         $result = $this->conn->query($sql);
-    
+
         if (!$result) {
             throw new Exception("Error en la consulta: " . $this->conn->error);
         }
-    
+
         // Configurar salida directa a PHP output
         $output = fopen('php://output', 'w');
-    
+
         // Escribir la cabecera del CSV
         fputcsv($output, [
             'aspirante_id',
-            'identidad',
+            'documento',
             'nombre',
             'apellido',
             'correo',
@@ -223,16 +292,15 @@ class Aspirante {
             'carrera_secundaria',
             'centro'
         ]);
-    
+
         // Escribir los datos de los aspirantes
         while ($row = $result->fetch_assoc()) {
             fputcsv($output, $row);
         }
-    
+
         // Cerrar el archivo
         fclose($output);
     }
-
 
     public function evaluarAspirante($aspiranteId) {
         // Obtener notas y datos del aspirante
@@ -361,6 +429,7 @@ class Aspirante {
         $stmt->bind_param("si", $estado, $aspiranteId);
         $stmt->execute();
     }
+
     
     
     /**
@@ -404,15 +473,14 @@ class Aspirante {
             $result = $stmt->get_result();
             $solicitud = $result->fetch_assoc();
             $stmt->close();
-
             return $solicitud ?: null;
+
 
         } catch (Exception $e) {
             throw new Exception("Error al obtener solicitud: " . $e->getMessage());
         }
     }
-
-
+  
     /**
      * Procesa la revisión de una solicitud de aspirante.
      *
@@ -434,19 +502,22 @@ class Aspirante {
             } else {
                 throw new Exception("La acción debe ser 'aceptar' o 'rechazar'");
             }
-            
+    
+            // Obtener el estado_aspirante_id correspondiente a los estados 'ADMITIDO' y 'RECHAZADO'
+            $estadoAspiranteId = $this->obtenerEstadoAspiranteId($nuevoEstado);
+    
             // Actualizar el estado del aspirante
-            $sqlUpdate = "UPDATE Aspirante SET estado = ? WHERE aspirante_id = ?";
+            $sqlUpdate = "UPDATE Aspirante SET estado_aspirante_id = ? WHERE aspirante_id = ?";
             $stmt = $this->conn->prepare($sqlUpdate);
             if (!$stmt) {
                 throw new Exception("Error preparando actualización en Aspirante: " . $this->conn->error);
             }
-            $stmt->bind_param("si", $nuevoEstado, $aspirante_id);
+            $stmt->bind_param("ii", $estadoAspiranteId, $aspirante_id);
             if (!$stmt->execute()) {
                 throw new Exception("Error actualizando el estado del aspirante: " . $stmt->error);
             }
             $stmt->close();
-            
+    
             // Insertar registro en RevisionAspirante
             $sqlInsertRevision = "INSERT INTO RevisionAspirante (aspirante_id, revisor_usuario_id, fecha_revision) VALUES (?, ?, NOW())";
             $stmt = $this->conn->prepare($sqlInsertRevision);
@@ -459,7 +530,7 @@ class Aspirante {
             }
             $revision_id = $stmt->insert_id;
             $stmt->close();
-            
+    
             // Si la acción es rechazar, registrar los motivos
             if (strtolower($accion) === 'rechazar') {
                 if (empty($motivos) || !is_array($motivos)) {
@@ -482,7 +553,7 @@ class Aspirante {
                     $stmt->close();
                 }
             }
-            
+    
             $this->conn->commit();
             return ['revision_id' => $revision_id, 'accion' => strtolower($accion)];
         } catch (Exception $e) {
@@ -491,5 +562,312 @@ class Aspirante {
         }
     }
 
+    /**
+     * Obtiene el ID de estado aspirante correspondiente al nombre.
+     * 
+     * @param string $estado Nombre del estado (ej. 'ADMITIDO', 'RECHAZADO').
+     * @return int El ID del estado aspirante.
+     * @throws Exception Si no se encuentra el estado.
+     */
+    private function obtenerEstadoAspiranteId($estado) {
+        $sql = "SELECT estado_aspirante_id FROM EstadoAspirante WHERE nombre = ?";
+        $stmt = $this->conn->prepare($sql);
+        if (!$stmt) {
+            throw new Exception("Error preparando la consulta: " . $this->conn->error);
+        }
+        $stmt->bind_param("s", $estado);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $row = $result->fetch_assoc();
+        $stmt->close();
+
+        if ($row) {
+            return $row['estado_aspirante_id'];
+        } else {
+            throw new Exception("Estado de aspirante '$estado' no encontrado");
+        }
+    }
+
+    /**
+     * Obtiene los datos de un aspirante por su documento.
+     *
+     * @param string $documento Documento del aspirante.
+     * @return array|null Datos del aspirante o null si no se encuentra.
+     * @throws Exception Si ocurre un error en la consulta.
+     */
+    public function obtenerAspirantePorDocumento($documento) {
+        $sql = "
+        SELECT 
+            a.aspirante_id,
+            a.nombre,
+            a.apellido,
+            a.numSolicitud,
+            a.documento,
+            td.nombre AS tipo_documento,
+            a.fecha_solicitud,
+            c.nombre AS carrera_principal,
+            c2.nombre AS carrera_secundaria     
+        FROM Aspirante a
+        LEFT JOIN Carrera c ON a.carrera_principal_id = c.carrera_id
+        LEFT JOIN Carrera c2 ON a.carrera_secundaria_id = c2.carrera_id
+        LEFT JOIN TipoDocumento td ON a.tipo_documento_id = td.tipo_documento_id
+        WHERE a.documento = ?
+                ";
+
+        $stmt = $this->conn->prepare($sql);
+        if (!$stmt) {
+            throw new Exception("Error preparando la consulta: " . $this->conn->error);
+        }
+
+        $stmt->bind_param('s', $documento);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        if ($result->num_rows === 0) {
+            return null; // Si no se encuentra el aspirante
+        }
+
+        $aspirante = $result->fetch_assoc();
+        $stmt->close();
+
+        return $aspirante;
+    }
+
+    /**
+     * Obtiene los datos de un aspirante por su número de solicitud.
+     *
+     * @param string $numSolicitud Número de solicitud del aspirante.
+     * @return array|null Datos del aspirante o null si no se encuentra.
+     * @throws Exception Si ocurre un error en la consulta.
+     */
+    public function obtenerAspirantePorSolicitud($numSolicitud) {
+        $sql = "
+            SELECT 
+                a.aspirante_id,
+                a.nombre AS aspirante_nombre,
+                a.apellido AS aspirante_apellido,
+                a.documento,
+                a.telefono,
+                a.correo,
+                a.foto,
+                a.fotodni,
+                a.numSolicitud,
+                td.nombre AS tipo_documento,
+                c.nombre AS carrera_principal,
+                c2.nombre AS carrera_secundaria,
+                e.nombre AS estado_aspirante,
+                a.fecha_solicitud,
+                r.fecha_revision,
+                tr.nombre AS tipo_rechazo,
+                mr.descripcion AS motivo_rechazo
+            FROM Aspirante a
+            LEFT JOIN TipoDocumento td ON a.tipo_documento_id = td.tipo_documento_id
+            LEFT JOIN Carrera c ON a.carrera_principal_id = c.carrera_id
+            LEFT JOIN Carrera c2 ON a.carrera_secundaria_id = c2.carrera_id
+            LEFT JOIN EstadoAspirante e ON a.estado_aspirante_id = e.estado_aspirante_id
+            LEFT JOIN RevisionAspirante r ON a.aspirante_id = r.aspirante_id
+            LEFT JOIN AspiranteMotivoRechazo amr ON r.revision_id = amr.revision_id
+            LEFT JOIN MotivoRechazoAspirante mr ON amr.motivo_id = mr.motivo_id
+            LEFT JOIN TipoRechazoSolicitudAspirante tr ON mr.tipo_rechazo_id = tr.tipo_rechazo_id
+            WHERE a.numSolicitud = ?
+            ORDER BY tr.nombre, mr.descripcion;
+        ";
+
+        $stmt = $this->conn->prepare($sql);
+        if (!$stmt) {
+            throw new Exception("Error preparando la consulta: " . $this->conn->error);
+        }
+    
+        $stmt->bind_param('s', $numSolicitud);
+        $stmt->execute();
+        $result = $stmt->get_result();
+    
+        if ($result->num_rows === 0) {
+            return null;
+        }
+    
+        // Procesar todas las filas primero
+        $rows = $result->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
+    
+        // Extraer datos básicos del aspirante (primera fila)
+        $aspirante = $rows[0];
+        
+        // Limpiar campos de rechazo del objeto principal
+        unset($aspirante['tipo_rechazo']);
+        unset($aspirante['motivo_rechazo']);
+    
+        // Agrupar rechazos
+        $aspirante['rechazos'] = [];
+        foreach ($rows as $row) {
+            if (!empty($row['tipo_rechazo'])) {
+                $tipo = $row['tipo_rechazo'];
+                $motivo = $row['motivo_rechazo'];
+                
+                // Buscar si ya existe el tipo de rechazo
+                $index = array_search($tipo, array_column($aspirante['rechazos'], 'tipo_rechazo'));
+                
+                if ($index === false) {
+                    // Nuevo tipo de rechazo
+                    $aspirante['rechazos'][] = [
+                        'tipo_rechazo' => $tipo,
+                        'motivos' => [$motivo]
+                    ];
+                } else {
+                    // Agregar motivo al tipo existente
+                    if (!in_array($motivo, $aspirante['rechazos'][$index]['motivos'])) {
+                        $aspirante['rechazos'][$index]['motivos'][] = $motivo;
+                    }
+                }
+            }
+        }
+        return $aspirante;
+    }
+
+     /**
+     * Actualiza los detalles de un aspirante por su número de solicitud.
+     * También cambia el estado a CORREGIDO_PENDIENTE si el estado actual es RECHAZADO.
+     *
+     * @param string $numSolicitud Número de solicitud del aspirante.
+     * @param array $data Datos a actualizar (campos a actualizar y archivos si es necesario).
+     * @return bool Verdadero si la actualización fue exitosa, falso de lo contrario.
+     * @throws Exception Si ocurre un error en la consulta.
+     */
+    public function actualizarAspirantePorSolicitud($numSolicitud, $data) {
+        $setClause = [];
+        $params = [];
+    
+        if (isset($data['aspirante_nombre'])) {
+            $setClause[] = "nombre = ?";
+            $params[] = $data['aspirante_nombre'];
+        }
+        
+        if (isset($data['aspirante_apellido'])) {
+            $setClause[] = "apellido = ?";
+            $params[] = $data['aspirante_apellido'];
+        }
+    
+        if (isset($data['documento'])) {
+            $setClause[] = "documento = ?";
+            $params[] = $data['documento'];
+        }
+    
+        if (isset($data['telefono'])) {
+            $setClause[] = "telefono = ?";
+            $params[] = $data['telefono'];
+        }
+    
+        if (isset($data['correo'])) {
+            $setClause[] = "correo = ?";
+            $params[] = $data['correo'];
+        }
+    
+        // Aquí se actualizan los campos de archivos usando el valor ya procesado en el controlador
+        if (isset($data['foto'])) {
+            $setClause[] = "foto = ?";
+            $params[] = $data['foto'];
+        }
+    
+        if (isset($data['fotodni'])) {
+            $setClause[] = "fotodni = ?";
+            $params[] = $data['fotodni'];
+        }
+    
+        if (isset($data['certificado_url'])) {
+            $setClause[] = "certificado_url = ?";
+            $params[] = $data['certificado_url'];
+        }
+    
+        if (isset($data['tipo_documento'])) {
+            $setClause[] = "tipo_documento_id = (SELECT tipo_documento_id FROM TipoDocumento WHERE nombre = ?)";
+            $params[] = $data['tipo_documento'];
+        }
+    
+        if (empty($setClause)) {
+            throw new Exception('No hay datos para actualizar');
+        }
+    
+        $sql = "UPDATE Aspirante SET " . implode(", ", $setClause) . " WHERE numSolicitud = ?";
+        $params[] = $numSolicitud;
+    
+        $stmt = $this->conn->prepare($sql);
+        if (!$stmt) {
+            throw new Exception("Error preparando la consulta: " . $this->conn->error);
+        }
+    
+        $types = str_repeat('s', count($params));
+        $stmt->bind_param($types, ...$params);
+        $stmt->execute();
+        $affectedRows = $stmt->affected_rows;
+        $stmt->close();
+    
+        // Se actualiza el estado si el aspirante estaba en RECHAZADO
+        $this->actualizarEstadoSiRechazado($numSolicitud);
+    
+        return $affectedRows > 0;
+    }
+
+    /**
+     * Cambia el estado del aspirante de RECHAZADO a CORREGIDO_PENDIENTE.
+     *
+     * @param string $numSolicitud Número de solicitud del aspirante.
+     * @return void
+     * @throws Exception Si ocurre un error en la consulta.
+     */
+    public function actualizarEstadoSiRechazado($numSolicitud) {
+        $sql = "UPDATE Aspirante 
+                SET estado_aspirante_id = (SELECT estado_aspirante_id FROM EstadoAspirante WHERE nombre = 'CORREGIDO_PENDIENTE') 
+                WHERE numSolicitud = ? AND estado_aspirante_id = (SELECT estado_aspirante_id FROM EstadoAspirante WHERE nombre = 'RECHAZADO')";
+
+        $stmt = $this->conn->prepare($sql);
+        if (!$stmt) {
+            throw new Exception("Error preparando la consulta: " . $this->conn->error);
+        }
+
+        $stmt->bind_param('s', $numSolicitud);
+        $stmt->execute();
+        $stmt->close();
+    }
+
+    /**
+     * Reenvía el correo de confirmación a un aspirante.
+     * 
+     * @param string $numSolicitud Número de solicitud (formato: SOL-XXXXX).
+     * @return bool True si el correo se envió correctamente.
+     * @throws Exception Si no se encuentra el aspirante o falla el envío.
+     */
+    public function reenviarCorreoPorSolicitud($numSolicitud) {
+        // 1. Buscar al aspirante
+        $query = "SELECT nombre, apellido, documento, correo FROM Aspirante WHERE numSolicitud = ?";
+        $stmt = $this->conn->prepare($query);
+        
+        if (!$stmt) {
+            throw new Exception("Error al preparar la consulta: " . $this->conn->error);
+        }
+
+        $stmt->bind_param("s", $numSolicitud);
+        
+        if (!$stmt->execute()) {
+            throw new Exception("Error al ejecutar la consulta: " . $stmt->error);
+        }
+
+        $result = $stmt->get_result();
+        
+        if ($result->num_rows === 0) {
+            throw new Exception("No se encontró el aspirante con número de solicitud: $numSolicitud");
+        }
+        
+        $aspirante = $result->fetch_assoc();
+        $stmt->close();
+        
+        // 2. Enviar correo
+        return $this->enviarCorreo(
+            $aspirante['nombre'],
+            $aspirante['apellido'],
+            $aspirante['documento'],
+            $numSolicitud,
+            $aspirante['correo']
+        );
+    }
 }
 ?>

@@ -29,10 +29,11 @@ class ProcesoMatricula {
         $this->conn = $database->getConnection();
     }
     
-    /**
+ /**
      * Crea un nuevo proceso de matrícula.
      *
-     * Si la fecha_fin ya pasó, se inserta con estado 'INACTIVO'; de lo contrario, 'ACTIVO'.
+     * Si la fecha_fin ya pasó, se inserta con estado 'INACTIVO';
+     * de lo contrario, 'ACTIVO'.
      *
      * @param int $periodo_academico_id ID del período académico.
      * @param string $tipo_proceso Tipo de proceso ('MATRICULA' o 'ADICIONES_CANCELACIONES').
@@ -43,13 +44,29 @@ class ProcesoMatricula {
      */
     public function crearProcesoMatricula($periodo_academico_id, $tipo_proceso, $fecha_inicio, $fecha_fin) {
         // Determinar el estado basado en la fecha_fin:
-        $estado = (strtotime($fecha_fin) < time()) ? 'INACTIVO' : 'ACTIVO';
+        $estado_nombre = (strtotime($fecha_fin) < time()) ? 'INACTIVO' : 'ACTIVO';
         
-        $stmt = $this->conn->prepare("INSERT INTO ProcesoMatricula (periodo_academico_id, tipo_proceso, fecha_inicio, fecha_fin, estado) VALUES (?, ?, ?, ?, ?)");
+        // Obtener el estado_proceso_id correspondiente al estado 'ACTIVO' o 'INACTIVO'
+        $stmt = $this->conn->prepare("SELECT estado_proceso_id FROM EstadoProceso WHERE nombre = ?");
         if (!$stmt) {
             throw new Exception("Error preparando la consulta: " . $this->conn->error);
         }
-        $stmt->bind_param("issss", $periodo_academico_id, $tipo_proceso, $fecha_inicio, $fecha_fin, $estado);
+        $stmt->bind_param("s", $estado_nombre);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        if ($result->num_rows == 0) {
+            throw new Exception("Estado del proceso no válido.");
+        }
+        $row = $result->fetch_assoc();
+        $estado_proceso_id = $row['estado_proceso_id'];
+        $stmt->close();
+
+        // Insertar el nuevo proceso de matrícula con el estado correspondiente
+        $stmt = $this->conn->prepare("INSERT INTO ProcesoMatricula (periodo_academico_id, tipo_proceso, fecha_inicio, fecha_fin, estado_proceso_id) VALUES (?, ?, ?, ?, ?)");
+        if (!$stmt) {
+            throw new Exception("Error preparando la consulta de inserción: " . $this->conn->error);
+        }
+        $stmt->bind_param("isssi", $periodo_academico_id, $tipo_proceso, $fecha_inicio, $fecha_fin, $estado_proceso_id);
         if (!$stmt->execute()) {
             throw new Exception("Error ejecutando la consulta: " . $stmt->error);
         }

@@ -13,7 +13,7 @@
 require_once __DIR__ . '/../models/Seccion.php';
 
 class SeccionController {
-    /**
+   /**
      * Valida y procesa la creación de una sección.
      *
      * Se espera recibir los siguientes campos en $data:
@@ -31,7 +31,7 @@ class SeccionController {
      */
     public function crearSeccion($data, $files) {
         // Validar campos requeridos (clase_id, docente_id, periodo_academico_id, etc.)
-        $required = ['clase_id','docente_id','periodo_academico_id','aula_id','hora_inicio','hora_fin','cupos','dias'];
+        $required = ['clase_id', 'docente_id', 'periodo_academico_id', 'aula_id', 'hora_inicio', 'hora_fin', 'cupos', 'dias'];
         foreach ($required as $field) {
             if (!isset($data[$field]) || empty($data[$field])) {
                 http_response_code(400);
@@ -51,12 +51,10 @@ class SeccionController {
         $dias                 = $data['dias'];
 
         // Manejo de archivo de video (opcional).
-        // Si el front envía "video" como un File, lo subimos; de lo contrario, video_url será NULL.
         $video_url = null;
         if (isset($files['video']) && $files['video']['error'] === UPLOAD_ERR_OK) {
-            
             // Validar tipo de archivo de video 
-            $allowedVideoTypes = ['video/mp4','video/avi','video/mpeg','video/quicktime'];
+            $allowedVideoTypes = ['video/mp4', 'video/avi', 'video/mpeg', 'video/quicktime'];
             if (!in_array($files['video']['type'], $allowedVideoTypes)) {
                 http_response_code(400);
                 echo json_encode(['error' => 'Tipo de video no permitido']);
@@ -68,8 +66,8 @@ class SeccionController {
                 mkdir($uploadsDirVideo, 0755, true);
             }
             $extVideo = pathinfo($files['video']['name'], PATHINFO_EXTENSION);
-            $videoName = uniqid('video_', true).'.'.$extVideo;
-            $fullPathVideo = $uploadsDirVideo.$videoName;
+            $videoName = uniqid('video_', true) . '.' . $extVideo;
+            $fullPathVideo = $uploadsDirVideo . $videoName;
 
             if (!move_uploaded_file($files['video']['tmp_name'], $fullPathVideo)) {
                 http_response_code(500);
@@ -77,10 +75,11 @@ class SeccionController {
                 exit;
             }
             // Guardar la ruta relativa
-            $video_url = 'uploads/videos/'.$videoName;
+            $video_url = 'uploads/videos/' . $videoName;
         }
 
         try {
+            // Instanciar el modelo y crear la sección
             $seccionModel = new Seccion();
             $seccion_id = $seccionModel->crearSeccion(
                 $clase_id,
@@ -122,11 +121,14 @@ class SeccionController {
      * @return void
      */
     public function modificarSeccion($data) {
+        // Validar campos requeridos
         if (!isset($data['seccion_id']) || empty($data['seccion_id'])) {
             http_response_code(400);
             echo json_encode(['error' => "Falta el campo seccion_id"]);
             exit;
         }
+        
+        // Asignar variables con valores de la solicitud
         $seccion_id = intval($data['seccion_id']);
         $docente_id = isset($data['docente_id']) && $data['docente_id'] !== "" ? intval($data['docente_id']) : null;
         $aula_id = isset($data['aula_id']) && $data['aula_id'] !== "" ? intval($data['aula_id']) : null;
@@ -136,13 +138,23 @@ class SeccionController {
         $video_url = isset($data['video_url']) && $data['video_url'] !== "" ? $data['video_url'] : null;
 
         try {
+            // Instanciar el modelo Seccion y llamar a la función para modificar la sección
             $seccionModel = new Seccion();
-            $mensaje = $seccionModel->modificarSeccion($seccion_id, $docente_id, $aula_id, $estado, $motivo_cancelacion, $cupos, $video_url);
+            $mensaje = $seccionModel->modificarSeccion(
+                $seccion_id,
+                $docente_id,
+                $aula_id,
+                $estado,
+                $motivo_cancelacion,
+                $cupos,
+                $video_url
+            );
         } catch (Exception $e) {
             http_response_code(500);
             echo json_encode(['error' => $e->getMessage()]);
             exit;
         }
+
         http_response_code(200);
         echo json_encode(['message' => $mensaje]);
     }

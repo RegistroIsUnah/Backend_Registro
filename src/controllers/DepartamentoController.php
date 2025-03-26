@@ -38,7 +38,7 @@ class DepartamentoController {
 
 
     /**
-     * Estructura los datos agrupando secciones por clase
+     * Estructura los datos agrupando secciones por clase.
      */
     private function procesarDatos($data) {
         $clases = [];
@@ -68,6 +68,8 @@ class DepartamentoController {
         
         return array_values($clases);
     }
+
+
     /**
      * Obtiene clases y secciones por departamento, año y período
      */
@@ -85,34 +87,40 @@ class DepartamentoController {
     public function obtenerClasesPorDepartamento() {
         $params = ['departamentoId', 'anio', 'periodo'];
         
+        // Validar que todos los parámetros estén presentes
         foreach ($params as $param) {
             if (!isset($_GET[$param]) || empty($_GET[$param])) {
                 return $this->error("Parámetro requerido: $param", 400);
             }
         }
-
+    
         try {
             $deptId = (int)$_GET['departamentoId'];
             $anio = (int)$_GET['anio'];
             $periodo = $_GET['periodo'];
-
+    
+            // Validar el parámetro 'periodo'
             if (!in_array($periodo, ['1', '2', '3'])) {
                 return $this->error('Período inválido (valores permitidos: 1, 2, 3)', 400);
             }
-
+    
+            // Llamar al modelo para obtener las clases y secciones filtradas por departamento, año y período
             $data = $this->model->obtenerClasesYSecciones($deptId, $anio, $periodo);
-
+    
+            // Si no hay datos, devolver un error
             if (empty($data)) {
                 return $this->error('No se encontraron clases activas', 404);
             }
-
+    
+            // Procesar los datos y devolverlos
             $response = $this->procesarDatos($data);
             $this->responder($response);
-
+    
         } catch (Exception $e) {
             error_log("Error: " . $e->getMessage());
             $this->error('Error interno del servidor', 500);
         }
     }
+    
 }
 ?>
