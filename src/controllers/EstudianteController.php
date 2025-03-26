@@ -116,5 +116,64 @@ class EstudianteController {
             ]);
         }
     }
+
+    
+    /**
+ * Actualiza el perfil del estudiante
+ * 
+ * @return void
+ * @author Jose Vargas
+ * @version 1.0
+ */
+public function actualizarPerfil() {
+    header('Content-Type: application/json');
+    
+    try {
+        session_start();
+        
+        // Validar autenticación
+        if (!isset($_SESSION['usuario_id']) || !isset($_SESSION['estudiante_id'])) {
+            http_response_code(401);
+            echo json_encode(['error' => 'Debe iniciar sesión como estudiante']);
+            return;
+        }
+        
+        // Obtener método HTTP
+        $metodo = $_SERVER['REQUEST_METHOD'];
+        
+        // Obtener datos según el método
+        if ($metodo === 'PUT' || $metodo === 'POST') {
+            $input = json_decode(file_get_contents('php://input'), true);
+        } elseif ($metodo === 'GET') {
+            $input = $_GET;
+        } else {
+            http_response_code(405);
+            echo json_encode(['error' => 'Método no permitido']);
+            return;
+        }
+        
+        // Validar datos recibidos
+        if (empty($input)) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Datos de actualización requeridos']);
+            return;
+        }
+        
+        // Actualizar perfil
+        $this->modelo->actualizarPerfil($_SESSION['estudiante_id'], $input);
+        
+        echo json_encode([
+            'success' => true,
+            'message' => 'Perfil actualizado exitosamente'
+        ]);
+        
+    } catch (Exception $e) {
+        http_response_code(500);
+        echo json_encode([
+            'success' => false,
+            'error' => $e->getMessage()
+        ]);
+    }
+}
 }
 ?>

@@ -23,6 +23,7 @@
  *     "detalles": [...] 
  *   }
  * }
+ * @author Jose Vargas
  */
 
 require_once __DIR__ . '/../../controllers/AspiranteController.php';
