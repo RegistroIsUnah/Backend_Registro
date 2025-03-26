@@ -470,7 +470,7 @@ public function registrarLibro($titulo, $editorial, $libro_url, $fecha_publicaci
                     l.libro_url,
                     l.fecha_publicacion,
                     l.descripcion,
-                    estl.nombre
+                    estl.nombre AS estado
                 FROM Clase c
                 INNER JOIN ClaseLibro cl ON c.clase_id = cl.clase_id
                 INNER JOIN Libro l ON cl.libro_id = l.libro_id
