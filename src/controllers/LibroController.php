@@ -202,7 +202,7 @@ class LibroController {
     /**
      * Actualiza un libro y sus asociaciones de forma parcial.
      *
-     * Se esperan los siguientes parámetros vía PATCH (multipart/form-data):
+     * Se esperan los siguientes parámetros vía POST (multipart/form-data):
      *   - libro_id: int (requerido)
      *   - titulo: string (opcional)
      *   - editorial: string (opcional)
@@ -214,7 +214,7 @@ class LibroController {
      *   - estado: string (opcional, 'ACTIVO' o 'INACTIVO')
      *   - libro: archivo (opcional, para actualizar el archivo; solo PDF)
      *
-     * Nota: Se recomienda que la solicitud use el método PATCH, de modo que solo se actualicen los campos enviados.
+     * Nota: Se recomienda que la solicitud use el método POST, de modo que solo se actualicen los campos enviados.
      *
      * @param array $data Datos enviados vía PATCH (usualmente a través de POST con override).
      * @param array $files Datos de archivos enviados vía $_FILES.
