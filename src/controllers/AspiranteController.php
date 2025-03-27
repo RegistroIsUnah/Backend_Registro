@@ -265,15 +265,22 @@ class AspiranteController {
                 http_response_code(200);
                 echo json_encode(['mensaje' => 'No hay solicitudes pendientes']);
             } else {
-                http_response_code(200);
-                echo json_encode($solicitud);
+                // Asignamos el revisor a la solicitud si no tiene un revisor asignado
+                $asignado = $solicitudModel->asignarRevisor($solicitud['aspirante_id'], $revisor_id);
+                if ($asignado) {
+                    http_response_code(200);
+                    echo json_encode(['mensaje' => 'Solicitud asignada con éxito', 'solicitud' => $solicitud]);
+                } else {
+                    http_response_code(200);
+                    echo json_encode(['mensaje' => 'La solicitud ya fue revisada o está fuera de tiempo']);
+                }
             }
         } catch (Exception $e) {
             http_response_code(500);
             echo json_encode(['error' => $e->getMessage()]);
         }
     }
-
+    
 
     /*
 
