@@ -212,6 +212,8 @@ CREATE TABLE Aspirante (
     certificado_url VARCHAR(255),
     estado_aspirante_id INT NOT NULL,
     fecha_solicitud DATE NOT NULL,
+    revisor_id INT NULL DEFAULT NULL,
+    fecha_asignacion DATETIME DEFAULT NULL,
     FOREIGN KEY (carrera_principal_id) REFERENCES Carrera(carrera_id),
     FOREIGN KEY (tipo_documento_id) REFERENCES TipoDocumento(tipo_documento_id),
     FOREIGN KEY (estado_aspirante_id) REFERENCES EstadoAspirante(estado_aspirante_id),

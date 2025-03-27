@@ -447,6 +447,7 @@ class Aspirante {
     public function obtenerYAsignarSolicitud($revisor_id) {
         $this->conn->begin_transaction();
         try {
+<<<<<<< Updated upstream
             // Seleccionar una solicitud que esté pendiente o corregida (ahora filtramos por estado_aspirante_id)
             $sql = "SELECT A.aspirante_id, A.nombre, A.apellido, A.documento, A.telefono, A.correo, A.foto, A.fotodni, A.numSolicitud, 
                             A.carrera_principal_id, A.carrera_secundaria_id, A.centro_id, A.certificado_url, A.estado_aspirante_id, A.fecha_solicitud
@@ -456,14 +457,47 @@ class Aspirante {
                     ORDER BY A.fecha_solicitud ASC
                     LIMIT 1";
                     
+=======
+            // Consulta optimizada para obtener solicitudes y liberarlas después de 5 minutos
+            $sql = "SELECT 
+                        aspirante_id, 
+                        nombre, 
+                        apellido, 
+                        documento, 
+                        telefono, 
+                        correo, 
+                        foto, 
+                        fotodni, 
+                        numSolicitud, 
+                        carrera_principal_id, 
+                        carrera_secundaria_id, 
+                        centro_id, 
+                        certificado_url, 
+                        estado_aspirante_id, 
+                        fecha_solicitud, 
+                        revisor_id, 
+                        fecha_asignacion
+                    FROM Aspirante
+                    WHERE (revisor_id IS NULL OR 
+                        (revisor_id IS NOT NULL AND TIMESTAMPDIFF(SECOND, fecha_asignacion, NOW()) > 60)) 
+                    AND estado_aspirante_id IN (SELECT estado_aspirante_id FROM EstadoAspirante WHERE nombre IN ('PENDIENTE', 'CORREGIDO_PENDIENTE'))
+                    ORDER BY fecha_solicitud ASC
+                    LIMIT 1";
+    
+>>>>>>> Stashed changes
             $stmt = $this->conn->prepare($sql);
             if (!$stmt) {
                 throw new Exception("Error preparando la consulta: " . $this->conn->error);
             }
+<<<<<<< Updated upstream
+=======
+    
+>>>>>>> Stashed changes
             $stmt->execute();
             $result = $stmt->get_result();
             $solicitud = $result->fetch_assoc();
             $stmt->close();
+<<<<<<< Updated upstream
     
             if (!$solicitud) {
                 $this->conn->commit();
@@ -485,12 +519,50 @@ class Aspirante {
     
             $this->conn->commit();
             return $solicitud;
+=======
+            
+            // Si no hay solicitud disponible
+            return $solicitud ?: null;
+    
+>>>>>>> Stashed changes
         } catch (Exception $e) {
             $this->conn->rollback();
             throw $e;
         }
     }
     
+<<<<<<< Updated upstream
+=======
+    public function asignarRevisor($aspirante_id, $revisor_id) {
+        try {
+            // Asignar un revisor a una solicitud
+            $sql = "UPDATE Aspirante 
+                    SET revisor_id = ?, fecha_asignacion = NOW() 
+                    WHERE aspirante_id = ? AND (revisor_id IS NULL OR TIMESTAMPDIFF(SECOND, fecha_asignacion, NOW()) > 300)";
+    
+            $stmt = $this->conn->prepare($sql);
+            if (!$stmt) {
+                throw new Exception("Error preparando la consulta: " . $this->conn->error);
+            }
+    
+            $stmt->bind_param("ii", $revisor_id, $aspirante_id);
+            $stmt->execute();
+    
+            if ($stmt->affected_rows > 0) {
+                $stmt->close();
+                return true;  // Se asignó correctamente
+            } else {
+                $stmt->close();
+                return false;  // No se pudo asignar
+            }
+    
+        } catch (Exception $e) {
+            throw new Exception("Error al asignar revisor: " . $e->getMessage());
+        }
+    }
+    
+  
+>>>>>>> Stashed changes
     /**
      * Procesa la revisión de una solicitud de aspirante.
      *
