@@ -447,7 +447,7 @@ class Aspirante {
                         aspirante_id, 
                         nombre, 
                         apellido, 
-                        identidad, 
+                        documento, 
                         telefono, 
                         correo, 
                         foto, 
@@ -457,7 +457,7 @@ class Aspirante {
                         carrera_secundaria_id, 
                         centro_id, 
                         certificado_url, 
-                        estado, 
+                        estado_aspirante_id, 
                         fecha_solicitud
                     FROM Aspirante
                     WHERE estado IN ('PENDIENTE','CORREGIDO_PENDIENTE')
