@@ -632,4 +632,3 @@ CREATE TABLE ClaseRequisito (
     FOREIGN KEY (clase_id) REFERENCES Clase(clase_id),
     FOREIGN KEY (prerequisito_clase_id) REFERENCES Clase(clase_id)
 ) ENGINE=InnoDB;
-
