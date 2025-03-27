@@ -231,7 +231,7 @@ class LibroController {
 
         // Expresiones regulares
         $regexTitulo    = '/^[\w\s\.\-áéíóúÁÉÍÓÚñÑ,!?]+$/u';
-        $regexEditorial = '/^[\w\s\.\-áéíóúÁÉÍÓÚñÑ,!?]+$/u/';
+        $regexEditorial = '/^[\w\s\.\-áéíóúÁÉÍÓÚñÑ,!?]+$/u';
         $regexFecha     = '/^\d{4}-\d{2}-\d{2}$/';
         $regexTexto     = '/^.{0,1000}$/s'; // Hasta 1000 caracteres, opcional
         $regexTag       = '/^\d+$/'; // Se esperan tag IDs numéricos
