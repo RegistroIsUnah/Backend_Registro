@@ -168,5 +168,57 @@ public function actualizarPerfil($estudianteId, $datosActualizados) {
 
 
 
+    /**
+     * Registra una evaluación de docente realizada por el estudiante
+     * 
+     * @param int $docenteId
+     * @param int $periodoId
+     * @param array $respuestas
+     * @return bool
+     * @throws Exception
+     * @author Jose Vargas
+     * @version 1.0
+     */
+    public function registrarEvaluacionDocente($docenteId, $periodoId, $respuestas) {
+        $this->conn->begin_transaction();
+        
+        try {
+            // 1. Insertar evaluación principal
+            $sqlEvaluacion = "INSERT INTO EvaluacionDocente (
+                docente_id, 
+                estudiante_id, 
+                periodo_academico_id, 
+                fecha, 
+                estado_evaluacion_id
+            ) VALUES (?, ?, ?, NOW(), 1)";
+            
+            $stmt = $this->conn->prepare($sqlEvaluacion);
+            $stmt->bind_param("iiii", $docenteId, $estudianteId, $periodoId); // Usar parámetro
+            $stmt->execute();
+            $evaluacionId = $stmt->insert_id;
+
+            // 2. Insertar respuestas individuales
+            foreach ($respuestas as $preguntaId => $respuesta) {
+                $sqlRespuesta = "INSERT INTO RespuestaEvaluacion (
+                    evaluacion_id, 
+                    pregunta_id, 
+                    respuesta
+                ) VALUES (?, ?, ?)";
+                
+                $stmtResp = $this->conn->prepare($sqlRespuesta);
+                $stmtResp->bind_param("iis", $evaluacionId, $preguntaId, $respuesta);
+                $stmtResp->execute();
+            }
+
+            $this->conn->commit();
+            return true;
+
+        } catch (Exception $e) {
+            $this->conn->rollback();
+            throw new Exception("Error al guardar evaluación: " . $e->getMessage());
+        }
+    }
+
+
 }
 ?>
