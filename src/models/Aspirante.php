@@ -442,7 +442,7 @@ class Aspirante {
      */
     public function obtenerYAsignarSolicitud($revisor_id) {
         try {
-            // Consulta optimizada solo para lectura
+            // Consulta optimizada para obtener solicitudes y liberarlas después de 5 minutos
             $sql = "SELECT 
                         aspirante_id, 
                         nombre, 
@@ -458,28 +458,62 @@ class Aspirante {
                         centro_id, 
                         certificado_url, 
                         estado_aspirante_id, 
-                        fecha_solicitud
+                        fecha_solicitud, 
+                        revisor_id, 
+                        fecha_asignacion
                     FROM Aspirante
-                    WHERE estado IN ('PENDIENTE','CORREGIDO_PENDIENTE')
+                    WHERE (revisor_id IS NULL OR 
+                        (revisor_id IS NOT NULL AND TIMESTAMPDIFF(SECOND, fecha_asignacion, NOW()) > 60)) 
+                    AND estado_aspirante_id IN (SELECT estado_aspirante_id FROM EstadoAspirante WHERE nombre IN ('PENDIENTE', 'CORREGIDO_PENDIENTE'))
                     ORDER BY fecha_solicitud ASC
                     LIMIT 1";
-
+    
             $stmt = $this->conn->prepare($sql);
             if (!$stmt) {
                 throw new Exception("Error en preparación de consulta: " . $this->conn->error);
             }
-
+    
             $stmt->execute();
             $result = $stmt->get_result();
             $solicitud = $result->fetch_assoc();
             $stmt->close();
+            
+            // Si no hay solicitud disponible
             return $solicitud ?: null;
-
-
+    
         } catch (Exception $e) {
             throw new Exception("Error al obtener solicitud: " . $e->getMessage());
         }
     }
+    
+    public function asignarRevisor($aspirante_id, $revisor_id) {
+        try {
+            // Asignar un revisor a una solicitud
+            $sql = "UPDATE Aspirante 
+                    SET revisor_id = ?, fecha_asignacion = NOW() 
+                    WHERE aspirante_id = ? AND (revisor_id IS NULL OR TIMESTAMPDIFF(SECOND, fecha_asignacion, NOW()) > 300)";
+    
+            $stmt = $this->conn->prepare($sql);
+            if (!$stmt) {
+                throw new Exception("Error preparando la consulta: " . $this->conn->error);
+            }
+    
+            $stmt->bind_param("ii", $revisor_id, $aspirante_id);
+            $stmt->execute();
+    
+            if ($stmt->affected_rows > 0) {
+                $stmt->close();
+                return true;  // Se asignó correctamente
+            } else {
+                $stmt->close();
+                return false;  // No se pudo asignar
+            }
+    
+        } catch (Exception $e) {
+            throw new Exception("Error al asignar revisor: " . $e->getMessage());
+        }
+    }
+    
   
     /**
      * Procesa la revisión de una solicitud de aspirante.
