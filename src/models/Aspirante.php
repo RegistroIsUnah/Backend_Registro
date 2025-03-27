@@ -431,33 +431,17 @@ class Aspirante {
     }
 
     
+    
     /**
-     * Obtiene una solicitud pendiente o corregida y la asigna al revisor.
-     *
-     * Se selecciona una solicitud de la tabla Aspirante en la que:
-     *   - estado IN ('PENDIENTE', 'CORREGIDO_PENDIENTE')
-     * Se ordena por fecha_solicitud ascendente y se toma la primera.
-     * Luego, se inserta un registro en RevisionAspirante con el ID del aspirante, el ID del revisor
-     * y la fecha de revisión (NOW()). Si no hay solicitudes disponibles, se retorna NULL.
-     *
-     * @param int $revisor_id ID del revisor que solicita la revisión.
-     * @return array|null Los datos de la solicitud asignada o NULL si no hay solicitudes pendientes.
-     * @throws Exception Si ocurre un error durante la transacción.
+     * Obtiene una solicitud pendiente o corregida SIN asignarla a ningún revisor
+     * 
+     * @return array|null Datos de la solicitud o NULL si no hay pendientes
+     * @throws Exception Si ocurre un error en la consulta
+     * @author Jose Vargas
+     * @version 1.2
      */
     public function obtenerYAsignarSolicitud($revisor_id) {
-        $this->conn->begin_transaction();
         try {
-<<<<<<< Updated upstream
-            // Seleccionar una solicitud que esté pendiente o corregida (ahora filtramos por estado_aspirante_id)
-            $sql = "SELECT A.aspirante_id, A.nombre, A.apellido, A.documento, A.telefono, A.correo, A.foto, A.fotodni, A.numSolicitud, 
-                            A.carrera_principal_id, A.carrera_secundaria_id, A.centro_id, A.certificado_url, A.estado_aspirante_id, A.fecha_solicitud
-                    FROM Aspirante A
-                    INNER JOIN EstadoAspirante E ON A.estado_aspirante_id = E.estado_aspirante_id
-                    WHERE E.nombre IN ('PENDIENTE', 'CORREGIDO_PENDIENTE')
-                    ORDER BY A.fecha_solicitud ASC
-                    LIMIT 1";
-                    
-=======
             // Consulta optimizada para obtener solicitudes y liberarlas después de 5 minutos
             $sql = "SELECT 
                         aspirante_id, 
@@ -484,55 +468,24 @@ class Aspirante {
                     ORDER BY fecha_solicitud ASC
                     LIMIT 1";
     
->>>>>>> Stashed changes
             $stmt = $this->conn->prepare($sql);
             if (!$stmt) {
-                throw new Exception("Error preparando la consulta: " . $this->conn->error);
+                throw new Exception("Error en preparación de consulta: " . $this->conn->error);
             }
-<<<<<<< Updated upstream
-=======
     
->>>>>>> Stashed changes
             $stmt->execute();
             $result = $stmt->get_result();
             $solicitud = $result->fetch_assoc();
             $stmt->close();
-<<<<<<< Updated upstream
-    
-            if (!$solicitud) {
-                $this->conn->commit();
-                return null; // No hay solicitudes pendientes
-            }
-    
-            // Insertar la asignación de la revisión en RevisionAspirante
-            $sqlInsert = "INSERT INTO RevisionAspirante (aspirante_id, revisor_usuario_id, fecha_revision)
-                        VALUES (?, ?, NOW())";
-            $stmt = $this->conn->prepare($sqlInsert);
-            if (!$stmt) {
-                throw new Exception("Error preparando la inserción en RevisionAspirante: " . $this->conn->error);
-            }
-            $stmt->bind_param("ii", $solicitud['aspirante_id'], $revisor_id);
-            if (!$stmt->execute()) {
-                throw new Exception("Error insertando en RevisionAspirante: " . $stmt->error);
-            }
-            $stmt->close();
-    
-            $this->conn->commit();
-            return $solicitud;
-=======
             
             // Si no hay solicitud disponible
             return $solicitud ?: null;
     
->>>>>>> Stashed changes
         } catch (Exception $e) {
-            $this->conn->rollback();
-            throw $e;
+            throw new Exception("Error al obtener solicitud: " . $e->getMessage());
         }
     }
     
-<<<<<<< Updated upstream
-=======
     public function asignarRevisor($aspirante_id, $revisor_id) {
         try {
             // Asignar un revisor a una solicitud
@@ -562,7 +515,6 @@ class Aspirante {
     }
     
   
->>>>>>> Stashed changes
     /**
      * Procesa la revisión de una solicitud de aspirante.
      *
