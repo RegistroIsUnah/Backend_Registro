@@ -16,6 +16,7 @@
  * 
  */
 
+header("Access-Control-Allow-Origin: *");
 header('Content-Type: application/json');
 
 if (!isset($_GET['libro_id']) || !is_numeric($_GET['libro_id'])) {

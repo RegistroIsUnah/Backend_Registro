@@ -9,16 +9,30 @@ function generarCSV() {
     
     // Consulta para obtener los datos de los estudiantes y sus exámenes
     $sql = "SELECT 
-                a.identidad,
-                te.nombre AS tipo_examen
+                a.documento,
+                te.nombre AS tipo_examen,
+                CASE 
+                    WHEN ce.carrera_id = a.carrera_principal_id THEN 'Principal'
+                    WHEN ce.carrera_id = a.carrera_secundaria_id THEN 'Secundaria'
+                END AS tipo_carrera,
+                c.nombre AS nombre_carrera
             FROM 
                 Aspirante a
             JOIN 
-                CarreraExamen ce ON a.carrera_principal_id = ce.carrera_id
+                EstadoAspirante est ON a.estado_aspirante_id = est.estado_aspirante_id
+            JOIN 
+                CarreraExamen ce ON (ce.carrera_id = a.carrera_principal_id OR ce.carrera_id = a.carrera_secundaria_id)
             JOIN 
                 TipoExamen te ON ce.tipo_examen_id = te.tipo_examen_id
+            JOIN 
+                Carrera c ON c.carrera_id = ce.carrera_id  -- Relacionamos la carrera directamente con CarreraExamen
             WHERE 
-                a.estado = 'ADMITIDO';"; // Ajusta según el filtro que necesites
+                est.nombre = 'ADMITIDO'
+                AND (a.carrera_principal_id IS NOT NULL OR a.carrera_secundaria_id IS NOT NULL)  -- Aseguramos que tenga al menos una carrera
+            ORDER BY 
+                a.documento, 
+                tipo_carrera,
+                te.nombre"; // Ajusta según el filtro que necesites
     
     $stmt = $conn->prepare($sql);
     if (!$stmt) {
@@ -32,12 +46,12 @@ function generarCSV() {
     $file = fopen($filePath, 'w');
 
     // Escribir la cabecera del CSV
-    fputcsv($file, ['Identidad', 'Tipo de Examen', 'Nota']);
+    fputcsv($file, ['Documento', 'Tipo de Examen', 'Nota']);
     
     // Escribir los datos
     while ($row = $result->fetch_assoc()) {
         // Por cada estudiante, escribir las filas del CSV
-        fputcsv($file, [$row['identidad'], $row['tipo_examen'], '']); // La nota será agregada manualmente luego
+        fputcsv($file, [$row['documento'], $row['tipo_examen'], '']); // La nota será agregada manualmente luego
     }
     
     // Cerrar el archivo
