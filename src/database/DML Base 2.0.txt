@@ -343,12 +343,12 @@ INSERT INTO EstadoLibro (nombre) VALUES
 ('En Reparación'),
 ('Perdido');
 
-INSERT INTO Libro (titulo, editorial, libro_url, fecha_publicacion, descripcion, estado_libro_id) VALUES 
-('Cálculo I', 'Editorial Matemáticas', 'http://example.com/libro1', '2020-01-01', 'Libro de Cálculo I', 1),
-('Diseño Estructural', 'Editorial Ingeniería', 'http://example.com/libro2', '2019-05-15', 'Libro de Diseño Estructural', 2),
-('Anatomía Humana', 'Editorial Medicina', 'http://example.com/libro3', '2021-03-10', 'Libro de Anatomía Humana', 3),
-('Derecho Constitucional', 'Editorial Derecho', 'http://example.com/libro4', '2018-07-20', 'Libro de Derecho Constitucional', 4),
-('Pintura al Óleo', 'Editorial Arte', 'http://example.com/libro5', '2022-09-05', 'Libro de Pintura al Óleo', 5);
+INSERT INTO Libro (titulo, editorial, libro_url, fecha_publicacion, descripcion, isbn_libro, estado_libro_id) VALUES 
+('Cálculo I', 'Editorial Matemáticas', 'http://example.com/libro1', '2020-01-01', 'Libro de Cálculo I', 'A42FFGTG23', 1),
+('Diseño Estructural', 'Editorial Ingeniería', 'http://example.com/libro2', '2019-05-15', 'Libro de Diseño Estructural', 'PKYVV538HY', 2),
+('Anatomía Humana', 'Editorial Medicina', 'http://example.com/libro3', '2021-03-10', 'Libro de Anatomía Humana', '08GUU75NBG', 3),
+('Derecho Constitucional', 'Editorial Derecho', 'http://example.com/libro4', '2018-07-20', 'Libro de Derecho Constitucional', 'A42FKI352', 4),
+('Pintura al Óleo', 'Editorial Arte', 'http://example.com/libro5', '2022-09-05', 'Libro de Pintura al Óleo', 'A4IU09G23', 5);
 
 INSERT INTO Tag (tag_nombre) VALUES 
 ('Matemáticas'),

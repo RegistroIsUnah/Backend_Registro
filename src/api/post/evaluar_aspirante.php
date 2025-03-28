@@ -23,8 +23,11 @@
  *     "detalles": [...] 
  *   }
  * }
+ * @author Jose Vargas
  */
 
+header("Access-Control-Allow-Origin: *");
+ 
 require_once __DIR__ . '/../../controllers/AspiranteController.php';
 
 $controller = new AspiranteController();

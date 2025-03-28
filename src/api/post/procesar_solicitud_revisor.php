@@ -17,9 +17,10 @@
  * @author Jose Vargas
  * @version 1.0
  */
+ header("Access-Control-Allow-Origin: *");
 
-require_once __DIR__ . '/../../controllers/RevisorController.php';
+ require_once __DIR__ . '/../../controllers/RevisorController.php';
 
-$controller = new RevisorController();
-$controller->procesarSolicitudRevisor();
+ $controller = new RevisorController();
+ $controller->procesarSolicitudRevisor();
 ?>

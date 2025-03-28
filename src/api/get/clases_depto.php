@@ -16,6 +16,7 @@
  * 
  */
 
+header("Access-Control-Allow-Origin: *");
 header('Content-Type: application/json');
 
 $dept_id = isset($_GET['dept_id']) ? intval($_GET['dept_id']) : null;

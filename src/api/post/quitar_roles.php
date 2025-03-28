@@ -28,13 +28,13 @@
  * @version 1.0
  * 
  */
+ header("Access-Control-Allow-Origin: *");
+ header('Content-Type: application/json');
 
-header('Content-Type: application/json');
+ $data = $_POST;
 
-$data = $_POST;
+ require_once __DIR__ . '/../../controllers/UsuarioRolController.php';
 
-require_once __DIR__ . '/../../controllers/UsuarioRolController.php';
-
-$controller = new UsuarioRolController();
-$controller->quitarRoles($data);
+ $controller = new UsuarioRolController();
+ $controller->quitarRoles($data);
 ?>

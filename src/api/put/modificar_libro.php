@@ -12,6 +12,7 @@
  *   - libro_id: int (requerido)
  *   - titulo: string (opcional)
  *   - fecha_publicacion: string (YYYY-MM-DD, opcional)
+ *   - isbn_libro: string
  *   - descripcion: string (opcional)
  *   - tags: JSON string (opcional)
  *   - autores: JSON string (opcional)
@@ -31,7 +32,7 @@
  * @version 1.0
  * 
  */
-
+ header("Access-Control-Allow-Origin: *");
  header('Content-Type: application/json');
 
  $data = $_POST;

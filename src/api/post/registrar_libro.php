@@ -12,6 +12,7 @@
  *   - titulo: string
  *   - editorial: string 
  *   - fecha_publicacion: string (YYYY-MM-DD)
+ *   - isbn_libro: string
  *   - descripcion: string
  *   - tags: JSON (por ejemplo: '["Tag1","Tag2"]')
  *   - autores: JSON (por ejemplo: '[{"nombre":"Juan","apellido":"Pérez"},{"nombre":"Ana","apellido":"Gómez"}]')
@@ -31,7 +32,7 @@
  * 
  */
 
-
+ header("Access-Control-Allow-Origin: *");
  header('Content-Type: application/json');
 
  $data = $_POST;

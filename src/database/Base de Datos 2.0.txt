@@ -429,6 +429,7 @@ CREATE TABLE Libro (
     editorial VARCHAR(200) NOT NULL,
     libro_url VARCHAR(255) NOT NULL,
     fecha_publicacion DATE NOT NULL,
+    isbn_libro VARCHAR(200) NOT NULL,
     descripcion TEXT,
     estado_libro_id INT NOT NULL,
     FOREIGN KEY (estado_libro_id) REFERENCES EstadoLibro(estado_libro_id)
@@ -632,3 +633,4 @@ CREATE TABLE ClaseRequisito (
     FOREIGN KEY (clase_id) REFERENCES Clase(clase_id),
     FOREIGN KEY (prerequisito_clase_id) REFERENCES Clase(clase_id)
 ) ENGINE=InnoDB;
+

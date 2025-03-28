@@ -28,13 +28,14 @@ class Libro {
         $this->conn = $database->getConnection();
     }
     
-  /**
+/**
  * Registra un libro y sus asociaciones.
  *
  * @param string $titulo Título del libro.
  * @param string $editorial Editorial del libro.
  * @param string $libro_url Ruta donde se guarda el archivo.
  * @param string $fecha_publicacion Fecha de publicación (YYYY-MM-DD).
+ * @param string $isbn_libro ISBN del libro.
  * @param string $descripcion Descripción del libro.
  * @param string $estado Estado del libro ('ACTIVO' o 'INACTIVO').
  * @param array $tags Array de tag IDs.
@@ -43,7 +44,7 @@ class Libro {
  * @return int ID del libro insertado.
  * @throws Exception Si ocurre un error en la transacción.
  */
-public function registrarLibro($titulo, $editorial, $libro_url, $fecha_publicacion, $descripcion, $estado, $tags, $autores, $clase_id) {
+public function registrarLibro($titulo, $editorial, $libro_url, $fecha_publicacion, $isbn_libro, $descripcion, $estado, $tags, $autores, $clase_id) {
     $this->conn->begin_transaction();
     try {
         // Obtener el estado_libro_id para el estado proporcionado (ACTIVO o INACTIVO)
@@ -60,18 +61,18 @@ public function registrarLibro($titulo, $editorial, $libro_url, $fecha_publicaci
         $estado_libro_id = $row['estado_libro_id'];
         $stmt->close();
 
-        // Insertar en la tabla Libro
-        $stmt = $this->conn->prepare("INSERT INTO Libro (titulo, editorial, libro_url, fecha_publicacion, descripcion, estado_libro_id) VALUES (?, ?, ?, ?, ?, ?)");
+        // Insertar en la tabla Libro, ahora incluyendo el campo isbn_libro
+        $stmt = $this->conn->prepare("INSERT INTO Libro (titulo, editorial, libro_url, fecha_publicacion, isbn_libro, descripcion, estado_libro_id) VALUES (?, ?, ?, ?, ?, ?, ?)");
         if (!$stmt) {
             throw new Exception("Error preparando inserción en Libro: " . $this->conn->error);
         }
-        $stmt->bind_param("sssssi", $titulo, $editorial, $libro_url, $fecha_publicacion, $descripcion, $estado_libro_id);
+        $stmt->bind_param("ssssssi", $titulo, $editorial, $libro_url, $fecha_publicacion, $isbn_libro, $descripcion, $estado_libro_id);
         if (!$stmt->execute()) {
             throw new Exception("Error insertando en Libro: " . $stmt->error);
         }
         $libro_id = $stmt->insert_id;
         $stmt->close();
-        
+
         // Procesar Tags (se espera un array de tag IDs)
         if (!empty($tags) && is_array($tags)) {
             foreach ($tags as $tagId) {
@@ -138,7 +139,7 @@ public function registrarLibro($titulo, $editorial, $libro_url, $fecha_publicaci
     }
 }
 
-    /**
+  /**
      * Actualiza un libro y sus asociaciones de forma parcial.
      *
      * Todos los parámetros (excepto $libro_id) son opcionales; solo se actualizan los que se proporcionen.
@@ -147,6 +148,7 @@ public function registrarLibro($titulo, $editorial, $libro_url, $fecha_publicaci
      * @param int $libro_id ID del libro a actualizar.
      * @param string|null $titulo
      * @param string|null $editorial
+     * @param string|null $isbn_libro  
      * @param string|null $libro_url (ruta del archivo, si se sube uno nuevo)
      * @param string|null $fecha_publicacion (YYYY-MM-DD)
      * @param string|null $descripcion
@@ -157,7 +159,7 @@ public function registrarLibro($titulo, $editorial, $libro_url, $fecha_publicaci
      * @return bool True si la actualización se realizó correctamente.
      * @throws Exception Si ocurre un error en la transacción.
      */
-    public function actualizarLibro($libro_id, $titulo = null, $editorial = null, $libro_url = null, $fecha_publicacion = null, $descripcion = null, $tags = null, $autores = null, $clase_id = null, $estado = null) {
+    public function actualizarLibro($libro_id, $titulo = null, $editorial = null, $isbn_libro = null, $libro_url = null, $fecha_publicacion = null, $descripcion = null, $tags = null, $autores = null, $clase_id = null, $estado = null) {
         $this->conn->begin_transaction();
         try {
             // 1. Obtener estado_libro_id para el estado proporcionado
@@ -180,6 +182,7 @@ public function registrarLibro($titulo, $editorial, $libro_url, $fecha_publicaci
             $updateFields = [];
             $params = [];
             $paramTypes = "";
+            
             if ($titulo !== null && $titulo !== "") {
                 $updateFields[] = "titulo = ?";
                 $params[] = $titulo;
@@ -188,6 +191,23 @@ public function registrarLibro($titulo, $editorial, $libro_url, $fecha_publicaci
             if ($editorial !== null && $editorial !== "") {
                 $updateFields[] = "editorial = ?";
                 $params[] = $editorial;
+                $paramTypes .= "s";
+            }
+            // Nuevo: Verificar y actualizar ISBN si se proporciona
+            if ($isbn_libro !== null && $isbn_libro !== "") {
+                // Verificar duplicidad: ningún otro libro (con distinto libro_id) debe tener este ISBN.
+                $stmt = $this->conn->prepare("SELECT COUNT(*) AS count FROM Libro WHERE isbn_libro = ? AND libro_id <> ?");
+                $stmt->bind_param("si", $isbn_libro, $libro_id);
+                $stmt->execute();
+                $result = $stmt->get_result();
+                $row = $result->fetch_assoc();
+                if ($row['count'] > 0) {
+                    throw new Exception("El ISBN ya se encuentra registrado en otro libro.");
+                }
+                $stmt->close();
+
+                $updateFields[] = "isbn_libro = ?";
+                $params[] = $isbn_libro;
                 $paramTypes .= "s";
             }
             if ($libro_url !== null && $libro_url !== "") {
@@ -210,6 +230,7 @@ public function registrarLibro($titulo, $editorial, $libro_url, $fecha_publicaci
                 $params[] = $estado_libro_id;
                 $paramTypes .= "i";
             }
+            
             if (!empty($updateFields)) {
                 $sql = "UPDATE Libro SET " . implode(", ", $updateFields) . " WHERE libro_id = ?";
                 $params[] = $libro_id;
@@ -311,7 +332,6 @@ public function registrarLibro($titulo, $editorial, $libro_url, $fecha_publicaci
             throw $e;
         }
     }
-
         
     /**
      * Obtiene los detalles de un libro, incluidos sus autores y tags para Estudiante.
@@ -470,13 +490,14 @@ public function registrarLibro($titulo, $editorial, $libro_url, $fecha_publicaci
                     l.libro_url,
                     l.fecha_publicacion,
                     l.descripcion,
-                    estl.nombre
+                    estl.nombre AS estado
                 FROM Clase c
                 INNER JOIN ClaseLibro cl ON c.clase_id = cl.clase_id
                 INNER JOIN Libro l ON cl.libro_id = l.libro_id
                 INNER JOIN EstadoLibro estl ON estl.estado_libro_id = l.estado_libro_id
                 WHERE c.dept_id = ?
-                ORDER BY c.clase_id";
+                ORDER BY c.clase_id
+                LIMIT 100";
         $stmt = $this->conn->prepare($sql);
         if (!$stmt) {
             throw new Exception("Error preparando la consulta: " . $this->conn->error);
@@ -574,7 +595,8 @@ public function registrarLibro($titulo, $editorial, $libro_url, $fecha_publicaci
                         SELECT seccion_id FROM HistorialEstudiante WHERE estudiante_id = ?
                     ) AS t
             )
-            ORDER BY c.clase_id, l.libro_id";
+            ORDER BY c.clase_id, l.libro_id
+            LIMIT 100";
         
         $stmt = $this->conn->prepare($sql);
         if (!$stmt) {

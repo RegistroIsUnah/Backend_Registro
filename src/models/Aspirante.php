@@ -104,47 +104,107 @@ class Aspirante {
      * @param string $numSolicitud
      * @param string $correo
      */
-    /*
-    private function enviarCorreoDeConfirmacion($nombre, $apellido, $documento, $numSolicitud, $correo) {
-        // Guardar el contenido del correo en variables
-        $subject = 'Confirmación de Registro';
-        $message = "
-            <h3>Hola {$nombre} {$apellido},</h3>
-            <p>Tu registro ha sido exitoso. Aquí están los detalles:</p>
-            <p><strong>Documento:</strong> {$documento}</p>
-            <p><strong>Número de Solicitud:</strong> {$numSolicitud}</p>
-            <p>Por favor, guarda esta información ya que es importante para futuras consultas.</p>
-        ";
-        $altmess = "Hola {$nombre} {$apellido},\n\nTu registro ha sido exitoso. Aquí están los detalles:\nDocumento: 
-        {$documento}\nNúmero de Solicitud: {$numSolicitud}\nPor favor, guarda esta información.";
-    
-        // Ejecutar en segundo plano después de la respuesta
-        register_shutdown_function(function() use ($correo, $nombre, $apellido, $subject, $message, $altmess) {
-            sendmail($correo, "{$nombre} {$apellido}", $subject, $message, $altmess);
-        });
-    }*/
-
-    private function enviarCorreo($nombre, $apellido, $documento, $numSolicitud, $correo) {
-        // Guardar el contenido del correo en variables
-        $subject = 'Confirmación de Registro';
-        $message = "
-            <h3>Hola {$nombre} {$apellido},</h3>
-            <p>Tu registro ha sido exitoso. Aquí están los detalles:</p>
-            <p><strong>Documento:</strong> {$documento}</p>
-            <p><strong>Número de Solicitud:</strong> {$numSolicitud}</p>
-            <p>Por favor, guarda esta información ya que es importante para futuras consultas.</p>
-            <br>
-            <p>Puede revisar el estado de su solicitud en esta pagina</p>
-            <br>
-            <a href=\"https://registroisunah.xyz/admisiones.php\">Ver solicitud</a>
-        ";
-        $altmess = "Hola {$nombre} {$apellido},\n\nTu registro ha sido exitoso. Aquí están los detalles:\nDocumento: 
-        {$documento}\nNúmero de Solicitud: {$numSolicitud}\nPor favor, guarda esta información.";
+    function enviarCorreo($nombre, $apellido, $documento, $numSolicitud, $correo) {
+        // Plantilla HTML como la que creamos anteriormente
+        $subject = 'Admisiones';
+        $message = '
+        <!DOCTYPE html>
+        <html lang="es">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Confirmación de Registro</title>
+            <style>
+                body {
+                    font-family: \'Arial\', sans-serif;
+                    background-color: #f4f4f4;
+                    margin: 0;
+                    padding: 20px;
+                    line-height: 1.6;
+                }
+                .container {
+                    max-width: 600px;
+                    margin: 0 auto;
+                    background-color: white;
+                    padding: 30px;
+                    border-radius: 10px;
+                    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+                }
+                .header {
+                    background-color: #3498db;
+                    color: white;
+                    text-align: center;
+                    padding: 20px;
+                    border-radius: 10px 10px 0 0;
+                }
+                .content {
+                    padding: 20px;
+                }
+                .details {
+                    background-color: #f9f9f9;
+                    border-left: 4px solid #3498db;
+                    padding: 15px;
+                    margin: 20px 0;
+                }
+                .btn {
+                    display: inline-block;
+                    background-color: #2ecc71;
+                    color: white;
+                    padding: 12px 25px;
+                    text-decoration: none;
+                    border-radius: 5px;
+                    margin-top: 20px;
+                    transition: background-color 0.3s ease;
+                }
+                .btn:hover {
+                    background-color: #27ae60;
+                }
+                .footer {
+                    text-align: center;
+                    color: #7f8c8d;
+                    margin-top: 20px;
+                    font-size: 0.9em;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <h1>Confirmación de Registro</h1>
+                </div>
+                <div class="content">
+                    <h3>Hola ' . htmlspecialchars($nombre) . ' ' . htmlspecialchars($apellido) . ',</h3>
+                    
+                    <p>Tu registro ha sido exitoso. Aquí están los detalles:</p>
+                    
+                    <div class="details">
+                        <p><strong>Documento:</strong> ' . htmlspecialchars($documento) . '</p>
+                        <p><strong>Número de Solicitud:</strong> ' . htmlspecialchars($numSolicitud) . '</p>
+                    </div>
+                    
+                    <p>Por favor, guarda esta información ya que es importante para futuras consultas.</p>
+                    
+                    <div style="text-align: center;">
+                        <a href="https://registroisunah.xyz/admisiones.php" class="btn">Ver Solicitud</a>
+                    </div>
+                </div>
+                
+                <div class="footer">
+                    <p>© 2025 UNAH | Admisiones</p>
+                </div>
+            </div>
+        </body>
+        </html>
+        ';
+         // Texto plano para clientes de correo que no soporten HTML
+        $altmess = "Hola {$nombre} {$apellido},\n\nTu registro ha sido exitoso. Aquí están los detalles:\n"
+                 . "Documento: {$documento}\n"
+                 . "Número de Solicitud: {$numSolicitud}\n"
+                 . "Por favor, guarda esta información.\n"
+                 . "Puedes ver tu solicitud en: https://registroisunah.xyz/admisiones.php";
     
         // Usar register_shutdown_function para ejecutar después de la respuesta
         register_shutdown_function(function() use ($correo, $nombre, $apellido, $subject, $message, $altmess) {
-            // Pequeña pausa para asegurar que la respuesta se envió primero
-           // usleep(100000); // 100ms (opcional)
             sendmail($correo, "{$nombre} {$apellido}", $subject, $message, $altmess);
         });
     }
@@ -863,23 +923,25 @@ class Aspirante {
         $stmt->close();
     }
 
-    /**
-     * Reenvía el correo de confirmación a un aspirante.
+   /**
+     * Reenvía el correo de confirmación a un aspirante usando su correo electrónico.
      * 
-     * @param string $numSolicitud Número de solicitud (formato: SOL-XXXXX).
+     * @param string $correo Correo electrónico del aspirante.
      * @return bool True si el correo se envió correctamente.
      * @throws Exception Si no se encuentra el aspirante o falla el envío.
      */
-    public function reenviarCorreoPorSolicitud($numSolicitud) {
-        // 1. Buscar al aspirante
-        $query = "SELECT nombre, apellido, documento, correo FROM Aspirante WHERE numSolicitud = ?";
+    public function reenviarCorreoPorEmail($correo) {
+        // 1. Buscar al aspirante por correo
+        $query = "SELECT nombre, apellido, documento, numSolicitud, correo 
+                FROM Aspirante 
+                WHERE correo = ?";
         $stmt = $this->conn->prepare($query);
         
         if (!$stmt) {
             throw new Exception("Error al preparar la consulta: " . $this->conn->error);
         }
 
-        $stmt->bind_param("s", $numSolicitud);
+        $stmt->bind_param("s", $correo);
         
         if (!$stmt->execute()) {
             throw new Exception("Error al ejecutar la consulta: " . $stmt->error);
@@ -888,19 +950,19 @@ class Aspirante {
         $result = $stmt->get_result();
         
         if ($result->num_rows === 0) {
-            throw new Exception("No se encontró el aspirante con número de solicitud: $numSolicitud");
+            throw new Exception("No se encontró ningún aspirante con el correo: $correo");
         }
         
         $aspirante = $result->fetch_assoc();
         $stmt->close();
         
-        // 2. Enviar correo
+        // 2. Enviar correo con todos los datos
         return $this->enviarCorreo(
             $aspirante['nombre'],
             $aspirante['apellido'],
             $aspirante['documento'],
-            $numSolicitud,
-            $aspirante['correo']
+            $aspirante['numSolicitud'],
+            $aspirante['correo'] // Ahora usamos el correo de la BD por seguridad
         );
     }
 }
