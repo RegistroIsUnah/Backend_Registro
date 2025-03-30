@@ -204,7 +204,7 @@ class AspiranteController {
     }    
 
     /**
-     * Genera un CSV con los aspirantes admitidos y fuerza la descarga.
+     * Genera un CSV con los aspirantes admitidos y guarda el archivo en una carpeta específica.
      */
     public function generarCSVAspirantesAdmitidos() {
         // Validar que el método de solicitud sea GET
@@ -214,28 +214,38 @@ class AspiranteController {
             exit;
         }
 
-        // Validar permisos (opcional, dependiendo de tu sistema de autenticación)
-        if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'admin') {
-            http_response_code(403); // Prohibido
-            echo json_encode(['error' => 'No tienes permisos para realizar esta acción']);
-            exit;
-        }
-
         // Intentar generar el CSV
         try {
-            // Configurar headers para descarga
-            header('Content-Type: text/csv; charset=utf-8');
-            header('Content-Disposition: attachment; filename="aspirantes_admitidos.csv"');
+            // Definir la ruta de la carpeta donde se guardará el CSV
+            $uploadsDir = __DIR__ . '/../../uploads/estudiantesaprobados/';
+
+            // Crear la carpeta si no existe
+            if (!is_dir($uploadsDir)) {
+                mkdir($uploadsDir, 0755, true); // Permite la creación de carpetas de forma recursiva
+            }
+
+            // Definir la ruta del archivo CSV
+            $fileName = 'aspirantes_admitidos_' . uniqid() . '.csv'; // Nombre único para el archivo
+            $filePath = $uploadsDir . $fileName;
+            $file = fopen($filePath, 'w'); // Abrir el archivo para escribir
 
             // Verificar que el método exista en el modelo
             if (!method_exists($this->modelo, 'exportarAspirantesAdmitidosCSV')) {
                 throw new Exception("El método exportarAspirantesAdmitidosCSV no existe en el modelo.");
             }
 
-            // Llamar al método del modelo para generar el CSV
-            $this->modelo->exportarAspirantesAdmitidosCSV();
+            // Llamar al método del modelo para generar el CSV y escribir en el archivo
+            $this->modelo->exportarAspirantesAdmitidosCSV($file);
 
-            exit; // Terminar ejecución después de enviar el archivo
+            fclose($file); // Cerrar el archivo
+
+            // Responder con éxito y la ruta del archivo generado
+            echo json_encode([
+                'success' => true,
+                'message' => 'Archivo CSV generado exitosamente.',
+                'file' => '/uploads/estudiantesaprobados/' . $fileName // Ruta accesible para descargar
+            ]);
+            exit; // Terminar ejecución
 
         } catch (Exception $e) {
             // Registrar el error en el log
@@ -247,40 +257,7 @@ class AspiranteController {
             exit;
         }
     }
-  
-    /**
-     * Obtiene una solicitud pendiente o corregida y la asigna al revisor que realiza la petición.
-     *
-     * Se espera recibir el ID del revisor y se retorna la solicitud asignada.
-     *
-     * @param int $revisor_id ID del revisor.
-     * @return void Envía la respuesta en formato JSON.
-     */
-    public function obtenerSolicitudParaRevision($revisor_id) {
-        try {
-            $solicitudModel = new Aspirante();
-            $solicitud = $solicitudModel->obtenerYAsignarSolicitud($revisor_id);
-            
-            if ($solicitud === null) {
-                http_response_code(200);
-                echo json_encode(['mensaje' => 'No hay solicitudes pendientes']);
-            } else {
-                // Asignamos el revisor a la solicitud si no tiene un revisor asignado
-                $asignado = $solicitudModel->asignarRevisor($solicitud['aspirante_id'], $revisor_id);
-                if ($asignado) {
-                    http_response_code(200);
-                    echo json_encode(['mensaje' => 'Solicitud asignada con éxito', 'solicitud' => $solicitud]);
-                } else {
-                    http_response_code(200);
-                    echo json_encode(['mensaje' => 'La solicitud ya fue revisada o está fuera de tiempo']);
-                }
-            }
-        } catch (Exception $e) {
-            http_response_code(500);
-            echo json_encode(['error' => $e->getMessage()]);
-        }
-    }
-    
+
 
     /*
 
@@ -541,52 +518,198 @@ class AspiranteController {
         return 'uploads/' . $folder . '/' . $fileName;
     }
 
-    /**
-     * Acción para reenviar el correo usando el email del aspirante.
-     * 
-     * @return void Envía respuesta JSON.
+
+    //Prueba 
+
+     /**
+     * Procesa el archivo CSV con resultados de exámenes
+     * @param string $filePath Ruta temporal al archivo CSV
+     * @return array Resultados del procesamiento
      */
-    public function reenviarCorreoAction() {
-        // Obtener datos del cuerpo (soporta JSON y form-data)
-        $data = json_decode(file_get_contents('php://input'), true) ?? $_POST;
-        
-        // Validar entrada
-        if (empty($data['correo'])) {
-            http_response_code(400);
-            echo json_encode(['error' => 'Campo "correo" es requerido']);
-            return;
+    public function procesarCSV($filePath) {
+        // Validar archivo
+        $this->validarArchivoCSV($filePath);
+
+        // Leer y agrupar datos
+        $datos = $this->leerCSV($filePath);
+        $agrupado = $this->agruparPorAspirante($datos);
+
+        // Procesar cada aspirante
+        $resultados = [];
+        foreach ($agrupado as $documento => $examenes) {
+            $resultados[$documento] = $this->procesarAspirante($documento, $examenes);
         }
 
-        $correo = trim($data['correo']);
-
-        // Validar formato del correo
-        if (!filter_var($correo, FILTER_VALIDATE_EMAIL)) {
-            http_response_code(400);
-            echo json_encode(['error' => 'Formato de correo electrónico inválido']);
-            return;
-        }
-
-        try {
-            // Procesar
-            $this->modelo->reenviarCorreoPorEmail($correo);
-            
-            // Respuesta exitosa
-            echo json_encode([
-                'success' => true,
-                'message' => 'Correo reenviado exitosamente',
-                'correo' => $correo
-            ]);
-
-        } catch (Exception $e) {
-            // Manejo de errores
-            $statusCode = (strpos($e->getMessage(), 'No se encontró') !== false) ? 404 : 500;
-            http_response_code($statusCode);
-            echo json_encode([
-                'error' => $e->getMessage(),
-                'correo' => $correo
-            ]);
-        }    
+        return $resultados;
     }
 
+    /**
+     * Valida el archivo CSV
+     */
+    private function validarArchivoCSV($filePath) {
+        // Verificación básica de existencia
+        if (!file_exists($filePath) || !is_readable($filePath)) {
+            throw new Exception("No se puede leer el archivo", 400);
+        }
+    
+        try {
+            $handle = fopen($filePath, "r");
+            if (!$handle) {
+                throw new Exception("Error al abrir el archivo", 400);
+            }
+    
+            // Validar encabezados (ahora con 4 columnas)
+            $firstLine = fgetcsv($handle, 1000, ",", '"');
+            if (count($firstLine) < 4 || 
+                strtolower(trim($firstLine[0])) !== 'documento' ||
+                strtolower(trim($firstLine[1])) !== 'tipo de examen' || 
+                strtolower(trim($firstLine[2])) !== 'carrera' ||
+                strtolower(trim($firstLine[3])) !== 'nota') {
+                throw new Exception("Formato de CSV inválido. Encabezados requeridos: Documento, Tipo de Examen, Carrera, Nota", 400);
+            }
+    
+            fclose($handle);
+            return true;
+    
+        } catch (Exception $e) {
+            if (isset($handle) && $handle) fclose($handle);
+            throw new Exception("Error validando CSV: " . $e->getMessage(), 400);
+        }
+    }
+
+    /**
+     * Lee el archivo CSV
+     */
+    private function leerCSV($filePath) {
+        $datos = [];
+        $linea = 0;
+    
+        if (($handle = fopen($filePath, "r")) !== FALSE) {
+            while (($row = fgetcsv($handle, 1000, ",")) !== FALSE) {
+                $linea++;
+                
+                // Saltar encabezados o líneas vacías
+                if ($linea === 1 || count($row) < 4) continue;
+    
+                // Validar formato de línea
+                if (empty($row[0]) || empty($row[1]) || empty($row[2]) || !is_numeric($row[3])) {
+                    continue; // O podrías lanzar una excepción
+                }
+    
+                $datos[] = [
+                    'documento' => trim($row[0]),
+                    'tipo_examen' => trim($row[1]),
+                    'carrera' => trim($row[2]), // Nueva columna
+                    'nota' => (float)$row[3]
+                ];
+            }
+            fclose($handle);
+        }
+    
+        if (empty($datos)) {
+            throw new Exception("El CSV no contiene datos válidos", 400);
+        }
+    
+        return $datos;
+    }
+
+    /**
+     * Agrupa exámenes por documento de aspirante
+     */
+    private function agruparPorAspirante($datos) {
+        $agrupado = [];
+        foreach ($datos as $fila) {
+            $documento = $fila['documento'];
+            if (!isset($agrupado[$documento])) {
+                $agrupado[$documento] = [];
+            }
+            $agrupado[$documento][] = [
+                'tipo_examen' => $fila['tipo_examen'],
+                'carrera' => $fila['carrera'], // Nueva columna
+                'nota' => $fila['nota']
+            ];
+        }
+        return $agrupado;
+    }
+
+    private function procesarAspirante($documento, $examenes) {
+        try {
+            $aspirante = $this->modelo->obtenerAspiranteResultado($documento);
+            
+            if (!$aspirante) {
+                throw new Exception("Aspirante no encontrado");
+            }
+    
+            $resultadosExamenes = [];
+            foreach ($examenes as $examen) {
+                $tipoExamen = $this->modelo->obtenerTipoExamenId($examen['tipo_examen']);
+                $carrera = $this->modelo->obtenerCarreraPorNombre($examen['carrera']);
+    
+                if (!$tipoExamen || !$carrera) {
+                    throw new Exception("Examen o carrera no válidos");
+                }
+    
+                $this->modelo->registrarResultadoExamen(
+                    $aspirante['aspirante_id'],
+                    $tipoExamen['tipo_examen_id'],
+                    $carrera['carrera_id'],
+                    $examen['nota']
+                );
+    
+                $resultadosExamenes[] = [
+                    'tipo_examen' => $examen['tipo_examen'],
+                    'tipo_examen_id' => $tipoExamen['tipo_examen_id'],
+                    'carrera' => $examen['carrera'],
+                    'carrera_id' => $carrera['carrera_id'],
+                    'nota' => $examen['nota'],
+                    'nota_minima' => $tipoExamen['nota_minima'],
+                    'aprobado' => $examen['nota'] >= $tipoExamen['nota_minima']
+                ];
+            }
+            
+            // Verificar aprobación con los datos frescos (sin forzar estado false primero)
+            $aprobado_principal = $this->modelo->verificarAprobacionCarrera(
+                $aspirante['aspirante_id'], 
+                $aspirante['carrera_principal_id']
+            );
+            
+            $aprobado_secundaria = $aspirante['carrera_secundaria_id'] ? 
+                $this->modelo->verificarAprobacionCarrera(
+                    $aspirante['aspirante_id'], 
+                    $aspirante['carrera_secundaria_id']
+                ) : false;
+    
+            // Actualizar estados SOLO después de verificar
+            $this->modelo->actualizarEstadoCarrera(
+                $aspirante['aspirante_id'],
+                $aspirante['carrera_principal_id'],
+                $aprobado_principal
+            );
+            
+            if ($aspirante['carrera_secundaria_id']) {
+                $this->modelo->actualizarEstadoCarrera(
+                    $aspirante['aspirante_id'],
+                    $aspirante['carrera_secundaria_id'],
+                    $aprobado_secundaria
+                );
+            }
+    
+            $this->modelo->enviarCorreoResultados($aspirante, $resultadosExamenes, $aprobado_principal, $aprobado_secundaria);
+    
+            return [
+                'success' => true,
+                'aspirante' => $aspirante['nombre'] . ' ' . $aspirante['apellido'],
+                'examenes' => $resultadosExamenes,
+                'aprobado_principal' => $aprobado_principal,
+                'aprobado_secundaria' => $aprobado_secundaria
+            ];
+        } catch (Exception $e) {
+            return [
+                'success' => false,
+                'error' => $e->getMessage(),
+                'documento' => $documento
+            ];
+        }
+    }
 }
 ?>

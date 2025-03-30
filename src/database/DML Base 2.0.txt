@@ -169,8 +169,8 @@ INSERT INTO Aspirante (nombre, apellido, documento, telefono, correo, foto, foto
 ('Jorge', 'Díaz', '654321987', '555-3344', 'jorge.diaz@example.com', 'foto5.jpg', 'fotodni5.jpg', 'SOL005', 5, 5, NULL, 5, 'certificado5.pdf', 5, '2023-10-05');
 
 INSERT INTO EstadoAspiranteCarrera (nombre) VALUES 
-('APROVADO'),
-('NO_APROVADO'),
+('APROBADO'),
+('NO APROBADO'),
 ('RECHAZADO'),
 ('EN REVISION'),
 ('MATRICULADO');
@@ -254,17 +254,17 @@ INSERT INTO CarreraExamen (carrera_id, tipo_examen_id) VALUES
 
 INSERT INTO ResultadoExamenTipo (nombre) VALUES 
 ('APROBO'),
-('NO APROBO'),
+('NO_APROBO'),
 ('PENDIENTE'),
 ('NO_PRESENTADO'),
 ('CANCELADO');
 
-INSERT INTO ResultadoExamen (aspirante_id, tipo_examen_id, fecha_examen, calificacion, resultado_tipo_id) VALUES 
-(1, 1, '2023-10-01', 7.5, 1),
-(2, 2, '2023-10-02', 6.0, 2),
-(3, 3, '2023-10-03', 5.5, 3),
-(4, 4, '2023-10-04', 8.0, 4),
-(5, 5, '2023-10-05', 4.5, 5);
+INSERT INTO ResultadoExamen (aspirante_id, tipo_examen_id, carrera_id, fecha_examen, calificacion, resultado_tipo_id) VALUES 
+(1, 1, 1, '2023-10-01', 7.5, 1),    
+(2, 2, 2, '2023-10-02', 6.0, 2),    
+(3, 3, 3, '2023-10-03', 5.5, 3),    
+(4, 4, 4, '2023-10-04', 8.0, 4),    
+(5, 5, 5, '2023-10-05', 4.5, 5);    
 
 INSERT INTO EstadoSeccion (nombre) VALUES 
 ('ACTIVA'),
@@ -471,10 +471,10 @@ INSERT INTO EvaluacionDocente (docente_id, estudiante_id, periodo_academico_id, 
 
 INSERT INTO RespuestaEvaluacion (evaluacion_id, pregunta_id, respuesta) VALUES 
 (1, 1, 'Sí'),
-(2, 2, 'Sí'),
-(3, 3, 'Sí'),
-(4, 4, 'Sí'),
-(5, 5, 'Sí');
+(2, 2, 'No'),
+(3, 3, 'A veces'),
+(4, 4, 'Sí, con sugerencias'),
+(5, 5, 'No aplica');
 
 INSERT INTO ClaseRequisito (clase_id, prerequisito_clase_id) VALUES 
 (1, 2),

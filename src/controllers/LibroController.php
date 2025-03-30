@@ -157,7 +157,15 @@ public function registrarLibro($data, $files) {
     }
 
     // Validar que el archivo sea PDF
-    $allowedMimeTypes = ['application/pdf'];
+    $allowedMimeTypes = [
+        'application/pdf',          // PDF
+        'application/epub+zip',     // EPUB
+        'application/vnd.amazon.ebook', // AZW3 (Kindle)
+        'application/x-mobi8-ebook',    // Alternativo para AZW3
+        'text/plain',               // TXT
+        'application/rtf',          // RTF
+        'text/rtf'                  // Alternativo para RTF
+    ];
     if (!in_array($files['libro']['type'], $allowedMimeTypes)) {
         http_response_code(400);
         echo json_encode(['error' => 'Solo se permiten archivos PDF']);
@@ -358,7 +366,15 @@ public function registrarLibro($data, $files) {
             }
             $nombreArchivo = basename($files['libro']['name']);
             // Validar que el archivo sea PDF
-            $allowedMimeTypes = ['application/pdf'];
+            $allowedMimeTypes = [
+                'application/pdf',          // PDF
+                'application/epub+zip',     // EPUB
+                'application/vnd.amazon.ebook', // AZW3 (Kindle)
+                'application/x-mobi8-ebook',    // Alternativo para AZW3
+                'text/plain',               // TXT
+                'application/rtf',          // RTF
+                'text/rtf'                  // Alternativo para RTF
+            ];
             if (!in_array($files['libro']['type'], $allowedMimeTypes)) {
                 http_response_code(400);
                 echo json_encode(['error' => 'Solo se permiten archivos PDF']);

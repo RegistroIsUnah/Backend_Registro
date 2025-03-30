@@ -311,15 +311,17 @@ CREATE TABLE ResultadoExamenTipo (
 );
 
 CREATE TABLE ResultadoExamen (
+    resultado_id INT AUTO_INCREMENT PRIMARY KEY,
     aspirante_id INT NOT NULL,
     tipo_examen_id INT NOT NULL,
+    carrera_id INT NOT NULL,  -- Nuevo campo clave
     fecha_examen DATE NOT NULL,
     calificacion DECIMAL(4,2) NOT NULL,
     resultado_tipo_id INT NOT NULL,
-    FOREIGN KEY (resultado_tipo_id) REFERENCES ResultadoExamenTipo(resultado_tipo_id),
-    PRIMARY KEY (aspirante_id, tipo_examen_id),
     FOREIGN KEY (aspirante_id) REFERENCES Aspirante(aspirante_id),
-    FOREIGN KEY (tipo_examen_id) REFERENCES TipoExamen(tipo_examen_id)
+    FOREIGN KEY (tipo_examen_id) REFERENCES TipoExamen(tipo_examen_id),
+    FOREIGN KEY (carrera_id) REFERENCES Carrera(carrera_id),
+    FOREIGN KEY (resultado_tipo_id) REFERENCES ResultadoExamenTipo(resultado_tipo_id)
 ) ENGINE=InnoDB;
 
 CREATE TABLE EstadoSeccion (
@@ -618,10 +620,10 @@ CREATE TABLE EvaluacionDocente (
 ) ENGINE=InnoDB;
 
 CREATE TABLE RespuestaEvaluacion (
+    resp_evaluacion_id INT AUTO_INCREMENT PRIMARY KEY,
     evaluacion_id INT NOT NULL,
     pregunta_id INT NOT NULL,
     respuesta TEXT NOT NULL,
-    PRIMARY KEY (evaluacion_id, pregunta_id),
     FOREIGN KEY (evaluacion_id) REFERENCES EvaluacionDocente(evaluacion_id),
     FOREIGN KEY (pregunta_id) REFERENCES PreguntaEvaluacion(pregunta_id)
 ) ENGINE=InnoDB;
