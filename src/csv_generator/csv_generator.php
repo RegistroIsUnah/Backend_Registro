@@ -41,29 +41,44 @@ function generarCSV() {
     $stmt->execute();
     $result = $stmt->get_result();
     
+    // Verificar si la carpeta existe, si no, crearla
+    $uploadsDir = __DIR__ . '/../../uploads/notas_aspirantes/';
+    if (!is_dir($uploadsDir)) {
+        mkdir($uploadsDir, 0755, true); // Crear la carpeta de forma recursiva
+    }
+
+    // Definir el nombre del archivo CSV con un nombre único
+    $filePath = $uploadsDir . 'notas_' . uniqid() . '.csv';
+    
     // Abrir el archivo CSV para escribirlo
-    $filePath = __DIR__ . '/../../uploads/aspirantes_examenes.csv';
     $file = fopen($filePath, 'w');
 
-    // Escribir la cabecera del CSV
-    fputcsv($file, ['Documento', 'Tipo de Examen', 'Nota']);
+    // Cabecera con el campo de carrera
+    fputcsv($file, ['Documento', 'Tipo de Examen', 'Carrera', 'Nota']);
     
-    // Escribir los datos
     while ($row = $result->fetch_assoc()) {
-        // Por cada estudiante, escribir las filas del CSV
-        fputcsv($file, [$row['documento'], $row['tipo_examen'], '']); // La nota será agregada manualmente luego
+        // Cada fila mostrará claramente a qué carrera pertenece el examen
+        fputcsv($file, [
+            $row['documento'],
+            $row['tipo_examen'],
+            $row['nombre_carrera'],  // Nombre de la carrera asociada
+            ''  // Espacio para la nota (puedes agregar lógica para la nota si la tienes)
+        ]);
     }
-    
-    // Cerrar el archivo
+        
     fclose($file);
-    echo json_encode(['message' => 'CSV generado exitosamente', 'file' => $filePath]);
+
+    // Responder con la ruta del archivo generado y el número de registros
+    echo json_encode([
+        'message' => 'CSV generado exitosamente', 
+        'file' => '/uploads/estudiantesaprobados/' . basename($filePath),
+        'records' => $result->num_rows
+    ]);
 }
 
-// Llamar a la función para generar el CSV
 try {
     generarCSV();
 } catch (Exception $e) {
     echo json_encode(['error' => $e->getMessage()]);
 }
-
 ?>

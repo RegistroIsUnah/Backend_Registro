@@ -356,7 +356,7 @@ public function registrarLibro($titulo, $editorial, $libro_url, $fecha_publicaci
         $stmt->close();
 
         // 2. Obtener los datos principales del libro (solo si está ACTIVO)
-        $sql = "SELECT libro_id, titulo, editorial, libro_url, fecha_publicacion, descripcion, estado_libro_id
+        $sql = "SELECT libro_id, titulo, editorial, isbn_libro, libro_url, fecha_publicacion, descripcion, estado_libro_id
                 FROM Libro
                 WHERE libro_id = ? AND estado_libro_id = ?";
         $stmt = $this->conn->prepare($sql);
@@ -412,7 +412,7 @@ public function registrarLibro($titulo, $editorial, $libro_url, $fecha_publicaci
      */
     public function obtenerLibroCompleto($libro_id) {
         // 1. Obtener los datos principales del libro (sin filtrar por estado)
-        $sql = "SELECT libro_id, titulo, editorial, libro_url, fecha_publicacion, descripcion, estado_libro_id
+        $sql = "SELECT libro_id, titulo, editorial, libro_url, fecha_publicacion, descripcion, isbn_libro, estado_libro_id
                 FROM Libro 
                 WHERE libro_id = ?";
         $stmt = $this->conn->prepare($sql);
@@ -487,6 +487,7 @@ public function registrarLibro($titulo, $editorial, $libro_url, $fecha_publicaci
                     l.libro_id,
                     l.titulo,
                     l.editorial,
+                    l.isbn_libro,
                     l.libro_url,
                     l.fecha_publicacion,
                     l.descripcion,
@@ -526,6 +527,7 @@ public function registrarLibro($titulo, $editorial, $libro_url, $fecha_publicaci
                 'libro_id' => $row['libro_id'],
                 'titulo' => $row['titulo'],
                 'editorial' => $row['editorial'],
+                'isbn_libro' => $row['isbn_libro'],
                 'libro_url' => $row['libro_url'],
                 'fecha_publicacion' => $row['fecha_publicacion'],
                 'descripcion' => $row['descripcion'],
@@ -579,6 +581,7 @@ public function registrarLibro($titulo, $editorial, $libro_url, $fecha_publicaci
                 l.libro_id,
                 l.titulo,
                 l.editorial,
+                l.isbn_libro,
                 l.libro_url,
                 l.fecha_publicacion,
                 l.descripcion,
@@ -625,6 +628,7 @@ public function registrarLibro($titulo, $editorial, $libro_url, $fecha_publicaci
                 'libro_id'          => $row['libro_id'],
                 'titulo'            => $row['titulo'],
                 'editorial'         => $row['editorial'],
+                'isbn_libro'        => $row['isbn_libro'],
                 'libro_url'         => $row['libro_url'],
                 'fecha_publicacion' => $row['fecha_publicacion'],
                 'descripcion'       => $row['descripcion'],
