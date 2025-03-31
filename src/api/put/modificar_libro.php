@@ -47,4 +47,3 @@
  $controller = new LibroController();
  $controller->actualizarLibro($data, $files);
  ?>
-?>
