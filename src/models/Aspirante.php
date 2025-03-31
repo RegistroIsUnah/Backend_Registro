@@ -484,8 +484,6 @@ class Aspirante {
         $stmt->execute();
     }
 
-    
-    
     /**
      * Obtiene una solicitud pendiente o corregida SIN asignarla a ningún revisor
      * 
@@ -545,7 +543,7 @@ class Aspirante {
             // Asignar un revisor a una solicitud
             $sql = "UPDATE Aspirante 
                     SET revisor_id = ?, fecha_asignacion = NOW() 
-                    WHERE aspirante_id = ? AND (revisor_id IS NULL OR TIMESTAMPDIFF(SECOND, fecha_asignacion, NOW()) > 300)";
+                    WHERE aspirante_id = ? AND (revisor_id IS NULL OR TIMESTAMPDIFF(SECOND, fecha_asignacion, NOW()) > 60)";
     
             $stmt = $this->conn->prepare($sql);
             if (!$stmt) {
@@ -960,14 +958,14 @@ class Aspirante {
         );
     }
 
-//Prueba
-    
- 
+     /**
+     * Obtiene el resultado de un aspirante mediante el documento
+     */
     public function obtenerAspiranteResultado($documento) {
         $query = "SELECT a.*, 
                     cp.nombre as carrera_principal_nombre,
                     cs.nombre as carrera_secundaria_nombre,
-                    a.correo  -- Asegúrate de incluir el correo aquí
+                    a.correo  
                 FROM Aspirante a
                 LEFT JOIN Carrera cp ON a.carrera_principal_id = cp.carrera_id
                 LEFT JOIN Carrera cs ON a.carrera_secundaria_id = cs.carrera_id
@@ -1353,6 +1351,5 @@ class Aspirante {
             throw new Exception("Error al enviar el correo a {$aspirante['correo']}");
         }
     }
-    
 }
 ?>

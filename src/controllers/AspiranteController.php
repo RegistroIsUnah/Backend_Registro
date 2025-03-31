@@ -518,9 +518,6 @@ class AspiranteController {
         return 'uploads/' . $folder . '/' . $fileName;
     }
 
-
-    //Prueba 
-
      /**
      * Procesa el archivo CSV con resultados de exámenes
      * @param string $filePath Ruta temporal al archivo CSV
@@ -709,6 +706,49 @@ class AspiranteController {
                 'error' => $e->getMessage(),
                 'documento' => $documento
             ];
+        }
+    }
+
+    /**
+     * Obtiene una solicitud pendiente o corregida para revisión y asigna al revisor.
+     *
+     * @param int $revisor_id ID del revisor que se le asignará la solicitud.
+     * @return void Responde con el resultado en formato JSON.
+     */
+    public function obtenerSolicitudParaRevision($revisor_id) {
+        try {
+            // Llamar al modelo para obtener y asignar la solicitud
+            $solicitud = $this->modelo->obtenerYAsignarSolicitud($revisor_id);
+
+            // Si hay una solicitud disponible, la asignamos
+            if ($solicitud) {
+                // Asignar revisor a la solicitud
+                $asignada = $this->modelo->asignarRevisor($solicitud['aspirante_id'], $revisor_id);
+
+                // Devolver respuesta de éxito
+                if ($asignada) {
+                    echo json_encode([
+                        'success' => true,
+                        'message' => 'Solicitud asignada correctamente.',
+                        'solicitud' => $solicitud
+                    ]);
+                    return;
+                } else {
+                    // Si no se pudo asignar la solicitud
+                    http_response_code(400);
+                    echo json_encode(['error' => 'No se pudo asignar la solicitud']);
+                    return;
+                }
+            } else {
+                // Si no hay solicitudes pendientes
+                http_response_code(404);
+                echo json_encode(['message' => 'No hay solicitudes pendientes para asignar']);
+                return;
+            }
+        } catch (Exception $e) {
+            // Si ocurre un error en la consulta o en la asignación
+            http_response_code(500);
+            echo json_encode(['error' => 'Error al obtener la solicitud: ' . $e->getMessage()]);
         }
     }
 }

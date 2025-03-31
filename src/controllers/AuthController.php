@@ -23,33 +23,46 @@ require_once __DIR__ . '/../models/Usuario.php';
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
         }
-        
+    
         $username = trim($username);
         $password = trim($password);
-        
+    
         $db = new DataBase();
         $conn = $db->getConnection();
-
-        // Se utiliza el modelo Usuario para obtener los datos
+    
+        // Obtener los datos del usuario
         $stmt = $conn->prepare('SELECT usuario_id, username, password FROM Usuario WHERE username = ?');
         $stmt->bind_param('s', $username);
         $stmt->execute();
         $result = $stmt->get_result();
-
+    
         if ($result->num_rows === 0) {
             http_response_code(401);
             echo json_encode(['error' => 'Credenciales inválidas']);
             exit;
         }
-
+    
         $user = $result->fetch_assoc();
-        if ($password !== $user['password']) {
-            http_response_code(401);
-            echo json_encode(['error' => 'Credenciales inválidas']);
-            exit;
+        $storedPassword = $user['password'];
+    
+        // Verificar si la contraseña almacenada está hasheada
+        if (password_get_info($storedPassword)['algo']) {
+            // Si la contraseña está hasheada, utilizar password_verify()
+            if (!password_verify($password, $storedPassword)) {
+                http_response_code(401);
+                echo json_encode(['error' => 'Credenciales inválidas']);
+                exit;
+            }
+        } else {
+            // Si la contraseña no está hasheada, comparar directamente
+            if ($password !== $storedPassword) {
+                http_response_code(401);
+                echo json_encode(['error' => 'Credenciales inválidas']);
+                exit;
+            }
         }
-
-        // Obtener roles del usuario desde la tabla UsuarioRol
+    
+        // Obtener roles del usuario
         $roles = [];
         $stmtRoles = $conn->prepare('SELECT r.nombre FROM Rol r
                                     INNER JOIN UsuarioRol ur ON r.rol_id = ur.rol_id
@@ -57,14 +70,14 @@ require_once __DIR__ . '/../models/Usuario.php';
         $stmtRoles->bind_param('i', $user['usuario_id']);
         $stmtRoles->execute();
         $resultRoles = $stmtRoles->get_result();
-        
+    
         while ($role = $resultRoles->fetch_assoc()) {
             $roles[] = $role['nombre'];
         }
-
+    
         $userDetails = [];
         $userDetails['user_id'] = $user['usuario_id']; // Siempre se incluye el usuario_id
-
+    
         // Obtener datos de Docente (si aplica)
         if (in_array('Docente', $roles)) {
             $stmtDocente = $conn->prepare('SELECT docente_id, nombre, apellido, correo, foto FROM Docente WHERE usuario_id = ?');
@@ -77,7 +90,7 @@ require_once __DIR__ . '/../models/Usuario.php';
                 $userDetails['docente'] = $docenteData;  // Agregamos todos los detalles del docente
             }
         }
-
+    
         // Obtener datos de Estudiante (si aplica)
         if (in_array('Estudiante', $roles)) {
             $stmtEstudiante = $conn->prepare('SELECT estudiante_id, nombre, apellido, correo_personal, telefono, direccion 
@@ -91,7 +104,7 @@ require_once __DIR__ . '/../models/Usuario.php';
                 $userDetails['estudiante'] = $estudianteData; // Agregar los detalles del estudiante
             }
         }
-
+    
         // Verificar si es revisor
         if (in_array('Revisor', $roles)) {
             $stmtRevisor = $conn->prepare('SELECT revisor_id FROM Revisor WHERE usuario_id = ?');
@@ -101,17 +114,19 @@ require_once __DIR__ . '/../models/Usuario.php';
             if ($resultRevisor->num_rows > 0) {
                 $revisorData = $resultRevisor->fetch_assoc();
                 $userDetails['revisor_id'] = $revisorData['revisor_id']; // Agregar revisor_id
+            } else {
+                $userDetails['error'] = 'El usuario no es revisor'; // Si no es revisor
             }
         }
-
+    
         // Guardar en la sesión
         $_SESSION['user_id'] = $user['usuario_id'];
         $_SESSION['username'] = $user['username'];
         $_SESSION['roles'] = $roles;
-        $_SESSION['revisor_id'] = $revisorData['revisor_id'];
-        
+        $_SESSION['revisor_id'] = isset($revisorData['revisor_id']) ? $revisorData['revisor_id'] : null;
+    
         $token = session_id();
-
+    
         $response = [
             'token' => $token,
             'user' => [
@@ -122,10 +137,11 @@ require_once __DIR__ . '/../models/Usuario.php';
             ],
             'message' => 'Inicio de sesión exitoso'
         ];
-
+    
         echo json_encode($response);
     }
-
+    
+    
     /**
      * Cierra la sesión del usuario actual.
      *
