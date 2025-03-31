@@ -169,8 +169,6 @@ public function actualizarPerfil($estudianteId, $datosActualizados) {
 
 
 
-<<<<<<< Updated upstream
-=======
     /**
      * Registra una evaluación de docente realizada por el estudiante
      * 
@@ -540,6 +538,5 @@ public function actualizarPerfil($estudianteId, $datosActualizados) {
             sendmail($correo, $nombreCompleto, $subject, $message, $altMessage);
         });
     }
->>>>>>> Stashed changes
 }
 ?>

@@ -119,64 +119,128 @@ class EstudianteController {
 
     
     /**
- * Actualiza el perfil del estudiante
- * 
- * @return void
- * @author Jose Vargas
- * @version 1.0
- */
-public function actualizarPerfil() {
-    header('Content-Type: application/json');
-    
-    try {
-        session_start();
+     * Actualiza el perfil del estudiante
+     * 
+     * @return void
+     * @author Jose Vargas
+     * @version 1.0
+     */
+    public function actualizarPerfil() {
+        header('Content-Type: application/json');
         
-        // Validar autenticación
-        if (!isset($_SESSION['usuario_id']) || !isset($_SESSION['estudiante_id'])) {
-            http_response_code(401);
-            echo json_encode(['error' => 'Debe iniciar sesión como estudiante']);
-            return;
+        try {
+            session_start();
+            
+            // Validar autenticación
+            if (!isset($_SESSION['usuario_id']) || !isset($_SESSION['estudiante_id'])) {
+                http_response_code(401);
+                echo json_encode(['error' => 'Debe iniciar sesión como estudiante']);
+                return;
+            }
+            
+            // Obtener método HTTP
+            $metodo = $_SERVER['REQUEST_METHOD'];
+            
+            // Obtener datos según el método
+            if ($metodo === 'PUT' || $metodo === 'POST') {
+                $input = json_decode(file_get_contents('php://input'), true);
+            } elseif ($metodo === 'GET') {
+                $input = $_GET;
+            } else {
+                http_response_code(405);
+                echo json_encode(['error' => 'Método no permitido']);
+                return;
+            }
+            
+            // Validar datos recibidos
+            if (empty($input)) {
+                http_response_code(400);
+                echo json_encode(['error' => 'Datos de actualización requeridos']);
+                return;
+            }
+            
+            // Actualizar perfil
+            $this->modelo->actualizarPerfil($_SESSION['estudiante_id'], $input);
+            
+            echo json_encode([
+                'success' => true,
+                'message' => 'Perfil actualizado exitosamente'
+            ]);
+            
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode([
+                'success' => false,
+                'error' => $e->getMessage()
+            ]);
         }
-        
-        // Obtener método HTTP
-        $metodo = $_SERVER['REQUEST_METHOD'];
-        
-        // Obtener datos según el método
-        if ($metodo === 'PUT' || $metodo === 'POST') {
-            $input = json_decode(file_get_contents('php://input'), true);
-        } elseif ($metodo === 'GET') {
-            $input = $_GET;
-        } else {
-            http_response_code(405);
-            echo json_encode(['error' => 'Método no permitido']);
-            return;
-        }
-        
-        // Validar datos recibidos
-        if (empty($input)) {
-            http_response_code(400);
-            echo json_encode(['error' => 'Datos de actualización requeridos']);
-            return;
-        }
-        
-        // Actualizar perfil
-        $this->modelo->actualizarPerfil($_SESSION['estudiante_id'], $input);
-        
-        echo json_encode([
-            'success' => true,
-            'message' => 'Perfil actualizado exitosamente'
-        ]);
-        
-    } catch (Exception $e) {
-        http_response_code(500);
-        echo json_encode([
-            'success' => false,
-            'error' => $e->getMessage()
-        ]);
     }
-<<<<<<< Updated upstream
-}
-=======
+
+    /**
+     * Registra la evaluación de un docente realizada por el estudiante
+     * 
+     * @param array $data Datos de la evaluación en formato array
+     * @return void Retorna una respuesta JSON con el resultado
+     * @author Jose Vargas
+     * @version 1.0
+     */
+    public function registrarEvaluacionDocente($data) {
+        header('Content-Type: application/json');
+        
+        try {
+            // 1. Validar sesión y rol
+            session_start();
+            if (!isset($_SESSION['usuario_id'])) {
+                throw new Exception('Debe iniciar sesión para realizar esta acción', 401);
+            }
+
+            if ($_SESSION['rol'] !== 'estudiante') {
+                throw new Exception('Solo los estudiantes pueden evaluar docentes', 403);
+            }
+
+            // 2. Validar campos requeridos
+            $camposRequeridos = ['docente_id', 'periodo_id', 'respuestas'];
+            foreach ($camposRequeridos as $campo) {
+                if (empty($data[$campo])) {
+                    throw new Exception("El campo '$campo' es requerido", 400);
+                }
+            }
+
+            // 3. Validar estructura de respuestas
+            if (!is_array($data['respuestas']) || empty($data['respuestas'])) {
+                throw new Exception("Las respuestas deben ser un array no vacío", 400);
+            }
+
+            // 4. Registrar evaluación
+            $this->modelo->registrarEvaluacionDocente(
+                $_SESSION['estudiante_id'], // Obtenido de la sesión
+                $data['docente_id'],
+                $data['periodo_id'],
+                $data['respuestas']
+            );
+
+            // 5. Respuesta exitosa
+            echo json_encode([
+                'success' => true,
+                'message' => 'Evaluación registrada correctamente',
+                'data' => [
+                    'docente_id' => $data['docente_id'],
+                    'preguntas_respondidas' => count($data['respuestas'])
+                ]
+            ]);
+
+        } catch (Exception $e) {
+            // Manejo de errores
+            $statusCode = $e->getCode() >= 400 ? $e->getCode() : 500;
+            http_response_code($statusCode);
+            
+            echo json_encode([
+                'success' => false,
+                'error' => $e->getMessage(),
+                'code' => $statusCode
+            ]);
+        }
+    }
 
     //Prueba
 
@@ -257,6 +321,5 @@ public function actualizarPerfil() {
             'error_count' => $errorCount
         ]);
     }
->>>>>>> Stashed changes
 }
 ?>

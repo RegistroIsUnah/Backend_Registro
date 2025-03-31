@@ -139,8 +139,8 @@ CREATE TABLE Estudiante (
     telefono VARCHAR(20),
     direccion VARCHAR(255),
     centro_id INT NOT NULL,
-    indice_global DECIMAL(4,2),
-    indice_periodo DECIMAL(4,2),
+    indice_global DECIMAL(5,2),
+    indice_periodo DECIMAL(5,2),
     FOREIGN KEY (usuario_id) REFERENCES Usuario(usuario_id),
     FOREIGN KEY (centro_id) REFERENCES Centro(centro_id)
 ) ENGINE=InnoDB;
