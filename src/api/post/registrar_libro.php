@@ -14,7 +14,7 @@
  *   - fecha_publicacion: string (YYYY-MM-DD)
  *   - isbn_libro: string
  *   - descripcion: string
- *   - tags: JSON (por ejemplo: '["Tag1","Tag2"]')
+ *   - tags: JSON (por ejemplo: '["1","2", "Historia", "Educación"]') //se manda el id del tag o el nombre y se registra si no existe
  *   - autores: JSON (por ejemplo: '[{"nombre":"Juan","apellido":"Pérez"},{"nombre":"Ana","apellido":"Gómez"}]')
  *   - clase_id: int (opcional)
  *   - libro: archivo (el documento del libro a subir)

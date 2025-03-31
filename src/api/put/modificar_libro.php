@@ -9,15 +9,19 @@
  *  POST
  * 
  * Se espera recibir (multipart/form-data) los siguientes parámetros:
- *   - libro_id: int (requerido)
- *   - titulo: string (opcional)
- *   - fecha_publicacion: string (YYYY-MM-DD, opcional)
+ * 
+ * Todos los campos son opcionales.
+ * 
+ *   - titulo: string
+ *   - editorial: string 
+ *   - fecha_publicacion: string (YYYY-MM-DD)
  *   - isbn_libro: string
- *   - descripcion: string (opcional)
- *   - tags: JSON string (opcional)
- *   - autores: JSON string (opcional)
+ *   - descripcion: string
+ *   - tags: JSON (por ejemplo: '["1","2", "Historia", "Educación"]') //se manda el id del tag o el nombre y se registra si no existe
+ *   - autores: JSON (por ejemplo: '[{"nombre":"Juan","apellido":"Pérez"},{"nombre":"Ana","apellido":"Gómez"}]')
  *   - clase_id: int (opcional)
- *   - libro: archivo (opcional, nuevo archivo para actualizar)
+ *   - libro: archivo (el documento del libro a subir)
+ *   - rol: string (rol del usuario; en un sistema real se obtendría de la sesión/autenticación)
  *
  * Responde en formato JSON.
  * 

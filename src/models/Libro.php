@@ -28,116 +28,137 @@ class Libro {
         $this->conn = $database->getConnection();
     }
     
-/**
- * Registra un libro y sus asociaciones.
- *
- * @param string $titulo Título del libro.
- * @param string $editorial Editorial del libro.
- * @param string $libro_url Ruta donde se guarda el archivo.
- * @param string $fecha_publicacion Fecha de publicación (YYYY-MM-DD).
- * @param string $isbn_libro ISBN del libro.
- * @param string $descripcion Descripción del libro.
- * @param string $estado Estado del libro ('ACTIVO' o 'INACTIVO').
- * @param array $tags Array de tag IDs.
- * @param array $autores Array de arrays con claves 'nombre' y 'apellido'.
- * @param int $clase_id ID de la clase a asociar (0 si no se asocia).
- * @return int ID del libro insertado.
- * @throws Exception Si ocurre un error en la transacción.
- */
-public function registrarLibro($titulo, $editorial, $libro_url, $fecha_publicacion, $isbn_libro, $descripcion, $estado, $tags, $autores, $clase_id) {
-    $this->conn->begin_transaction();
-    try {
-        // Obtener el estado_libro_id para el estado proporcionado (ACTIVO o INACTIVO)
-        $stmt = $this->conn->prepare("SELECT estado_libro_id FROM EstadoLibro WHERE nombre = ?");
-        $stmt->bind_param("s", $estado);
-        if (!$stmt->execute()) {
-            throw new Exception("Error obteniendo estado del libro: " . $stmt->error);
-        }
-        $result = $stmt->get_result();
-        if ($result->num_rows == 0) {
-            throw new Exception("Estado de libro no válido.");
-        }
-        $row = $result->fetch_assoc();
-        $estado_libro_id = $row['estado_libro_id'];
-        $stmt->close();
-
-        // Insertar en la tabla Libro, ahora incluyendo el campo isbn_libro
-        $stmt = $this->conn->prepare("INSERT INTO Libro (titulo, editorial, libro_url, fecha_publicacion, isbn_libro, descripcion, estado_libro_id) VALUES (?, ?, ?, ?, ?, ?, ?)");
-        if (!$stmt) {
-            throw new Exception("Error preparando inserción en Libro: " . $this->conn->error);
-        }
-        $stmt->bind_param("ssssssi", $titulo, $editorial, $libro_url, $fecha_publicacion, $isbn_libro, $descripcion, $estado_libro_id);
-        if (!$stmt->execute()) {
-            throw new Exception("Error insertando en Libro: " . $stmt->error);
-        }
-        $libro_id = $stmt->insert_id;
-        $stmt->close();
-
-        // Procesar Tags (se espera un array de tag IDs)
-        if (!empty($tags) && is_array($tags)) {
-            foreach ($tags as $tagId) {
-                $tagId = (int)$tagId;
-                $stmt = $this->conn->prepare("INSERT INTO TagLibro (libro_id, tag_id) VALUES (?, ?)");
-                $stmt->bind_param("ii", $libro_id, $tagId);
-                if (!$stmt->execute()) {
-                    throw new Exception("Error insertando en TagLibro: " . $stmt->error);
-                }
-                $stmt->close();
+    /**
+     * Registra un libro y sus asociaciones.
+     *
+     * @param string $titulo Título del libro.
+     * @param string $editorial Editorial del libro.
+     * @param string $libro_url Ruta donde se guarda el archivo.
+     * @param string $fecha_publicacion Fecha de publicación (YYYY-MM-DD).
+     * @param string $isbn_libro ISBN del libro.
+     * @param string $descripcion Descripción del libro.
+     * @param string $estado Estado del libro ('ACTIVO' o 'INACTIVO').
+     * @param array $tags Array de tag IDs.
+     * @param array $autores Array de arrays con claves 'nombre' y 'apellido'.
+     * @param int $clase_id ID de la clase a asociar (0 si no se asocia).
+     * @return int ID del libro insertado.
+     * @throws Exception Si ocurre un error en la transacción.
+     */
+    public function registrarLibro($titulo, $editorial, $libro_url, $fecha_publicacion, $isbn_libro, $descripcion, $estado, $tags, $autores, $clase_id) {
+        $this->conn->begin_transaction();
+        try {
+            // Obtener el estado_libro_id para el estado proporcionado (ACTIVO o INACTIVO)
+            $stmt = $this->conn->prepare("SELECT estado_libro_id FROM EstadoLibro WHERE nombre = ?");
+            $stmt->bind_param("s", $estado);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            if ($result->num_rows == 0) {
+                throw new Exception("Estado de libro no válido.");
             }
-        }
-
-        // Procesar Autores
-        if (!empty($autores) && is_array($autores)) {
-            foreach ($autores as $autor) {
-                if (!isset($autor['nombre']) || !isset($autor['apellido'])) continue;
-                $nombre = trim($autor['nombre']);
-                $apellido = trim($autor['apellido']);
-                if (empty($nombre) || empty($apellido)) continue;
-                
-                $stmt = $this->conn->prepare("SELECT autor_id FROM Autor WHERE nombre = ? AND apellido = ?");
-                $stmt->bind_param("ss", $nombre, $apellido);
-                $stmt->execute();
-                $stmt->store_result();
-                if ($stmt->num_rows > 0) {
-                    $stmt->bind_result($autor_id);
-                    $stmt->fetch();
-                } else {
-                    $stmt->close();
-                    $stmt = $this->conn->prepare("INSERT INTO Autor (nombre, apellido) VALUES (?, ?)");
-                    $stmt->bind_param("ss", $nombre, $apellido);
-                    if (!$stmt->execute()) {
-                        throw new Exception("Error insertando Autor: " . $stmt->error);
-                    }
-                    $autor_id = $stmt->insert_id;
-                }
-                $stmt->close();
-                
-                $stmt = $this->conn->prepare("INSERT INTO LibroAutor (libro_id, autor_id) VALUES (?, ?)");
-                $stmt->bind_param("ii", $libro_id, $autor_id);
-                if (!$stmt->execute()) {
-                    throw new Exception("Error insertando en LibroAutor: " . $stmt->error);
-                }
-                $stmt->close();
-            }
-        }
-
-        // Asociar el libro a una clase (si se proporciona)
-        if ($clase_id > 0) {
-            $stmt = $this->conn->prepare("INSERT INTO ClaseLibro (clase_id, libro_id) VALUES (?, ?)");
-            $stmt->bind_param("ii", $clase_id, $libro_id);
-            if (!$stmt->execute()) {
-                throw new Exception("Error insertando en ClaseLibro: " . $stmt->error);
-            }
+            $row = $result->fetch_assoc();
+            $estado_libro_id = $row['estado_libro_id'];
             $stmt->close();
+    
+            // Insertar en la tabla Libro, ahora incluyendo el campo isbn_libro
+            $stmt = $this->conn->prepare("INSERT INTO Libro (titulo, editorial, libro_url, fecha_publicacion, isbn_libro, descripcion, estado_libro_id) VALUES (?, ?, ?, ?, ?, ?, ?)");
+            $stmt->bind_param("ssssssi", $titulo, $editorial, $libro_url, $fecha_publicacion, $isbn_libro, $descripcion, $estado_libro_id);
+            $stmt->execute();
+            $libro_id = $stmt->insert_id;
+            $stmt->close();
+    
+            // Procesar Tags (se espera un array de tag IDs o nombres)
+            if (!empty($tags) && is_array($tags)) {
+                foreach ($tags as $tag) {
+                    if (is_numeric($tag)) {
+                        // Si el tag es un ID numérico, lo usamos directamente
+                        $this->asociarTagAlLibro($libro_id, (int)$tag);
+                    } else {
+                        // Si el tag es un nombre, lo buscamos o lo creamos si no existe
+                        $tagId = $this->obtenerOCrearTag($tag);
+                        $this->asociarTagAlLibro($libro_id, $tagId);
+                    }
+                }
+            }
+    
+            // Procesar Autores
+            if (!empty($autores) && is_array($autores)) {
+                foreach ($autores as $autor) {
+                    if (!isset($autor['nombre']) || !isset($autor['apellido'])) continue;
+                    $nombre = trim($autor['nombre']);
+                    $apellido = trim($autor['apellido']);
+                    if (empty($nombre) || empty($apellido)) continue;
+    
+                    $stmt = $this->conn->prepare("SELECT autor_id FROM Autor WHERE nombre = ? AND apellido = ?");
+                    $stmt->bind_param("ss", $nombre, $apellido);
+                    $stmt->execute();
+                    $stmt->store_result();
+                    if ($stmt->num_rows > 0) {
+                        $stmt->bind_result($autor_id);
+                        $stmt->fetch();
+                    } else {
+                        $stmt->close();
+                        $stmt = $this->conn->prepare("INSERT INTO Autor (nombre, apellido) VALUES (?, ?)");
+                        $stmt->bind_param("ss", $nombre, $apellido);
+                        $stmt->execute();
+                        $autor_id = $stmt->insert_id;
+                    }
+                    $stmt->close();
+    
+                    // Asociar autor con libro
+                    $stmt = $this->conn->prepare("INSERT INTO LibroAutor (libro_id, autor_id) VALUES (?, ?)");
+                    $stmt->bind_param("ii", $libro_id, $autor_id);
+                    $stmt->execute();
+                }
+            }
+    
+            // Asociar el libro con una clase si se proporciona
+            if ($clase_id > 0) {
+                $stmt = $this->conn->prepare("INSERT INTO ClaseLibro (clase_id, libro_id) VALUES (?, ?)");
+                $stmt->bind_param("ii", $clase_id, $libro_id);
+                $stmt->execute();
+                $stmt->close();
+            }
+    
+            $this->conn->commit();
+            return $libro_id;
+        } catch (Exception $e) {
+            $this->conn->rollback();
+            throw $e;
         }
-
-        $this->conn->commit();
-        return $libro_id;
-    } catch (Exception $e) {
-        $this->conn->rollback();
-        throw $e;
     }
-}
+    
+    // Función para obtener o crear un tag
+    public function obtenerOCrearTag($tagNombre) {
+        // Buscar el tag por nombre
+        $stmt = $this->conn->prepare("SELECT tag_id FROM Tag WHERE tag_nombre = ?");
+        $stmt->bind_param("s", $tagNombre);
+        $stmt->execute();
+        $result = $stmt->get_result();
+    
+        if ($result->num_rows > 0) {
+            // Si el tag existe, retornar su ID
+            $row = $result->fetch_assoc();
+            $tagId = $row['tag_id'];
+        } else {
+            // Si no existe, lo creamos
+            $stmt = $this->conn->prepare("INSERT INTO Tag (tag_nombre) VALUES (?)");
+            $stmt->bind_param("s", $tagNombre);
+            $stmt->execute();
+            $tagId = $stmt->insert_id;
+        }
+    
+        $stmt->close();
+        return $tagId;
+    }
+    
+    // Función para asociar un tag al libro
+    private function asociarTagAlLibro($libro_id, $tag_id) {
+        $stmt = $this->conn->prepare("INSERT INTO TagLibro (libro_id, tag_id) VALUES (?, ?)");
+        $stmt->bind_param("ii", $libro_id, $tag_id);
+        $stmt->execute();
+        $stmt->close();
+    }
+    
 
   /**
      * Actualiza un libro y sus asociaciones de forma parcial.
@@ -253,12 +274,20 @@ public function registrarLibro($titulo, $editorial, $libro_url, $fecha_publicaci
                 $stmt->bind_param("i", $libro_id);
                 $stmt->execute();
                 $stmt->close();
+    
                 // Insertar nuevas asociaciones
-                foreach ($tags as $tag_id) {
-                    if (!is_numeric($tag_id)) {
-                        throw new Exception("El tag_id '$tag_id' no es válido.");
+                foreach ($tags as $tag) {
+                    $tag_id = null;
+    
+                    // Si el tag es un número (ID), lo usamos directamente
+                    if (is_numeric($tag)) {
+                        $tag_id = (int)$tag;
+                    } else {
+                        // Si es un nombre, lo buscamos o lo creamos
+                        $tag_id = $this->obtenerOCrearTag($tag);
                     }
-                    $tag_id = (int)$tag_id;
+    
+                    // Asociamos el tag al libro
                     $stmt = $this->conn->prepare("INSERT INTO TagLibro (libro_id, tag_id) VALUES (?, ?)");
                     $stmt->bind_param("ii", $libro_id, $tag_id);
                     if (!$stmt->execute()) {
