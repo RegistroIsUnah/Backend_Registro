@@ -751,5 +751,52 @@ class AspiranteController {
             echo json_encode(['error' => 'Error al obtener la solicitud: ' . $e->getMessage()]);
         }
     }
+
+        /**
+     * Acción para reenviar el correo usando el email del aspirante.
+     * 
+     * @return void Envía respuesta JSON.
+     */
+    public function reenviarCorreoAction() {
+        // Obtener datos del cuerpo (soporta JSON y form-data)
+        $data = json_decode(file_get_contents('php://input'), true) ?? $_POST;
+        
+        // Validar entrada
+        if (empty($data['correo'])) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Campo "correo" es requerido']);
+            return;
+        }
+
+        $correo = trim($data['correo']);
+
+        // Validar formato del correo
+        if (!filter_var($correo, FILTER_VALIDATE_EMAIL)) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Formato de correo electrónico inválido']);
+            return;
+        }
+
+        try {
+            // Procesar
+            $this->modelo->reenviarCorreoPorEmail($correo);
+            
+            // Respuesta exitosa
+            echo json_encode([
+                'success' => true,
+                'message' => 'Correo reenviado exitosamente',
+                'correo' => $correo
+            ]);
+
+        } catch (Exception $e) {
+            // Manejo de errores
+            $statusCode = (strpos($e->getMessage(), 'No se encontró') !== false) ? 404 : 500;
+            http_response_code($statusCode);
+            echo json_encode([
+                'error' => $e->getMessage(),
+                'correo' => $correo
+            ]);
+        }    
+    }
 }
 ?>
