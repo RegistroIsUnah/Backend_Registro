@@ -1,0 +1,488 @@
+USE sistemaregistro1;
+
+INSERT INTO Centro (nombre) VALUES 
+('Centro de Ciencias Básicas'),
+('Centro de Ingeniería y Tecnología'),
+('Centro de Ciencias de la Salud'),
+('Centro de Ciencias Sociales y Humanidades'),
+('Centro de Artes y Diseño');
+
+INSERT INTO Edificio (centro_id, nombre) VALUES 
+(1, 'Edificio de Matemáticas'),
+(2, 'Edificio de Ingeniería Civil'),
+(3, 'Edificio de Medicina'),
+(4, 'Edificio de Derecho'),
+(5, 'Edificio de Bellas Artes');
+
+INSERT INTO Facultad (edificio_id, nombre) VALUES 
+(1, 'Facultad de Matemáticas'),
+(2, 'Facultad de Ingeniería Civil'),
+(3, 'Facultad de Medicina'),
+(4, 'Facultad de Derecho'),
+(5, 'Facultad de Bellas Artes');
+
+INSERT INTO Departamento (facultad_id, nombre) VALUES 
+(1, 'Departamento de Matemáticas Puras'),
+(2, 'Departamento de Ingeniería Estructural'),
+(3, 'Departamento de Cirugía'),
+(4, 'Departamento de Derecho Penal'),
+(5, 'Departamento de Pintura');
+
+INSERT INTO Carrera (dept_id, nombre) VALUES 
+(1, 'Licenciatura en Matemáticas'),
+(2, 'Ingeniería Civil'),
+(3, 'Medicina General'),
+(4, 'Derecho'),
+(5, 'Licenciatura en Bellas Artes');
+
+INSERT INTO CentroCarrera (centro_id, carrera_id) VALUES 
+(1, 1),
+(2, 2),
+(3, 3),
+(4, 4),
+(5, 5);
+
+INSERT INTO Clase (dept_id, codigo, nombre, creditos, tiene_laboratorio) VALUES 
+(1, 'MAT101', 'Cálculo I', 4, FALSE),
+(2, 'ICV201', 'Diseño Estructural', 5, TRUE),
+(3, 'MED301', 'Anatomía Humana', 6, TRUE),
+(4, 'DER101', 'Derecho Constitucional', 4, FALSE),
+(5, 'ART101', 'Pintura al Óleo', 3, FALSE);
+
+INSERT INTO ClaseCarrera (clase_id, carrera_id) VALUES 
+(1, 1),
+(2, 2),
+(3, 3),
+(4, 4),
+(5, 5);
+
+INSERT INTO NumeroPeriodo (nombre) VALUES 
+('PRIMERO'),
+('SEGUNDO'),
+('TERCERO'),
+('CUARTO'),
+('QUINTO');
+
+INSERT INTO EstadoProceso (nombre) VALUES 
+('ACTIVO'),
+('INACTIVO'),
+('PENDIENTE'),
+('FINALIZADO'),
+('CANCELADO');
+
+INSERT INTO PeriodoAcademico (anio, numero_periodo_id, fecha_inicio, fecha_fin, estado_proceso_id) VALUES 
+(2023, 1, '2023-01-15 00:00:00', '2023-05-15 23:59:59', 1),
+(2023, 2, '2023-06-01 00:00:00', '2023-10-31 23:59:59', 1),
+(2024, 1, '2024-01-15 00:00:00', '2024-05-15 23:59:59', 1),
+(2024, 2, '2024-06-01 00:00:00', '2024-10-31 23:59:59', 1),
+(2025, 1, '2025-01-15 00:00:00', '2025-05-15 23:59:59', 1);
+
+INSERT INTO Aula (edificio_id, nombre, capacidad) VALUES 
+(1, 'Aula 101', 50),
+(2, 'Aula 201', 60),
+(3, 'Aula 301', 70),
+(4, 'Aula 401', 80),
+(5, 'Aula 501', 90);
+
+INSERT INTO Rol (nombre) VALUES 
+('Administrador'),
+('Estudiante'),
+('Docente'),
+('Coordinador'),
+('Revisor');
+
+INSERT INTO Usuario (username, password) VALUES 
+('juan.perez', 'password123'),
+('maria.gomez', 'password456'),
+('carlos.lopez', 'password789'),
+('ana.martinez', 'password012'),
+('luis.rodriguez', 'password345');
+
+INSERT INTO UsuarioRol (usuario_id, rol_id) VALUES 
+(1, 1),
+(2, 2),
+(3, 3),
+(4, 4),
+(5, 5);
+
+INSERT INTO EstadoPasswordResetRequest (nombre) VALUES 
+('PENDIENTE'),
+('APROBADO'),
+('RECHAZADO'),
+('EXPIRADO'),
+('COMPLETADO');
+
+INSERT INTO ResetPasswordRequest (usuario_id, token, fecha_solicitud, fecha_expiracion, estado_password_id) VALUES 
+(1, 'token123', '2023-10-01 12:00:00', '2023-10-02 12:00:00', 1),
+(2, 'token456', '2023-10-02 12:00:00', '2023-10-03 12:00:00', 2),
+(3, 'token789', '2023-10-03 12:00:00', '2023-10-04 12:00:00', 3),
+(4, 'token012', '2023-10-04 12:00:00', '2023-10-05 12:00:00', 4),
+(5, 'token345', '2023-10-05 12:00:00', '2023-10-06 12:00:00', 5);
+
+INSERT INTO Estudiante (usuario_id, identidad, nombre, apellido, correo_personal, telefono, direccion, centro_id, indice_global, indice_periodo) VALUES 
+(1, '123456789', 'Juan', 'Pérez', 'juan.perez@example.com', '555-1234', 'Calle 123, Ciudad', 1, 8.5, 8.7),
+(2, '987654321', 'María', 'Gómez', 'maria.gomez@example.com', '555-5678', 'Avenida 456, Ciudad', 2, 9.0, 9.2),
+(3, '456789123', 'Carlos', 'López', 'carlos.lopez@example.com', '555-9101', 'Calle 789, Ciudad', 3, 7.8, 8.0),
+(4, '321654987', 'Ana', 'Martínez', 'ana.martinez@example.com', '555-1122', 'Avenida 101, Ciudad', 4, 8.9, 9.1),
+(5, '654321987', 'Luis', 'Rodríguez', 'luis.rodriguez@example.com', '555-3344', 'Calle 202, Ciudad', 5, 8.2, 8.4);
+
+INSERT INTO FotosEstudiante (ruta_foto, estudiante_id) VALUES 
+('fotos/juan_perez.jpg', 1),
+('fotos/maria_gomez.jpg', 2),
+('fotos/carlos_lopez.jpg', 3),
+('fotos/ana_martinez.jpg', 4),
+('fotos/luis_rodriguez.jpg', 5);
+
+INSERT INTO EstudianteCarrera (estudiante_id, carrera_id) VALUES 
+(1, 1),
+(2, 2),
+(3, 3),
+(4, 4),
+(5, 5);
+
+INSERT INTO Docente (usuario_id, nombre, apellido, correo, numero_empleado, centro_id, dept_id, foto) VALUES 
+(1, 'Pedro', 'García', 'pedro.garcia@example.com', 'EMP001', 1, 1, 'foto1.jpg'),
+(2, 'Laura', 'Fernández', 'laura.fernandez@example.com', 'EMP002', 2, 2, 'foto2.jpg'),
+(3, 'Miguel', 'Sánchez', 'miguel.sanchez@example.com', 'EMP003', 3, 3, 'foto3.jpg'),
+(4, 'Sofía', 'Ramírez', 'sofia.ramirez@example.com', 'EMP004', 4, 4, 'foto4.jpg'),
+(5, 'Jorge', 'Díaz', 'jorge.diaz@example.com', 'EMP005', 5, 5, 'foto5.jpg');
+
+INSERT INTO TipoDocumento (nombre) VALUES 
+('CEDULA'),
+('PASAPORTE'),
+('LICENCIA'),
+('DNI'),
+('TARJETA_DE_IDENTIDAD');
+
+INSERT INTO EstadoAspirante (nombre) VALUES 
+('PENDIENTE'),
+('ADMITIDO'),
+('RECHAZADO'),
+('CORREGIDO_PENDIENTE'),
+('CANCELADO');
+
+INSERT INTO Aspirante (nombre, apellido, documento, telefono, correo, foto, fotodni, numSolicitud, tipo_documento_id, carrera_principal_id, carrera_secundaria_id, centro_id, certificado_url, estado_aspirante_id, fecha_solicitud) VALUES 
+('Carlos', 'Mendoza', '123456789', '555-1234', 'carlos.mendoza@example.com', 'foto1.jpg', 'fotodni1.jpg', 'SOL001', 1, 1, NULL, 1, 'certificado1.pdf', 1, '2023-10-01'),
+('Ana', 'Gómez', '987654321', '555-5678', 'ana.gomez@example.com', 'foto2.jpg', 'fotodni2.jpg', 'SOL002', 2, 2, NULL, 2, 'certificado2.pdf', 2, '2023-10-02'),
+('Luis', 'Fernández', '456789123', '555-9101', 'luis.fernandez@example.com', 'foto3.jpg', 'fotodni3.jpg', 'SOL003', 3, 3, NULL, 3, 'certificado3.pdf', 3, '2023-10-03'),
+('Sofía', 'Ramírez', '321654987', '555-1122', 'sofia.ramirez@example.com', 'foto4.jpg', 'fotodni4.jpg', 'SOL004', 4, 4, NULL, 4, 'certificado4.pdf', 4, '2023-10-04'),
+('Jorge', 'Díaz', '654321987', '555-3344', 'jorge.diaz@example.com', 'foto5.jpg', 'fotodni5.jpg', 'SOL005', 5, 5, NULL, 5, 'certificado5.pdf', 5, '2023-10-05');
+
+INSERT INTO EstadoAspiranteCarrera (nombre) VALUES 
+('APROBADO'),
+('NO APROBADO'),
+('RECHAZADO'),
+('EN REVISION'),
+('MATRICULADO');
+
+INSERT INTO AspiranteCarrera (aspirante_id, carrera_id, estado_aspirante_carrera_id) VALUES 
+(1, 1, 1),
+(2, 2, 2),
+(3, 3, 3),
+(4, 4, 4),
+(5, 5, 5);
+
+INSERT INTO Revisor (estudiante_id, fecha_aprobacion, usuario_id) VALUES 
+(1, '2023-10-01', 1),
+(2, '2023-10-02', 2),
+(3, '2023-10-03', 3),
+(4, '2023-10-04', 4),
+(5, '2023-10-05', 5);
+
+INSERT INTO EstadoSolicitudRevisor (nombre) VALUES 
+('PENDIENTE'),
+('APROVADO'),
+('RECHAZADO'),
+('EN REVISION'),
+('Finalizado');
+
+INSERT INTO AplicanteRevisor (estudiante_id, carrera_id, fecha_solicitud, estado_solicitud_revisor_id) VALUES 
+(1, 1, '2023-10-01', 1),
+(2, 2, '2023-10-02', 2),
+(3, 3, '2023-10-03', 3),
+(4, 4, '2023-10-04', 4),
+(5, 5, '2023-10-05', 5);
+
+INSERT INTO RevisionAspirante (aspirante_id, revisor_usuario_id, fecha_revision) VALUES 
+(1, 1, '2023-10-01 12:00:00'),
+(2, 2, '2023-10-02 12:00:00'),
+(3, 3, '2023-10-03 12:00:00'),
+(4, 4, '2023-10-04 12:00:00'),
+(5, 5, '2023-10-05 12:00:00');
+
+INSERT INTO TipoRechazoSolicitudAspirante (nombre) VALUES 
+('Documentación Incompleta'),
+('Falta de Requisitos'),
+('Error en el Formulario'),
+('Falta de Pago'),
+('Otro');
+
+INSERT INTO MotivoRechazoAspirante (tipo_rechazo_id, descripcion) VALUES 
+(1, 'Falta copia de la cédula'),
+(2, 'No cumple con el promedio mínimo'),
+(3, 'Formulario mal diligenciado'),
+(4, 'No se ha realizado el pago de matrícula'),
+(5, 'Otros motivos no especificados');
+
+INSERT INTO MotivoRechazoAspirante (tipo_rechazo_id, descripcion) VALUES 
+(1, 'Falta copia de la cédula'),
+(2, 'No cumple con el promedio mínimo'),
+(3, 'Formulario mal diligenciado'),
+(4, 'No se ha realizado el pago de matrícula'),
+(5, 'Otros motivos no especificados');
+
+INSERT INTO AspiranteMotivoRechazo (revision_id, motivo_id, fecha_rechazo) VALUES 
+(1, 1, '2023-10-01'),
+(2, 2, '2023-10-02'),
+(3, 3, '2023-10-03'),
+(4, 4, '2023-10-04'),
+(5, 5, '2023-10-05');
+
+INSERT INTO TipoExamen (nombre, nota_minima) VALUES 
+('Examen de Matemáticas', 6.0),
+('Examen de Física', 5.5),
+('Examen de Química', 5.0),
+('Examen de Inglés', 6.5),
+('Examen de Historia', 5.0);
+
+INSERT INTO CarreraExamen (carrera_id, tipo_examen_id) VALUES 
+(1, 1),
+(2, 2),
+(3, 3),
+(4, 4),
+(5, 5);
+
+INSERT INTO ResultadoExamenTipo (nombre) VALUES 
+('APROBO'),
+('NO_APROBO'),
+('PENDIENTE'),
+('NO_PRESENTADO'),
+('CANCELADO');
+
+INSERT INTO ResultadoExamen (aspirante_id, tipo_examen_id, carrera_id, fecha_examen, calificacion, resultado_tipo_id) VALUES 
+(1, 1, 1, '2023-10-01', 7.5, 1),    
+(2, 2, 2, '2023-10-02', 6.0, 2),    
+(3, 3, 3, '2023-10-03', 5.5, 3),    
+(4, 4, 4, '2023-10-04', 8.0, 4),    
+(5, 5, 5, '2023-10-05', 4.5, 5);    
+
+INSERT INTO EstadoSeccion (nombre) VALUES 
+('ACTIVA'),
+('INACTIVA'),
+('CANCELADA'),
+('NO APROBADA'),
+('OMITIDA');
+
+INSERT INTO Seccion (clase_id, docente_id, periodo_academico_id, hora_inicio, hora_fin, aula_id, estado_seccion_id, video_url, motivo_cancelacion, cupos) VALUES 
+(1, 1, 1, '08:00:00', '10:00:00', 1, 1, NULL, NULL, 30),
+(2, 2, 2, '10:00:00', '12:00:00', 2, 2, NULL, NULL, 25),
+(3, 3, 3, '14:00:00', '16:00:00', 3, 3, NULL, NULL, 20),
+(4, 4, 4, '16:00:00', '18:00:00', 4, 4, NULL, NULL, 15),
+(5, 5, 5, '18:00:00', '20:00:00', 5, 5, NULL, NULL, 10);
+
+INSERT INTO DiaSemana (nombre) VALUES 
+('Lunes'),
+('Martes'),
+('Miércoles'),
+('Jueves'),
+('Viernes');
+
+INSERT INTO SeccionDia (seccion_id, dia_id) VALUES 
+(1, 1),
+(2, 2),
+(3, 3),
+(4, 4),
+(5, 5);
+
+INSERT INTO Laboratorio (clase_id, codigo_laboratorio, periodo_academico_id, hora_inicio, hora_fin, aula_id, estado_seccion_id, motivo_cancelacion) VALUES 
+(1, 'LAB101', 1, '08:00:00', '10:00:00', 1, 1, NULL),
+(2, 'LAB201', 2, '10:00:00', '12:00:00', 2, 2, NULL),
+(3, 'LAB301', 3, '14:00:00', '16:00:00', 3, 3, NULL),
+(4, 'LAB401', 4, '16:00:00', '18:00:00', 4, 4, NULL),
+(5, 'LAB501', 5, '18:00:00', '20:00:00', 5, 5, NULL);
+
+INSERT INTO LaboratorioDia (laboratorio_id, dia_id) VALUES 
+(1, 1),
+(2, 2),
+(3, 3),
+(4, 4),
+(5, 5);
+
+INSERT INTO TipoProcesoMatricula (nombre) VALUES 
+('MATRICULA'),
+('ADICIONES_CANCELACIONES'),
+('Matrícula Especial'),
+('Matrícula de Reingreso'),
+('Matrícula de Transferencia');
+
+INSERT INTO ProcesoMatricula (periodo_academico_id, tipo_proceso_id, fecha_inicio, fecha_fin, estado_proceso_id) VALUES 
+(1, 1, '2023-10-01 00:00:00', '2023-10-15 23:59:59', 1),
+(2, 2, '2023-10-16 00:00:00', '2023-10-31 23:59:59', 2),
+(3, 3, '2023-11-01 00:00:00', '2023-11-15 23:59:59', 3),
+(4, 4, '2023-11-16 00:00:00', '2023-11-30 23:59:59', 4),
+(5, 5, '2023-12-01 00:00:00', '2023-12-15 23:59:59', 5);
+
+INSERT INTO TipoProcesoExcepcional (nombre) VALUES 
+('PAGO_REPOSICION'),
+('CANCELACION_EXCEPCIONAL'),
+('CAMBIO_CARRERA'),
+('Aplazamiento'),
+('Reingreso');
+
+INSERT INTO ProcesosExcepcionales (periodo_academico_id, tipo_proceso_id, fecha_inicio, fecha_fin, estado_proceso_id) VALUES 
+(1, 1, '2023-10-01 00:00:00', '2023-10-15 23:59:59', 1),
+(2, 2, '2023-10-16 00:00:00', '2023-10-31 23:59:59', 2),
+(3, 3, '2023-11-01 00:00:00', '2023-11-15 23:59:59', 3),
+(4, 4, '2023-11-16 00:00:00', '2023-11-30 23:59:59', 4),
+(5, 5, '2023-12-01 00:00:00', '2023-12-15 23:59:59', 5);
+
+INSERT INTO EstadoLibro (nombre) VALUES 
+('ACTIVO'),
+('INACTIVO'),
+('Reservado'),
+('En Reparación'),
+('Perdido');
+
+INSERT INTO Libro (titulo, editorial, libro_url, fecha_publicacion, descripcion, isbn_libro, estado_libro_id) VALUES 
+('Cálculo I', 'Editorial Matemáticas', 'http://example.com/libro1', '2020-01-01', 'Libro de Cálculo I', 'A42FFGTG23', 1),
+('Diseño Estructural', 'Editorial Ingeniería', 'http://example.com/libro2', '2019-05-15', 'Libro de Diseño Estructural', 'PKYVV538HY', 2),
+('Anatomía Humana', 'Editorial Medicina', 'http://example.com/libro3', '2021-03-10', 'Libro de Anatomía Humana', '08GUU75NBG', 3),
+('Derecho Constitucional', 'Editorial Derecho', 'http://example.com/libro4', '2018-07-20', 'Libro de Derecho Constitucional', 'A42FKI352', 4),
+('Pintura al Óleo', 'Editorial Arte', 'http://example.com/libro5', '2022-09-05', 'Libro de Pintura al Óleo', 'A4IU09G23', 5);
+
+INSERT INTO Tag (tag_nombre) VALUES 
+('Matemáticas'),
+('Ingeniería'),
+('Medicina'),
+('Derecho'),
+('Arte');
+
+INSERT INTO TagLibro (libro_id, tag_id) VALUES 
+(1, 1),
+(2, 2),
+(3, 3),
+(4, 4),
+(5, 5);
+
+INSERT INTO Autor (nombre, apellido) VALUES 
+('Juan', 'Pérez'),
+('María', 'Gómez'),
+('Carlos', 'López'),
+('Ana', 'Martínez'),
+('Luis', 'Rodríguez');
+
+INSERT INTO Autor (nombre, apellido) VALUES 
+('Juan', 'Pérez'),
+('María', 'Gómez'),
+('Carlos', 'López'),
+('Ana', 'Martínez'),
+('Luis', 'Rodríguez');
+
+INSERT INTO LibroAutor (libro_id, autor_id) VALUES 
+(1, 1),
+(2, 2),
+(3, 3),
+(4, 4),
+(5, 5);
+
+INSERT INTO ClaseLibro (clase_id, libro_id) VALUES 
+(1, 1),
+(2, 2),
+(3, 3),
+(4, 4),
+(5, 5);
+
+INSERT INTO EstadoCurso (nombre) VALUES 
+('ABANDONADA'),
+('REPROBADA'),
+('APROBADA'),
+('CANCELADA'),
+('Pendiente');
+
+INSERT INTO EstadoMatricula (nombre) VALUES 
+('MATRICULADO'),
+('EN_ESPERA'),
+('Cancelado'),
+('Completado'),
+('Pendiente');
+
+INSERT INTO Matricula (estudiante_id, seccion_id, fecha, observacion, estado_matricula_id, orden_inscripcion) VALUES 
+(1, 1, '2023-10-01', NULL, 1, 1),
+(2, 2, '2023-10-02', NULL, 2, 2),
+(3, 3, '2023-10-03', NULL, 3, 3),
+(4, 4, '2023-10-04', NULL, 4, 4),
+(5, 5, '2023-10-05', NULL, 5, 5);
+
+INSERT INTO HistorialEstudiante (estudiante_id, seccion_id, calificacion, observacion, fecha, estado_curso_id) VALUES 
+(1, 1, 8.5, NULL, '2023-10-01', 1),
+(2, 2, 9.0, NULL, '2023-10-02', 2),
+(3, 3, 7.8, NULL, '2023-10-03', 3),
+(4, 4, 8.9, NULL, '2023-10-04', 4),
+(5, 5, 8.2, NULL, '2023-10-05', 5);
+
+INSERT INTO MotivoRechazoSolicitud (descripcion) VALUES 
+('Falta de documentación'),
+('No cumple con los requisitos'),
+('Error en el formulario'),
+('Falta de pago'),
+('Otros motivos');
+
+INSERT INTO EstadoSolicitud (nombre) VALUES 
+('PENDIENTE'),
+('APROBADA'),
+('DENEGADA'),
+('En Revisión'),
+('Finalizado');
+
+INSERT INTO TipoSolicitud (nombre) VALUES 
+('CAMBIO_CENTRO'),
+('CANCELACION_EXCEPCIONAL'),
+('CAMBIO_CARRERA'),
+('PAGO_REPOSICION'),
+('Reingreso');	
+
+INSERT INTO Solicitud (estudiante_id, tipo_solicitud_id, motivo_id, fecha_solicitud, archivo_pdf, estado_solicitud_id) VALUES 
+(1, 1, NULL, '2023-10-01', NULL, 1),
+(2, 2, NULL, '2023-10-02', NULL, 2),
+(3, 3, NULL, '2023-10-03', NULL, 3),
+(4, 4, NULL, '2023-10-04', NULL, 4),
+(5, 5, NULL, '2023-10-05', NULL, 5);
+
+INSERT INTO PreguntaEvaluacion (texto) VALUES 
+('¿El docente explica claramente los temas?'),
+('¿El docente está disponible para resolver dudas?'),
+('¿El material de clase es adecuado?'),
+('¿El docente fomenta la participación?'),
+('¿El docente cumple con los horarios?');
+
+INSERT INTO EstadoEvaluacion (nombre) VALUES 
+('Pendiente'),
+('Completado'),
+('Cancelado'),
+('En Revisión'),
+('Finalizado');
+
+INSERT INTO EvaluacionDocente (docente_id, estudiante_id, periodo_academico_id, fecha, estado_evaluacion_id) VALUES 
+(1, 1, 1, '2023-10-01 12:00:00', 1),
+(2, 2, 2, '2023-10-02 12:00:00', 2),
+(3, 3, 3, '2023-10-03 12:00:00', 3),
+(4, 4, 4, '2023-10-04 12:00:00', 4),
+(5, 5, 5, '2023-10-05 12:00:00', 5);
+
+INSERT INTO RespuestaEvaluacion (evaluacion_id, pregunta_id, respuesta) VALUES 
+(1, 1, 'Sí'),
+(2, 2, 'No'),
+(3, 3, 'A veces'),
+(4, 4, 'Sí, con sugerencias'),
+(5, 5, 'No aplica');
+
+INSERT INTO ClaseRequisito (clase_id, prerequisito_clase_id) VALUES 
+(1, 2),
+(2, 3),
+(3, 4),
+(4, 5),
+(5, 1);
+
+
+
+
