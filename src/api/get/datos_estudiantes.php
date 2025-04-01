@@ -15,6 +15,31 @@
  * @package API
  * @author Jose Vargas
  * @version 1.0
+ 
+ {
+    "success": true,
+    "data": {
+        "informacion_personal": {
+            "nombre_completo": "Juan Pérez",
+            "identidad": "0801-1990-12345",
+            "correo": "juan@example.com",
+            "telefono": "+504 1234-5678",
+            "direccion": "Tegucigalpa, Honduras"
+        },
+        "academico": {
+            "indice_global": 85.50,
+            "indice_periodo": 90.00,
+            "centro": "Centro Universitario Tegucigalpa",
+            "carreras": [
+                "Ingeniería en Sistemas",
+                "Administración de Empresas"
+            ]
+        },
+        "cuenta": {
+            "username": "jperez2023"
+        }
+    }
+}
  */
 
 header('Content-Type: application/json');
