@@ -43,6 +43,7 @@
  * 
  */
 
+header("Access-Control-Allow-Origin: *");
 header('Content-Type: application/json');
 
 // Validar que se hayan recibido los parámetros obligatorios

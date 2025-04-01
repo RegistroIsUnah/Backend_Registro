@@ -13,13 +13,24 @@
 require_once __DIR__ . '/../models/Libro.php';
 
 class LibroController {
+
+    private $modelo; // Propiedad para almacenar el modelo
+
+    /**
+     * Constructor del controlador.
+     */
+    public function __construct() {
+        // Inicializar el modelo Aspirante
+        $this->modelo = new Libro();
+    }
  
     /**
      * Registra un libro.
      *
      * Se esperan los siguientes datos vía POST (multipart/form-data):
      *   - titulo (string)
-     *   - editorial (string)   <--- Nuevo campo
+     *   - editorial (string)
+     *   - isbn_libro (string)   <--- Nuevo campo
      *   - fecha_publicacion (YYYY-MM-DD)
      *   - descripcion (string)
      *   - tags (opcional, JSON string con array de tag IDs)
@@ -33,8 +44,8 @@ class LibroController {
      * @return void Envía la respuesta en formato JSON.
      */
     public function registrarLibro($data, $files) {
-        // Validar campos obligatorios (agregamos "editorial")
-        $camposObligatorios = ['titulo', 'editorial', 'fecha_publicacion', 'descripcion'];
+        // Validar campos obligatorios (se agregó "isbn_libro")
+        $camposObligatorios = ['titulo', 'editorial', 'isbn_libro', 'fecha_publicacion', 'descripcion'];
         foreach ($camposObligatorios as $campo) {
             if (empty($data[$campo])) {
                 http_response_code(400);
@@ -45,10 +56,10 @@ class LibroController {
         
         // Expresiones regulares de validación
         $regexTitulo = '/^[\w\s\.\-áéíóúÁÉÍÓÚñÑ,!?]+$/u';
-        $regexEditorial = '/^[\w\s\.\-áéíóúÁÉÍÓÚñÑ,!?]+$/u'; // Puedes ajustar según tus necesidades
+        $regexEditorial = '/^[\w\s\.\-áéíóúÁÉÍÓÚñÑ,!?]+$/u';
+        $regexISBN = '/^[\d\-Xx]+$/'; // Permite dígitos, guiones y X/x
         $regexFecha  = '/^\d{4}-\d{2}-\d{2}$/';
         $regexDescripcion = '/^.{1,1000}$/s';
-        $regexTag    = '/^\d+$/'; // Se esperan tag IDs numéricos
         $regexNombre = '/^[A-Za-z\sáéíóúÁÉÍÓÚñÑ]+$/u';
         
         // Validar y limpiar título
@@ -64,6 +75,14 @@ class LibroController {
         if (!preg_match($regexEditorial, $editorial)) {
             http_response_code(400);
             echo json_encode(['error' => 'La editorial tiene un formato no válido']);
+            return;
+        }
+        
+        // Validar y limpiar ISBN
+        $isbn_libro = trim($data['isbn_libro']);
+        if (!preg_match($regexISBN, $isbn_libro)) {
+            http_response_code(400);
+            echo json_encode(['error' => 'El ISBN tiene un formato no válido']);
             return;
         }
         
@@ -89,16 +108,18 @@ class LibroController {
             $tagsDecoded = json_decode($data['tags'], true);
             if (!is_array($tagsDecoded)) {
                 http_response_code(400);
-                echo json_encode(['error' => 'El campo tags debe ser un array JSON válido de identificadores']);
+                echo json_encode(['error' => 'El campo tags debe ser un array JSON válido de identificadores o nombres']);
                 return;
             }
-            foreach ($tagsDecoded as $tagId) {
-                if (!is_numeric($tagId)) {
-                    http_response_code(400);
-                    echo json_encode(['error' => "El tag_id '$tagId' debe ser numérico"]);
-                    return;
+            foreach ($tagsDecoded as $tag) {
+                if (is_numeric($tag)) {
+                    // Si el tag es un ID numérico, lo usamos directamente
+                    $tags[] = (int)$tag;
+                } else {
+                    // Si el tag es un nombre, lo buscamos o lo creamos
+                    $tagId = $this->modelo->obtenerOCrearTag($tag);
+                    $tags[] = $tagId;
                 }
-                $tags[] = (int)$tagId;
             }
         }
         
@@ -148,7 +169,15 @@ class LibroController {
         }
 
         // Validar que el archivo sea PDF
-        $allowedMimeTypes = ['application/pdf'];
+        $allowedMimeTypes = [
+            'application/pdf',          // PDF
+            'application/epub+zip',     // EPUB
+            'application/vnd.amazon.ebook', // AZW3 (Kindle)
+            'application/x-mobi8-ebook',    // Alternativo para AZW3
+            'text/plain',               // TXT
+            'application/rtf',          // RTF
+            'text/rtf'                  // Alternativo para RTF
+        ];
         if (!in_array($files['libro']['type'], $allowedMimeTypes)) {
             http_response_code(400);
             echo json_encode(['error' => 'Solo se permiten archivos PDF']);
@@ -176,7 +205,7 @@ class LibroController {
         }
         $libro_url = '/uploads/libros/' . $newFileName;
 
-        // Llamar al modelo para registrar el libro, pasando también el estado
+        // Llamar al modelo para registrar el libro, pasando también el nuevo campo isbn_libro
         try {
             $libroModel = new Libro();
             $libro_id = $libroModel->registrarLibro(
@@ -184,6 +213,7 @@ class LibroController {
                 $editorial,
                 $libro_url,
                 $fecha_publicacion,
+                $isbn_libro,
                 $descripcion,
                 $estado,
                 $tags,
@@ -198,14 +228,14 @@ class LibroController {
         }
     }
 
-   
-    /**
+   /**
      * Actualiza un libro y sus asociaciones de forma parcial.
      *
-     * Se esperan los siguientes parámetros vía PATCH (multipart/form-data):
+     * Se esperan los siguientes parámetros vía POST (multipart/form-data):
      *   - libro_id: int (requerido)
      *   - titulo: string (opcional)
      *   - editorial: string (opcional)
+     *   - isbn_libro: string (opcional)   <--- Nuevo campo
      *   - fecha_publicacion: string (YYYY-MM-DD, opcional)
      *   - descripcion: string (opcional)
      *   - tags: JSON string (opcional, array de tag IDs)
@@ -214,7 +244,7 @@ class LibroController {
      *   - estado: string (opcional, 'ACTIVO' o 'INACTIVO')
      *   - libro: archivo (opcional, para actualizar el archivo; solo PDF)
      *
-     * Nota: Se recomienda que la solicitud use el método PATCH, de modo que solo se actualicen los campos enviados.
+     * Nota: Se recomienda que la solicitud use el método POST, de modo que solo se actualicen los campos enviados.
      *
      * @param array $data Datos enviados vía PATCH (usualmente a través de POST con override).
      * @param array $files Datos de archivos enviados vía $_FILES.
@@ -231,10 +261,10 @@ class LibroController {
 
         // Expresiones regulares
         $regexTitulo    = '/^[\w\s\.\-áéíóúÁÉÍÓÚñÑ,!?]+$/u';
-        $regexEditorial = '/^[\w\s\.\-áéíóúÁÉÍÓÚñÑ,!?]+$/u/';
+        $regexEditorial = '/^[\w\s\.\-áéíóúÁÉÍÓÚñÑ,!?]+$/u';
+        $regexISBN      = '/^[\d\-Xx]+$/';  // Permite dígitos, guiones y X/x
         $regexFecha     = '/^\d{4}-\d{2}-\d{2}$/';
         $regexTexto     = '/^.{0,1000}$/s'; // Hasta 1000 caracteres, opcional
-        $regexTag       = '/^\d+$/'; // Se esperan tag IDs numéricos
         $regexNombre    = '/^[A-Za-z\sáéíóúÁÉÍÓÚñÑ]+$/u';
 
         // Recoger y validar de forma opcional cada campo
@@ -252,6 +282,14 @@ class LibroController {
         if ($editorial !== null && $editorial !== "" && !preg_match($regexEditorial, $editorial)) {
             http_response_code(400);
             echo json_encode(['error' => 'La editorial tiene un formato no válido']);
+            return;
+        }
+
+        // ISBN (opcional)
+        $isbn_libro = isset($data['isbn_libro']) ? trim($data['isbn_libro']) : null;
+        if ($isbn_libro !== null && $isbn_libro !== "" && !preg_match($regexISBN, $isbn_libro)) {
+            http_response_code(400);
+            echo json_encode(['error' => 'El ISBN tiene un formato no válido']);
             return;
         }
 
@@ -281,15 +319,17 @@ class LibroController {
                 return;
             }
             $tags = [];
-            foreach ($tagsDecoded as $tagId) {
-                if (!preg_match($regexTag, $tagId)) {
-                    http_response_code(400);
-                    echo json_encode(['error' => "El tag_id '$tagId' debe ser numérico"]);
-                    return;
+            foreach ($tagsDecoded as $tag) {
+                if (is_numeric($tag)) {
+                    $tags[] = (int)$tag;  // Si es un ID, lo agregamos directamente
+                } else {
+                    // Si es un nombre de tag, buscamos o creamos el tag
+                    $tagId = $this->modelo->obtenerOCrearTag($tag);
+                    $tags[] = $tagId;
                 }
-                $tags[] = (int)$tagId;
             }
         }
+
 
         // Autores (opcional) - se espera un JSON array de objetos {nombre, apellido}
         $autores = null;
@@ -339,7 +379,15 @@ class LibroController {
             }
             $nombreArchivo = basename($files['libro']['name']);
             // Validar que el archivo sea PDF
-            $allowedMimeTypes = ['application/pdf'];
+            $allowedMimeTypes = [
+                'application/pdf',          // PDF
+                'application/epub+zip',     // EPUB
+                'application/vnd.amazon.ebook', // AZW3 (Kindle)
+                'application/x-mobi8-ebook',    // Alternativo para AZW3
+                'text/plain',               // TXT
+                'application/rtf',          // RTF
+                'text/rtf'                  // Alternativo para RTF
+            ];
             if (!in_array($files['libro']['type'], $allowedMimeTypes)) {
                 http_response_code(400);
                 echo json_encode(['error' => 'Solo se permiten archivos PDF']);
@@ -362,10 +410,22 @@ class LibroController {
             $libro_url = '/uploads/libros/' . $newFileName;
         }
 
-        // Llamar al modelo para actualizar el libro (actualización parcial)
+        // Llamar al modelo para actualizar el libro (actualización parcial) e incluir isbn_libro
         try {
             $libroModel = new Libro();
-            $libroModel->actualizarLibro($libro_id, $titulo, $editorial, $libro_url, $fecha_publicacion, $descripcion, $tags, $autores, $clase_id, $estado);
+            $libroModel->actualizarLibro(
+                $libro_id,
+                $titulo,
+                $editorial,
+                $isbn_libro,  // Se pasa el nuevo campo
+                $libro_url,
+                $fecha_publicacion,
+                $descripcion,
+                $tags,
+                $autores,
+                $clase_id,
+                $estado
+            );
             http_response_code(200);
             echo json_encode(['mensaje' => 'Libro actualizado correctamente']);
         } catch (Exception $e) {
@@ -373,8 +433,6 @@ class LibroController {
             echo json_encode(['error' => $e->getMessage()]);
         }
     }
-
-
 
     /**
      * Obtiene los detalles de un libro que estan activos para Estudiantes.

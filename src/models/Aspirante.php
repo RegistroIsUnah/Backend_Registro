@@ -104,47 +104,107 @@ class Aspirante {
      * @param string $numSolicitud
      * @param string $correo
      */
-    /*
-    private function enviarCorreoDeConfirmacion($nombre, $apellido, $documento, $numSolicitud, $correo) {
-        // Guardar el contenido del correo en variables
-        $subject = 'Confirmación de Registro';
-        $message = "
-            <h3>Hola {$nombre} {$apellido},</h3>
-            <p>Tu registro ha sido exitoso. Aquí están los detalles:</p>
-            <p><strong>Documento:</strong> {$documento}</p>
-            <p><strong>Número de Solicitud:</strong> {$numSolicitud}</p>
-            <p>Por favor, guarda esta información ya que es importante para futuras consultas.</p>
-        ";
-        $altmess = "Hola {$nombre} {$apellido},\n\nTu registro ha sido exitoso. Aquí están los detalles:\nDocumento: 
-        {$documento}\nNúmero de Solicitud: {$numSolicitud}\nPor favor, guarda esta información.";
-    
-        // Ejecutar en segundo plano después de la respuesta
-        register_shutdown_function(function() use ($correo, $nombre, $apellido, $subject, $message, $altmess) {
-            sendmail($correo, "{$nombre} {$apellido}", $subject, $message, $altmess);
-        });
-    }*/
-
-    private function enviarCorreo($nombre, $apellido, $documento, $numSolicitud, $correo) {
-        // Guardar el contenido del correo en variables
-        $subject = 'Confirmación de Registro';
-        $message = "
-            <h3>Hola {$nombre} {$apellido},</h3>
-            <p>Tu registro ha sido exitoso. Aquí están los detalles:</p>
-            <p><strong>Documento:</strong> {$documento}</p>
-            <p><strong>Número de Solicitud:</strong> {$numSolicitud}</p>
-            <p>Por favor, guarda esta información ya que es importante para futuras consultas.</p>
-            <br>
-            <p>Puede revisar el estado de su solicitud en esta pagina</p>
-            <br>
-            <a href=\"https://registroisunah.xyz/admisiones.php\">Ver solicitud</a>
-        ";
-        $altmess = "Hola {$nombre} {$apellido},\n\nTu registro ha sido exitoso. Aquí están los detalles:\nDocumento: 
-        {$documento}\nNúmero de Solicitud: {$numSolicitud}\nPor favor, guarda esta información.";
+    function enviarCorreo($nombre, $apellido, $documento, $numSolicitud, $correo) {
+        // Plantilla HTML como la que creamos anteriormente
+        $subject = 'Admisiones';
+        $message = '
+        <!DOCTYPE html>
+        <html lang="es">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Confirmación de Registro</title>
+            <style>
+                body {
+                    font-family: \'Arial\', sans-serif;
+                    background-color: #f4f4f4;
+                    margin: 0;
+                    padding: 20px;
+                    line-height: 1.6;
+                }
+                .container {
+                    max-width: 600px;
+                    margin: 0 auto;
+                    background-color: white;
+                    padding: 30px;
+                    border-radius: 10px;
+                    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+                }
+                .header {
+                    background-color: #3498db;
+                    color: white;
+                    text-align: center;
+                    padding: 20px;
+                    border-radius: 10px 10px 0 0;
+                }
+                .content {
+                    padding: 20px;
+                }
+                .details {
+                    background-color: #f9f9f9;
+                    border-left: 4px solid #3498db;
+                    padding: 15px;
+                    margin: 20px 0;
+                }
+                .btn {
+                    display: inline-block;
+                    background-color: #2ecc71;
+                    color: white;
+                    padding: 12px 25px;
+                    text-decoration: none;
+                    border-radius: 5px;
+                    margin-top: 20px;
+                    transition: background-color 0.3s ease;
+                }
+                .btn:hover {
+                    background-color: #27ae60;
+                }
+                .footer {
+                    text-align: center;
+                    color: #7f8c8d;
+                    margin-top: 20px;
+                    font-size: 0.9em;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <h1>Confirmación de Registro</h1>
+                </div>
+                <div class="content">
+                    <h3>Hola ' . htmlspecialchars($nombre) . ' ' . htmlspecialchars($apellido) . ',</h3>
+                    
+                    <p>Tu registro ha sido exitoso. Aquí están los detalles:</p>
+                    
+                    <div class="details">
+                        <p><strong>Documento:</strong> ' . htmlspecialchars($documento) . '</p>
+                        <p><strong>Número de Solicitud:</strong> ' . htmlspecialchars($numSolicitud) . '</p>
+                    </div>
+                    
+                    <p>Por favor, guarda esta información ya que es importante para futuras consultas.</p>
+                    
+                    <div style="text-align: center;">
+                        <a href="https://registroisunah.xyz/admisiones.php" class="btn">Ver Solicitud</a>
+                    </div>
+                </div>
+                
+                <div class="footer">
+                    <p>© 2025 UNAH | Admisiones</p>
+                </div>
+            </div>
+        </body>
+        </html>
+        ';
+         // Texto plano para clientes de correo que no soporten HTML
+        $altmess = "Hola {$nombre} {$apellido},\n\nTu registro ha sido exitoso. Aquí están los detalles:\n"
+                 . "Documento: {$documento}\n"
+                 . "Número de Solicitud: {$numSolicitud}\n"
+                 . "Por favor, guarda esta información.\n"
+                 . "Puedes ver tu solicitud en: https://registroisunah.xyz/admisiones.php";
     
         // Usar register_shutdown_function para ejecutar después de la respuesta
         register_shutdown_function(function() use ($correo, $nombre, $apellido, $subject, $message, $altmess) {
-            // Pequeña pausa para asegurar que la respuesta se envió primero
-           // usleep(100000); // 100ms (opcional)
             sendmail($correo, "{$nombre} {$apellido}", $subject, $message, $altmess);
         });
     }
@@ -246,28 +306,29 @@ class Aspirante {
 
 
     /**
-     * Obtiene la lista de los aspirantes admitidos en formato CSV
-     * Usando como base la funcion obtenerAspirantesAdmitidos
-     * @return string CSV con la lista de los aspirantes admitidos.
+     * Obtiene la lista de los aspirantes admitidos con carreras aprobadas en formato CSV
+     * @param resource $file El manejador de archivo para escribir los resultados en el CSV
      */
-    public function exportarAspirantesAdmitidosCSV() {
+    public function exportarAspirantesAdmitidosCSV($file) {
         // Consulta SQL para obtener los aspirantes admitidos con estado_aspirante_id
-        $sql = "SELECT 
-                    A.aspirante_id,
-                    A.documento,
-                    A.nombre,
-                    A.apellido,
-                    A.correo,
-                    A.telefono,
-                    A.numSolicitud,
-                    C_principal.nombre AS carrera_principal,
-                    C_secundaria.nombre AS carrera_secundaria,
-                    Cen.nombre AS centro
-                FROM Aspirante A
-                INNER JOIN Carrera C_principal ON A.carrera_principal_id = C_principal.carrera_id
-                LEFT JOIN Carrera C_secundaria ON A.carrera_secundaria_id = C_secundaria.carrera_id
-                INNER JOIN Centro Cen ON A.centro_id = Cen.centro_id
-                WHERE A.estado_aspirante_id = (SELECT estado_aspirante_id FROM EstadoAspirante WHERE nombre = 'ADMITIDO')";
+        // Incluye solo las carreras aprobadas y retorna solo la carrera en la que aprobaron
+        $sql = "
+        SELECT 
+            a.nombre, 
+            a.apellido, 
+            a.documento, 
+            a.correo, 
+            a.telefono, 
+            a.centro_id,
+            -- Carrera principal
+            cp.nombre AS carrera_principal,
+            -- Carrera secundaria (si existe)
+            cs.nombre AS carrera_secundaria
+        FROM Aspirante a
+        INNER JOIN Carrera cp ON a.carrera_principal_id = cp.carrera_id
+        LEFT JOIN Carrera cs ON a.carrera_secundaria_id = cs.carrera_id
+        INNER JOIN EstadoAspirante ea ON a.estado_aspirante_id = ea.estado_aspirante_id
+        WHERE ea.nombre = 'ADMITIDO'";
 
         // Ejecutar la consulta
         $result = $this->conn->query($sql);
@@ -276,31 +337,24 @@ class Aspirante {
             throw new Exception("Error en la consulta: " . $this->conn->error);
         }
 
-        // Configurar salida directa a PHP output
-        $output = fopen('php://output', 'w');
-
         // Escribir la cabecera del CSV
-        fputcsv($output, [
-            'aspirante_id',
-            'documento',
+        fputcsv($file, [
             'nombre',
             'apellido',
+            'documento',
             'correo',
             'telefono',
-            'numSolicitud',
+            'centro_id',
             'carrera_principal',
-            'carrera_secundaria',
-            'centro'
+            'carrera_secundaria'
         ]);
 
         // Escribir los datos de los aspirantes
         while ($row = $result->fetch_assoc()) {
-            fputcsv($output, $row);
+            fputcsv($file, $row);
         }
-
-        // Cerrar el archivo
-        fclose($output);
     }
+
 
     public function evaluarAspirante($aspiranteId) {
         // Obtener notas y datos del aspirante
@@ -430,8 +484,6 @@ class Aspirante {
         $stmt->execute();
     }
 
-    
-    
     /**
      * Obtiene una solicitud pendiente o corregida SIN asignarla a ningún revisor
      * 
@@ -442,7 +494,7 @@ class Aspirante {
      */
     public function obtenerYAsignarSolicitud($revisor_id) {
         try {
-            // Consulta optimizada solo para lectura
+            // Consulta optimizada para obtener solicitudes y liberarlas después de 5 minutos
             $sql = "SELECT 
                         aspirante_id, 
                         nombre, 
@@ -458,28 +510,62 @@ class Aspirante {
                         centro_id, 
                         certificado_url, 
                         estado_aspirante_id, 
-                        fecha_solicitud
+                        fecha_solicitud, 
+                        revisor_id, 
+                        fecha_asignacion
                     FROM Aspirante
-                    WHERE estado IN ('PENDIENTE','CORREGIDO_PENDIENTE')
+                    WHERE (revisor_id IS NULL OR 
+                        (revisor_id IS NOT NULL AND TIMESTAMPDIFF(SECOND, fecha_asignacion, NOW()) > 60)) 
+                    AND estado_aspirante_id IN (SELECT estado_aspirante_id FROM EstadoAspirante WHERE nombre IN ('PENDIENTE', 'CORREGIDO_PENDIENTE'))
                     ORDER BY fecha_solicitud ASC
                     LIMIT 1";
-
+    
             $stmt = $this->conn->prepare($sql);
             if (!$stmt) {
                 throw new Exception("Error en preparación de consulta: " . $this->conn->error);
             }
-
+    
             $stmt->execute();
             $result = $stmt->get_result();
             $solicitud = $result->fetch_assoc();
             $stmt->close();
+            
+            // Si no hay solicitud disponible
             return $solicitud ?: null;
-
-
+    
         } catch (Exception $e) {
             throw new Exception("Error al obtener solicitud: " . $e->getMessage());
         }
     }
+    
+    public function asignarRevisor($aspirante_id, $revisor_id) {
+        try {
+            // Asignar un revisor a una solicitud
+            $sql = "UPDATE Aspirante 
+                    SET revisor_id = ?, fecha_asignacion = NOW() 
+                    WHERE aspirante_id = ? AND (revisor_id IS NULL OR TIMESTAMPDIFF(SECOND, fecha_asignacion, NOW()) > 60)";
+    
+            $stmt = $this->conn->prepare($sql);
+            if (!$stmt) {
+                throw new Exception("Error preparando la consulta: " . $this->conn->error);
+            }
+    
+            $stmt->bind_param("ii", $revisor_id, $aspirante_id);
+            $stmt->execute();
+    
+            if ($stmt->affected_rows > 0) {
+                $stmt->close();
+                return true;  // Se asignó correctamente
+            } else {
+                $stmt->close();
+                return false;  // No se pudo asignar
+            }
+    
+        } catch (Exception $e) {
+            throw new Exception("Error al asignar revisor: " . $e->getMessage());
+        }
+    }
+    
   
     /**
      * Procesa la revisión de una solicitud de aspirante.
@@ -829,23 +915,25 @@ class Aspirante {
         $stmt->close();
     }
 
-    /**
-     * Reenvía el correo de confirmación a un aspirante.
+   /**
+     * Reenvía el correo de confirmación a un aspirante usando su correo electrónico.
      * 
-     * @param string $numSolicitud Número de solicitud (formato: SOL-XXXXX).
+     * @param string $correo Correo electrónico del aspirante.
      * @return bool True si el correo se envió correctamente.
      * @throws Exception Si no se encuentra el aspirante o falla el envío.
      */
-    public function reenviarCorreoPorSolicitud($numSolicitud) {
-        // 1. Buscar al aspirante
-        $query = "SELECT nombre, apellido, documento, correo FROM Aspirante WHERE numSolicitud = ?";
+    public function reenviarCorreoPorEmail($correo) {
+        // 1. Buscar al aspirante por correo
+        $query = "SELECT nombre, apellido, documento, numSolicitud, correo 
+                FROM Aspirante 
+                WHERE correo = ?";
         $stmt = $this->conn->prepare($query);
         
         if (!$stmt) {
             throw new Exception("Error al preparar la consulta: " . $this->conn->error);
         }
 
-        $stmt->bind_param("s", $numSolicitud);
+        $stmt->bind_param("s", $correo);
         
         if (!$stmt->execute()) {
             throw new Exception("Error al ejecutar la consulta: " . $stmt->error);
@@ -854,20 +942,414 @@ class Aspirante {
         $result = $stmt->get_result();
         
         if ($result->num_rows === 0) {
-            throw new Exception("No se encontró el aspirante con número de solicitud: $numSolicitud");
+            throw new Exception("No se encontró ningún aspirante con el correo: $correo");
         }
         
         $aspirante = $result->fetch_assoc();
         $stmt->close();
         
-        // 2. Enviar correo
+        // 2. Enviar correo con todos los datos
         return $this->enviarCorreo(
             $aspirante['nombre'],
             $aspirante['apellido'],
             $aspirante['documento'],
-            $numSolicitud,
-            $aspirante['correo']
+            $aspirante['numSolicitud'],
+            $aspirante['correo'] // Ahora usamos el correo de la BD por seguridad
         );
+    }
+
+     /**
+     * Obtiene el resultado de un aspirante mediante el documento
+     */
+    public function obtenerAspiranteResultado($documento) {
+        $query = "SELECT a.*, 
+                    cp.nombre as carrera_principal_nombre,
+                    cs.nombre as carrera_secundaria_nombre,
+                    a.correo  
+                FROM Aspirante a
+                LEFT JOIN Carrera cp ON a.carrera_principal_id = cp.carrera_id
+                LEFT JOIN Carrera cs ON a.carrera_secundaria_id = cs.carrera_id
+                WHERE a.documento = ?";
+        
+        $stmt = $this->conn->prepare($query);
+        $stmt->bind_param("s", $documento);
+        $stmt->execute();
+        
+        $result = $stmt->get_result();
+        $aspirante = $result->fetch_assoc();
+
+        // Verifica si el correo está disponible
+        if (empty($aspirante['correo'])) {
+            throw new Exception("Correo del aspirante no disponible para {$aspirante['nombre']} {$aspirante['apellido']}");
+        }
+
+        return $aspirante;
+    }
+
+    /**
+     * Obtiene el ID de tipo de examen por nombre usando SP
+     */
+    public function obtenerTipoExamenId($nombre_examen) {
+        $query = "CALL SP_obtener_tipo_examen(?, @tipo_examen_id, @nota_minima)";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bind_param("s", $nombre_examen);
+        $stmt->execute();
+        
+        $result = $this->conn->query("SELECT @tipo_examen_id as tipo_examen_id, @nota_minima as nota_minima");
+        return $result->fetch_assoc();
+    }
+
+    /**
+     * Registra el resultado de un examen usando SP
+     */
+    public function registrarResultadoExamen($aspirante_id, $tipo_examen_id, $carrera_id, $nota) {
+        $query = "CALL SP_registrar_resultado_examen(?, ?, ?, ?, @resultado_id)";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bind_param("iiid", $aspirante_id, $tipo_examen_id, $carrera_id, $nota);
+        $stmt->execute();
+        
+        $result = $this->conn->query("SELECT @resultado_id as resultado_id");
+        $row = $result->fetch_assoc();
+        
+        return $row['resultado_id'];
+    }
+
+    /**
+     * Obtiene una carrera por nombre
+     */
+    public function obtenerCarreraPorNombre($nombre_carrera) {
+        $query = "SELECT carrera_id, nombre FROM Carrera WHERE nombre = ?";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bind_param("s", $nombre_carrera);
+        $stmt->execute();
+        
+        $result = $stmt->get_result();
+        return $result->fetch_assoc();
+    }
+
+    /**
+     * Obtiene todos los exámenes de un aspirante para el correo
+     */
+    public function obtenerExamenesAspirante($aspirante_id) {
+        $query = "CALL SP_obtener_examenes_aspirante(?)";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bind_param("i", $aspirante_id);
+        $stmt->execute();
+        
+        $result = $stmt->get_result();
+        return $result->fetch_all(MYSQLI_ASSOC);
+    }
+
+    /**
+     * Evalúa si un aspirante aprobó una carrera usando SP
+     */
+    public function verificarAprobacionCarrera($aspirante_id, $carrera_id) {
+        $query = "CALL SP_evaluar_aprobacion_carrera(?, ?, @aprobado)";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bind_param("ii", $aspirante_id, $carrera_id);
+        $stmt->execute();
+        
+        $result = $this->conn->query("SELECT @aprobado as aprobado");
+        $row = $result->fetch_assoc();
+        
+        return (bool)$row['aprobado'];
+    }
+
+    /**
+     * Verifica si un examen pertenece a una carrera usando SP
+     */
+    public function esExamenDeCarrera($tipo_examen_id, $carrera_id) {
+        $query = "CALL SP_es_examen_de_carrera(?, ?, @pertenece)";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bind_param("ii", $tipo_examen_id, $carrera_id);
+        $stmt->execute();
+        
+        $result = $this->conn->query("SELECT @pertenece as pertenece");
+        $row = $result->fetch_assoc();
+        
+        return (bool)$row['pertenece'];
+    }
+
+    /**
+     * Actualiza el estado de la carrera usando SP
+     */
+    public function actualizarEstadoCarrera($aspirante_id, $carrera_id, $aprobado) {
+        $query = "CALL SP_actualizar_estado_carrera(?, ?, ?)";
+        $stmt = $this->conn->prepare($query);
+        $aprobado_int = $aprobado ? 1 : 0;
+        $stmt->bind_param("iii", $aspirante_id, $carrera_id, $aprobado_int);
+        return $stmt->execute();
+    }
+
+    public function enviarCorreoResultados($aspirante, $resultadosExamenes, $aprobado_principal, $aprobado_secundaria) {
+        $subject = "Resultado Detallado de Exámenes de Admisión";
+    
+        // Definir colores y estilos
+        $colorPrimario = "#3498db";
+        $colorSecundario = "#2c3e50";
+        $colorExito = "#2ecc71";
+        $colorError = "#e74c3c";
+        $colorFondo = "#f9f9f9";
+        $colorBorde = "#dddddd";
+        
+        // Inicio del HTML con estilos CSS
+        $message = "
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset='UTF-8'>
+            <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+            <title>Resultados de Admisión</title>
+            <style>
+                body {
+                    font-family: 'Helvetica Neue', Arial, sans-serif;
+                    line-height: 1.6;
+                    color: #333333;
+                    background-color: #ffffff;
+                    margin: 0;
+                    padding: 0;
+                }
+                .container {
+                    max-width: 600px;
+                    margin: 0 auto;
+                    padding: 20px;
+                    background-color: {$colorFondo};
+                    border-radius: 8px;
+                    border: 1px solid {$colorBorde};
+                }
+                .header {
+                    background-color: {$colorPrimario};
+                    color: white;
+                    padding: 20px;
+                    text-align: center;
+                    border-radius: 6px 6px 0 0;
+                    margin: -20px -20px 20px -20px;
+                }
+                h1, h2, h3, h4 {
+                    color: {$colorSecundario};
+                    margin-top: 20px;
+                    margin-bottom: 10px;
+                }
+                .header h1 {
+                    color: white;
+                    margin: 0;
+                }
+                .carrera {
+                    margin: 20px 0;
+                    padding: 15px;
+                    background-color: white;
+                    border-radius: 6px;
+                    border-left: 5px solid {$colorPrimario};
+                    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+                }
+                .resultado-lista {
+                    list-style-type: none;
+                    padding: 0;
+                    margin: 15px 0;
+                }
+                .resultado-item {
+                    padding: 10px;
+                    margin-bottom: 8px;
+                    background-color: white;
+                    border-radius: 4px;
+                    border: 1px solid {$colorBorde};
+                }
+                .aprobado {
+                    color: {$colorExito};
+                    font-weight: bold;
+                }
+                .no-aprobado {
+                    color: {$colorError};
+                    font-weight: bold;
+                }
+                .resultado-final {
+                    margin: 15px 0;
+                    padding: 12px;
+                    text-align: center;
+                    font-size: 18px;
+                    font-weight: bold;
+                    border-radius: 4px;
+                }
+                .aprobado-bg {
+                    background-color: #e8f8f5;
+                    border: 1px solid {$colorExito};
+                    color: {$colorExito};
+                }
+                .no-aprobado-bg {
+                    background-color: #fdedec;
+                    border: 1px solid {$colorError};
+                    color: {$colorError};
+                }
+                .mensaje-final {
+                    padding: 15px;
+                    margin-top: 20px;
+                    text-align: center;
+                    background-color: white;
+                    border-radius: 6px;
+                    border: 1px solid {$colorBorde};
+                }
+                .footer {
+                    margin-top: 30px;
+                    text-align: center;
+                    font-size: 12px;
+                    color: #777777;
+                }
+            </style>
+        </head>
+        <body>
+            <div class='container'>
+                <div class='header'>
+                    <h1>Resultados de Exámenes de Admisión</h1>
+                </div>
+                
+                <p>Hola <strong>{$aspirante['nombre']} {$aspirante['apellido']}</strong>,</p>
+                
+                <p>A continuación encontrarás los resultados detallados de tus exámenes de admisión:</p>";
+        
+        // Filtrar exámenes únicos por carrera
+        $examenes_principal = [];
+        $examenes_secundaria = [];
+        
+        foreach ($resultadosExamenes as $examen) {
+            // Para carrera principal
+            if ($examen['carrera_id'] == $aspirante['carrera_principal_id']) {
+                $examenes_principal[$examen['tipo_examen_id']] = $examen;
+            }
+            // Para carrera secundaria (si existe)
+            if ($aspirante['carrera_secundaria_id'] && $examen['carrera_id'] == $aspirante['carrera_secundaria_id']) {
+                $examenes_secundaria[$examen['tipo_examen_id']] = $examen;
+            }
+        }
+        
+        // Mostrar resultados para carrera principal
+        $message .= "
+                <div class='carrera'>
+                    <h3>Carrera Principal: {$aspirante['carrera_principal_nombre']}</h3>
+                    <ul class='resultado-lista'>";
+        
+        foreach ($examenes_principal as $examen) {
+            $clase_resultado = $examen['aprobado'] ? 'aprobado' : 'no-aprobado';
+            $texto_resultado = $examen['aprobado'] ? 'APROBADO' : 'NO APROBADO';
+            
+            $message .= "
+                        <li class='resultado-item'>
+                            <strong>{$examen['tipo_examen']}:</strong> {$examen['nota']} 
+                            <small>(Nota mínima: {$examen['nota_minima']})</small> - 
+                            <span class='{$clase_resultado}'>{$texto_resultado}</span>
+                        </li>";
+        }
+        
+        $message .= "
+                    </ul>";
+        
+        $clase_resultado_final = $aprobado_principal ? 'aprobado-bg' : 'no-aprobado-bg';
+        $texto_resultado_final = $aprobado_principal ? 'APROBADO' : 'NO APROBADO';
+        
+        $message .= "
+                    <div class='resultado-final {$clase_resultado_final}'>
+                        Resultado final: {$texto_resultado_final}
+                    </div>
+                </div>";
+        
+        // Mostrar resultados para carrera secundaria (si aplica)
+        if ($aspirante['carrera_secundaria_id'] && !empty($examenes_secundaria)) {
+            $message .= "
+                <div class='carrera'>
+                    <h3>Carrera Secundaria: {$aspirante['carrera_secundaria_nombre']}</h3>
+                    <ul class='resultado-lista'>";
+            
+            foreach ($examenes_secundaria as $examen) {
+                $clase_resultado = $examen['aprobado'] ? 'aprobado' : 'no-aprobado';
+                $texto_resultado = $examen['aprobado'] ? 'APROBADO' : 'NO APROBADO';
+                
+                $message .= "
+                        <li class='resultado-item'>
+                            <strong>{$examen['tipo_examen']}:</strong> {$examen['nota']} 
+                            <small>(Nota mínima: {$examen['nota_minima']})</small> - 
+                            <span class='{$clase_resultado}'>{$texto_resultado}</span>
+                        </li>";
+            }
+            
+            $message .= "
+                    </ul>";
+            
+            $clase_resultado_final = $aprobado_secundaria ? 'aprobado-bg' : 'no-aprobado-bg';
+            $texto_resultado_final = $aprobado_secundaria ? 'APROBADO' : 'NO APROBADO';
+            
+            $message .= "
+                    <div class='resultado-final {$clase_resultado_final}'>
+                        Resultado final: {$texto_resultado_final}
+                    </div>
+                </div>";
+        }
+        
+        // Mensaje final
+        if ($aprobado_principal || $aprobado_secundaria) {
+            $message .= "
+                <div class='mensaje-final' style='background-color: #e8f8f5; border-color: {$colorExito};'>
+                    <p><strong>¡Felicidades!</strong> Has aprobado al menos una de tus carreras seleccionadas.</p>
+                    <p>Recibirás un correo posterior con tus credenciales de acceso.</p>
+                </div>";
+        } else {
+            $message .= "
+                <div class='mensaje-final' style='background-color: #fdedec; border-color: {$colorError};'>
+                    <p>Lamentablemente no has aprobado ninguna de las carreras seleccionadas.</p>
+                    <p>Si tienes alguna duda, puedes comunicarte con el departamento de admisiones.</p>
+                </div>";
+        }
+        
+        // Pie de página
+        $message .= "
+                <div class='footer'>
+                    <p>Este es un correo automático. Por favor no responda a este mensaje.</p>
+                    <p>© " . date('Y') . " Sistema de Admisiones Universitarias</p>
+                </div>
+            </div>
+        </body>
+        </html>";
+        
+        // Versión alternativa para correo en texto plano
+        $altmess = "Resultados de exámenes de admisión\n\n";
+        $altmess .= "Hola {$aspirante['nombre']} {$aspirante['apellido']},\n\n";
+        $altmess .= "Carrera Principal: {$aspirante['carrera_principal_nombre']}\n";
+        
+        foreach ($examenes_principal as $examen) {
+            $aprobado = $examen['aprobado'] ? 'APROBADO' : 'NO APROBADO';
+            $altmess .= "- {$examen['tipo_examen']}: {$examen['nota']} (Mínima: {$examen['nota_minima']}) - {$aprobado}\n";
+        }
+        
+        $altmess .= "Resultado final: " . ($aprobado_principal ? "APROBADO" : "NO APROBADO") . "\n\n";
+        
+        if ($aspirante['carrera_secundaria_id']) {
+            $altmess .= "Carrera Secundaria: {$aspirante['carrera_secundaria_nombre']}\n";
+            
+            foreach ($examenes_secundaria as $examen) {
+                $aprobado = $examen['aprobado'] ? 'APROBADO' : 'NO APROBADO';
+                $altmess .= "- {$examen['tipo_examen']}: {$examen['nota']} (Mínima: {$examen['nota_minima']}) - {$aprobado}\n";
+            }
+            
+            $altmess .= "Resultado final: " . ($aprobado_secundaria ? "APROBADO" : "NO APROBADO") . "\n\n";
+        }
+        
+        if ($aprobado_principal || $aprobado_secundaria) {
+            $altmess .= "¡Felicidades! Has aprobado al menos una de tus carreras seleccionadas. ";
+            $altmess .= "Recibirás un correo posterior con tus credenciales de acceso.\n";
+        } else {
+            $altmess .= "Lamentablemente no has aprobado ninguna de las carreras seleccionadas.\n";
+            $altmess .= "Si tienes alguna duda, puedes comunicarte con el departamento de admisiones.\n";
+        }
+    
+        // Verificar si el correo es válido antes de enviar
+        if (empty($aspirante['correo'])) {
+            throw new Exception("Correo del aspirante no disponible");
+        }
+    
+        // Enviar el correo
+        $enviado = sendmail($aspirante['correo'], "{$aspirante['nombre']} {$aspirante['apellido']}", $subject, $message, $altmess);
+        
+        if (!$enviado) {
+            throw new Exception("Error al enviar el correo a {$aspirante['correo']}");
+        }
     }
 }
 ?>

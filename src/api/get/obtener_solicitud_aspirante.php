@@ -16,6 +16,7 @@
  * @version 1.0
  */
 
+header("Access-Control-Allow-Origin: *");
 header('Content-Type: application/json');
 
 if (!isset($_GET['revisor_id']) || !is_numeric($_GET['revisor_id'])) {

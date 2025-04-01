@@ -702,6 +702,157 @@ DELIMITER ;
 
 
 
+
+-- SIN PROBAR
+
+DELIMITER //
+CREATE PROCEDURE SP_actualizar_estado_carrera(
+    IN p_aspirante_id INT,
+    IN p_carrera_id INT,
+    IN p_aprobado BOOLEAN
+)
+BEGIN
+    DECLARE v_estado_id INT;
+    
+    -- Obtener ID del estado
+    IF p_aprobado THEN
+        SELECT estado_aspirante_carrera_id INTO v_estado_id
+        FROM EstadoAspiranteCarrera
+        WHERE nombre = 'APROVADO';
+    ELSE
+        SELECT estado_aspirante_carrera_id INTO v_estado_id
+        FROM EstadoAspiranteCarrera
+        WHERE nombre = 'NO_APROVADO';
+    END IF;
+    
+    -- Insertar o actualizar estado
+    INSERT INTO AspiranteCarrera 
+    (aspirante_id, carrera_id, estado_aspirante_carrera_id)
+    VALUES (p_aspirante_id, p_carrera_id, v_estado_id)
+    ON DUPLICATE KEY UPDATE 
+    estado_aspirante_carrera_id = v_estado_id;
+END //
+DELIMITER ;
+
+DELIMITER // 
+CREATE PROCEDURE SP_evaluar_aprobacion_carrera(
+    IN p_aspirante_id INT,
+    IN p_carrera_id INT,
+    OUT p_aprobado BOOLEAN
+)
+BEGIN
+    DECLARE examenes_faltantes INT;
+    
+    SELECT COUNT(*) INTO examenes_faltantes
+    FROM CarreraExamen ce
+    WHERE ce.carrera_id = p_carrera_id
+    AND NOT EXISTS (
+        SELECT 1 
+        FROM ResultadoExamen re
+        JOIN TipoExamen te ON re.tipo_examen_id = te.tipo_examen_id
+        WHERE re.aspirante_id = p_aspirante_id
+        AND re.carrera_id = p_carrera_id
+        AND re.tipo_examen_id = ce.tipo_examen_id
+        AND re.calificacion >= te.nota_minima
+    );
+    
+    SET p_aprobado = (examenes_faltantes = 0);
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE SP_registrar_resultado_examen(
+    IN p_aspirante_id INT,
+    IN p_tipo_examen_id INT,
+    IN p_carrera_id INT,
+    IN p_calificacion DECIMAL(4,2),
+    OUT p_resultado_id INT
+)
+BEGIN
+    DECLARE v_nota_minima DECIMAL(6,2);
+    DECLARE v_resultado_tipo_id INT;
+    DECLARE v_examen_pertenece INT DEFAULT 0;
+    
+    -- Verificar que el examen pertenezca a la carrera
+    SELECT COUNT(*) INTO v_examen_pertenece
+    FROM CarreraExamen
+    WHERE carrera_id = p_carrera_id AND tipo_examen_id = p_tipo_examen_id;
+    
+    IF v_examen_pertenece = 0 THEN
+        SIGNAL SQLSTATE '45000' 
+        SET MESSAGE_TEXT = 'El examen no pertenece a la carrera especificada';
+    ELSE
+        -- Obtener nota mínima para este examen en esta carrera
+        SELECT nota_minima INTO v_nota_minima 
+        FROM TipoExamen 
+        WHERE tipo_examen_id = p_tipo_examen_id;
+        
+        -- Determinar resultado
+        IF p_calificacion >= v_nota_minima THEN
+            SET v_resultado_tipo_id = 1; -- APROBADO
+        ELSE
+            SET v_resultado_tipo_id = 2; -- NO APROBADO
+        END IF;
+        
+        -- Insertar el resultado (sin ON DUPLICATE KEY porque ahora tenemos clave autoincremental)
+        INSERT INTO ResultadoExamen 
+        (aspirante_id, tipo_examen_id, carrera_id, fecha_examen, calificacion, resultado_tipo_id)
+        VALUES (p_aspirante_id, p_tipo_examen_id, p_carrera_id, CURDATE(), p_calificacion, v_resultado_tipo_id);
+        
+        SET p_resultado_id = LAST_INSERT_ID();
+    END IF;
+END //
+DELIMITER ;
+
+-- Obtener tipo de examen
+DELIMITER //
+CREATE PROCEDURE SP_obtener_tipo_examen(
+    IN p_nombre VARCHAR(100),
+    OUT p_tipo_examen_id INT,
+    OUT p_nota_minima DECIMAL(6,2)
+)
+BEGIN
+    SELECT tipo_examen_id, nota_minima INTO p_tipo_examen_id, p_nota_minima
+    FROM TipoExamen 
+    WHERE nombre = p_nombre;
+END //
+DELIMITER ;
+
+-- Obtener exámenes de un aspirante
+DELIMITER //
+CREATE PROCEDURE SP_obtener_examenes_aspirante(
+    IN p_aspirante_id INT
+)
+BEGIN
+    SELECT re.tipo_examen_id, te.nombre, re.calificacion, te.nota_minima
+    FROM ResultadoExamen re
+    JOIN TipoExamen te ON re.tipo_examen_id = te.tipo_examen_id
+    WHERE re.aspirante_id = p_aspirante_id;
+END //
+DELIMITER ;
+
+-- Verificar si examen pertenece a carrera
+DELIMITER //
+CREATE PROCEDURE SP_es_examen_de_carrera(
+    IN p_tipo_examen_id INT,
+    IN p_carrera_id INT,
+    OUT p_pertenece BOOLEAN
+)
+BEGIN
+    DECLARE v_count INT;
+    
+    SELECT COUNT(*) INTO v_count
+    FROM CarreraExamen
+    WHERE tipo_examen_id = p_tipo_examen_id
+    AND carrera_id = p_carrera_id;
+    
+    SET p_pertenece = (v_count > 0);
+END //
+DELIMITER ;
+
+
+
+
 --EVENTOS
 
 SET GLOBAL event_scheduler = ON;

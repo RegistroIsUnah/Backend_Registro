@@ -32,6 +32,9 @@
     "error": "No hay campos válidos para actualizar"
 }
 */
+
+header("Access-Control-Allow-Origin: *");
+
 require_once __DIR__ . '/../../controllers/EstudianteController.php';
 
 $controller = new EstudianteController();

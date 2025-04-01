@@ -33,13 +33,14 @@
  * @version 1.2
  * 
  */
+ 
+ header("Access-Control-Allow-Origin: *");
+ header('Content-Type: application/json');
 
-header('Content-Type: application/json');
+ $data = $_POST;
 
-$data = $_POST;
+ require_once __DIR__ . '/../../controllers/AspiranteController.php';
 
-require_once __DIR__ . '/../../controllers/AspiranteController.php';
-
-$controller = new AspiranteController();
-$controller->procesarRevision($data);
+ $controller = new AspiranteController();
+ $controller->procesarRevision($data);
 ?>
