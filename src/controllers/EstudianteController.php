@@ -57,7 +57,7 @@ class EstudianteController {
         }
     }
 
-    public function obtenerPerfilEstudiante() {
+    public function obtenerPerfilEstudiante($estudianteId) {
         header('Content-Type: application/json');
         
         try {
@@ -65,23 +65,19 @@ class EstudianteController {
             
             // Validar autenticación
             if (!isset($_SESSION['usuario_id'])) {
-                http_response_code(401);
-                echo json_encode(['error' => 'Debe iniciar sesión']);
-                return;
+                throw new Exception('Debe iniciar sesión', 401);
             }
     
-            // Obtener ID del estudiante
-            $estudianteId = $_SESSION['estudiante_id'] ?? null;
+            // Determinar ID a usar
+            $idFinal = $estudianteId ?? $_SESSION['estudiante_id'];
             
-            // Validar si es admin o el mismo estudiante
-            if ($_SESSION['rol'] !== 'admin' && $_SESSION['estudiante_id'] != $estudianteId) {
-                http_response_code(403);
-                echo json_encode(['error' => 'No autorizado']);
-                return;
+            // Validar permisos
+            if ($_SESSION['rol'] !== 'admin' && $_SESSION['estudiante_id'] != $idFinal) {
+                throw new Exception('No tiene permisos para ver este perfil', 403);
             }
     
             // Obtener datos del modelo
-            $perfil = $this->modelo->obtenerPerfilEstudiante($estudianteId);
+            $perfil = $this->modelo->obtenerPerfilEstudiante($idFinal);
             
             // Formatear respuesta
             $response = [
@@ -95,8 +91,8 @@ class EstudianteController {
                         'direccion' => $perfil['direccion']
                     ],
                     'academico' => [
-                        'indice_global' => $perfil['indice_global'],
-                        'indice_periodo' => $perfil['indice_periodo'],
+                        'indice_global' => (float)$perfil['indice_global'],
+                        'indice_periodo' => (float)$perfil['indice_periodo'],
                         'centro' => $perfil['centro'],
                         'carreras' => explode(', ', $perfil['carreras'])
                     ],
@@ -109,7 +105,7 @@ class EstudianteController {
             echo json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
     
         } catch (Exception $e) {
-            http_response_code(500);
+            http_response_code($e->getCode() ?: 500);
             echo json_encode([
                 'success' => false,
                 'error' => $e->getMessage()

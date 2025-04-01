@@ -1,5 +1,5 @@
 <?php
-/**
+/*
  * API GET para obtener datos del perfil del estudiante
  * 
  * Método: GET
@@ -44,16 +44,25 @@
 
 header('Content-Type: application/json');
 
-try {
-    require_once __DIR__ . '/../../controllers/EstudianteController.php';
-    $controller = new EstudianteController();
-    $controller->obtenerPerfilEstudiante();
-    
-} catch (Exception $e) {
-    http_response_code(500);
-    echo json_encode([
-        'success' => false,
-        'error' => 'Error interno: ' . $e->getMessage()
-    ]);
+
+if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+    $data = [
+        'estudianteid' => isset($_GET['estudianteid']) ? $_GET['estudianteid'] : null
+    ];
+} else {
+    http_response_code(405);
+    echo json_encode(['error' => 'Método no permitido']);
+    exit;
 }
+
+if (!$data || !isset($data['estudianteid'])) {
+    http_response_code(400);
+    echo json_encode(['error' => 'El parámetro estudianteid es requerido']);
+    exit;
+}
+
+require_once __DIR__ . '/../../controllers/EstudianteController.php';
+
+$controller = new EstudianteController();
+$controller->obtenerPerfilEstudiante($data);
 ?>
