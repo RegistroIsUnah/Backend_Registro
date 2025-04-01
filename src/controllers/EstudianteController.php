@@ -242,6 +242,59 @@ class EstudianteController {
         }
     }
 
+    /**
+     * Procesa solicitud de cambio de carrera
+     * 
+     * @return void Retorna respuesta JSON
+     * @author Jose Vargas
+     * @version 1.0
+     */
+    public function solicitarCambioCarrera($data) {
+        header('Content-Type: application/json');
+        
+        try {
+            // Validar sesión
+            session_start();
+            if (!isset($_SESSION['estudiante_id'])) {
+                throw new Exception('Acceso no autorizado', 401);
+            }
+    
+            // Validar campos requeridos
+            $required = ['carrera_solicitada_id'];
+            foreach ($required as $campo) {
+                if (empty($data[$campo])) {
+                    throw new Exception("Campo requerido: $campo", 400);
+                }
+            }
+    
+            // Obtener carrera actual
+            $carrerasEstudiante = $this->modelo->obtenerCarrerasEstudiante($_SESSION['estudiante_id']);
+            if (empty($carrerasEstudiante)) {
+                throw new Exception('El estudiante no tiene carrera registrada', 400);
+            }
+            $carreraActualId = $carrerasEstudiante[0]['carrera_id'];
+    
+            // Registrar solicitud
+            $this->modelo->solicitarCambioCarrera(
+                $_SESSION['estudiante_id'],
+                $carreraActualId,
+                $data['carrera_solicitada_id'],
+                $data['motivo'] ?? null
+            );
+    
+            echo json_encode([
+                'success' => true,
+                'message' => 'Solicitud registrada exitosamente'
+            ]);
+    
+        } catch (Exception $e) {
+            http_response_code($e->getCode() ?: 500);
+            echo json_encode([
+                'success' => false,
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
 
 }
 ?>
