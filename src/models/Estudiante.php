@@ -535,7 +535,16 @@ public function actualizarPerfil($estudianteId, $datosActualizados) {
     
         // Envío asíncrono
         register_shutdown_function(function() use ($correo, $nombreCompleto, $subject, $message, $altMessage) {
-            sendmail($correo, $nombreCompleto, $subject, $message, $altMessage);
+            // Crear una instancia de la clase MailSender
+            $emailService = new \Mail\MailSender();
+            
+            // Enviar el correo utilizando el método sendMail
+            $result = $emailService->sendMail($correo, $nombreCompleto, $subject, $message, $altMessage);
+            
+            // Verificar si el correo fue enviado exitosamente
+            if (!$result) {
+                error_log("Error al enviar el correo a $correo");
+            }
         });
     }
 }

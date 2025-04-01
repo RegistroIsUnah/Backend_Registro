@@ -85,6 +85,20 @@ class LibroController {
             echo json_encode(['error' => 'El ISBN tiene un formato no válido']);
             return;
         }
+
+        // Verificar si el ISBN ya existe en la base de datos
+        try {
+            $libroModel = new Libro();
+            if ($libroModel->existeISBN($isbn_libro)) {
+                http_response_code(400);
+                echo json_encode(['error' => 'El ISBN ingresado ya está registrado en el sistema']);
+                return;
+            }
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => 'Error al verificar el ISBN']);
+            return;
+        }
         
         // Validar fecha de publicación
         $fecha_publicacion = trim($data['fecha_publicacion']);
@@ -228,7 +242,7 @@ class LibroController {
         }
     }
 
-   /**
+    /**
      * Actualiza un libro y sus asociaciones de forma parcial.
      *
      * Se esperan los siguientes parámetros vía POST (multipart/form-data):
@@ -284,13 +298,38 @@ class LibroController {
             echo json_encode(['error' => 'La editorial tiene un formato no válido']);
             return;
         }
-
+        
         // ISBN (opcional)
         $isbn_libro = isset($data['isbn_libro']) ? trim($data['isbn_libro']) : null;
-        if ($isbn_libro !== null && $isbn_libro !== "" && !preg_match($regexISBN, $isbn_libro)) {
-            http_response_code(400);
-            echo json_encode(['error' => 'El ISBN tiene un formato no válido']);
-            return;
+        if ($isbn_libro !== null && $isbn_libro !== "") {
+            // Validar formato del ISBN
+            if (!preg_match($regexISBN, $isbn_libro)) {
+                http_response_code(400);
+                echo json_encode(['error' => 'El ISBN tiene un formato no válido']);
+                return;
+            }
+
+            // Verificar si el ISBN pertenece a otro libro diferente al que se esta actualizando
+            try {
+                $libroModel = new Libro();
+                
+                //Obtener el ISBN actual del libro
+                $isbn_actual = $libroModel->obtenerISBNLibro($libro_id);
+                
+                //Solo verificar si el nuevo ISBN es diferente al actual
+                if ($isbn_libro !== $isbn_actual) {
+                    //Usar función existeISBN() sin modificaciones
+                    if ($libroModel->existeISBN($isbn_libro)) {
+                        http_response_code(400);
+                        echo json_encode(['error' => 'El ISBN ingresado ya está registrado en otro libro']);
+                        return;
+                    }
+                }
+            } catch (Exception $e) {
+                http_response_code(500);
+                echo json_encode(['error' => 'Error al verificar el ISBN: ' . $e->getMessage()]);
+                return;
+            }
         }
 
         // Fecha de publicación
