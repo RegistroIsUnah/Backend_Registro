@@ -46,9 +46,4 @@
  
  $controller = new LibroController();
  $controller->actualizarLibro($data, $files);
-<<<<<<< Updated upstream
- ?>
 ?>
-=======
- ?>
->>>>>>> Stashed changes
