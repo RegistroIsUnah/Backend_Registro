@@ -220,6 +220,75 @@ public function actualizarPerfil($estudianteId, $datosActualizados) {
         }
     }
 
+    /**
+     * Registra una solicitud de cambio de carrera
+     * 
+     * @param int $estudianteId
+     * @param int $carreraActualId
+     * @param int $carreraSolicitadaId
+     * @param string $motivo
+     * @return bool
+     * @throws Exception
+     * @author Jose Vargas
+     * @version 1.0
+     */
+    public function solicitarCambioCarrera($estudianteId, $carreraActualId, $carreraSolicitadaId, $motivo = null) {
+        $sql = "INSERT INTO Solicitud (
+                    estudiante_id,
+                    tipo_solicitud_id,
+                    carrera_actual_id,
+                    carrera_solicitada_id,
+                    motivo_id,
+                    fecha_solicitud,
+                    estado_solicitud_id
+                ) VALUES (
+                    ?,
+                    (SELECT tipo_solicitud_id FROM TipoSolicitud WHERE nombre = 'Cambio de Carrera'),
+                    ?,
+                    ?,
+                    ?,
+                    CURDATE(),
+                    (SELECT estado_solicitud_id FROM EstadoSolicitud WHERE nombre = 'Pendiente')
+                )";
+
+        $stmt = $this->conn->prepare($sql);
+        
+        // Si no hay motivo, insertar NULL
+        $motivoId = !empty($motivo) ? $motivo : null;
+        
+        $stmt->bind_param("iiii", 
+            $estudianteId,
+            $carreraActualId,
+            $carreraSolicitadaId,
+            $motivoId
+        );
+
+        if (!$stmt->execute()) {
+            throw new Exception("Error al registrar solicitud: " . $stmt->error);
+        }
+        
+        return true;
+    }
+    
+    /**
+     * Obtiene las carreras del estudiante
+     * 
+     * @param int $estudianteId
+     * @return array
+     */
+    public function obtenerCarrerasEstudiante($estudianteId) {
+        $sql = "SELECT c.carrera_id, c.nombre 
+                FROM EstudianteCarrera ec
+                INNER JOIN Carrera c ON ec.carrera_id = c.carrera_id
+                WHERE ec.estudiante_id = ?";
+        
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param("i", $estudianteId);
+        $stmt->execute();
+        
+        $result = $stmt->get_result();
+        return $result->fetch_all(MYSQLI_ASSOC);
+    }
 
     //Prueba
 
