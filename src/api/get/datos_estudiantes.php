@@ -15,7 +15,7 @@
  * @package API
  * @author Jose Vargas
  * @version 1.0
- 
+ servidor:puerto/api/get/datos_estudiante.php?estudianteId=5
  {
     "success": true,
     "data": {
