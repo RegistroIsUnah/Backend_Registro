@@ -150,6 +150,23 @@ class Libro {
         $stmt->close();
         return $tagId;
     }
+
+    /**
+     * Verifica si un ISBN ya existe en la base de datos.
+     *
+     * @param string $isbn ISBN a verificar.
+     * @return bool True si el ISBN ya existe, false si no existe.
+     * @throws Exception Si ocurre un error en la consulta.
+     */
+    public function existeISBN($isbn) {
+        $stmt = $this->conn->prepare("SELECT libro_id FROM Libro WHERE isbn_libro = ?");
+        $stmt->bind_param("s", $isbn);
+        $stmt->execute();
+        $stmt->store_result();
+        $existe = $stmt->num_rows > 0;
+        $stmt->close();
+        return $existe;
+    }
     
     // Función para asociar un tag al libro
     private function asociarTagAlLibro($libro_id, $tag_id) {
@@ -160,7 +177,7 @@ class Libro {
     }
     
 
-  /**
+    /**
      * Actualiza un libro y sus asociaciones de forma parcial.
      *
      * Todos los parámetros (excepto $libro_id) son opcionales; solo se actualizan los que se proporcionen.
@@ -360,6 +377,29 @@ class Libro {
             $this->conn->rollback();
             throw $e;
         }
+    }
+
+    /**
+     * Obtiene el ISBN de un libro específico
+     *
+     * @param int $libro_id ID del libro
+     * @return string|null ISBN del libro o null si no existe
+     * @throws Exception Si ocurre un error en la consulta
+     */
+    public function obtenerISBNLibro($libro_id) {
+        $stmt = $this->conn->prepare("SELECT isbn_libro FROM Libro WHERE libro_id = ?");
+        $stmt->bind_param("i", $libro_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        if ($result->num_rows === 0) {
+            $stmt->close();
+            throw new Exception("Libro no encontrado");
+        }
+        
+        $row = $result->fetch_assoc();
+        $stmt->close();
+        return $row['isbn_libro'];
     }
         
     /**
