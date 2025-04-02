@@ -1,11 +1,7 @@
 <?php
 /**
-<<<<<<< Updated upstream
- * API para obtener las secciones de una clase con detalles del docente, aula y edificio que estan en estado activo.
-=======
  * API para obtener las secciones de una clase con detalles del docente, aula y edificio que estan en estado activo
  * y los cupos disponibles.
->>>>>>> Stashed changes
  *
  * Permite filtrar las secciones mediante el parámetro GET 'clase_id'.
  * servidor:puerto/api/get/secciones.php?clase_id=1
