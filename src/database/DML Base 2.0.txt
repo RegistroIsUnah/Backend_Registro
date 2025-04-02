@@ -402,7 +402,7 @@ INSERT INTO EstadoCurso (nombre) VALUES
 INSERT INTO EstadoMatricula (nombre) VALUES 
 ('MATRICULADO'),
 ('EN_ESPERA'),
-('Cancelado'),
+('CANCELADA'),
 ('Completado'),
 ('Pendiente');
 
