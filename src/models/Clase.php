@@ -86,9 +86,10 @@ class Clase {
                     FROM ClaseRequisito cr
                     INNER JOIN HistorialEstudiante he ON cr.prerequisito_clase_id = he.clase_id
                     INNER JOIN Seccion s ON he.seccion_id = s.seccion_id
-                    WHERE he.estudiante_id = ? 
+                    INNER JOIN EstadoCurso esc ON he.estado_curso_id = esc.estado_curso_id
+                    WHERE he.estudiante_id = ?
                     AND s.clase_id = c.clase_id
-                    AND he.estado_curso = 'APROBADA'
+                    AND esc.nombre = 'APROBADA'
                 )
             )
         ";
@@ -121,7 +122,7 @@ class Clase {
      * @throws Exception Si ocurre un error en la consulta.
      */
     public function obtenerLaboratoriosPorClase($clase_id) {
-        $sql = "SELECT * FROM Laboratorio WHERE clase_id = ?";
+        $sql = "SELECT * FROM Laboratorio l LEFT JOIN EstadoSeccion es ON l.estado_seccion_id = es.estado_seccion_id WHERE es.nombre = 'ACTIVA' AND clase_id = ?";
         $stmt = $this->conn->prepare($sql);
         if (!$stmt) {
             throw new Exception("Error preparando la consulta: " . $this->conn->error);

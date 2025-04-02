@@ -176,5 +176,23 @@ class SeccionController {
             echo json_encode(['error' => $e->getMessage()]);
         }
     }
+
+    /**
+     * Obtiene las secciones de una clase en estado activo y envía la respuesta en JSON.
+     *
+     * @param int $clase_id ID de la clase.
+     * @return void
+     */
+    public function getSeccionesPorClaseMatricula($clase_id) {
+        try {
+            $seccionModel = new Seccion();
+            $secciones = $seccionModel->obtenerSeccionesPorClaseMatricula($clase_id);
+            http_response_code(200);
+            echo json_encode($secciones);
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => $e->getMessage()]);
+        }
+    }
 }
 ?>
