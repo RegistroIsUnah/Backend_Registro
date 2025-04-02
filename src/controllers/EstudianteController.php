@@ -56,7 +56,14 @@ class EstudianteController {
             ]);
         }
     }
-
+    /**
+     * Obtiene el perfil del estudiante
+     * 
+     * @param int $estudianteId ID del estudiante (opcional)
+     * @return void
+     * @author Jose Vargas
+     * @version 1.3
+     */
     public function obtenerPerfilEstudiante($estudianteId) {
         header('Content-Type: application/json');
         
@@ -79,7 +86,8 @@ class EstudianteController {
             // Obtener datos del modelo
             $perfil = $this->modelo->obtenerPerfilEstudiante($idFinal);
             
-            // Formatear respuesta
+            // Formatear respuesta Actualizada
+
             $response = [
                 'success' => true,
                 'data' => [

@@ -82,7 +82,20 @@ class Estudiante {
         
         return $docentes;
     }
+
+
+    /**
+     * Obtiene el perfil del estudiante
+     * 
+     * @param int $estudianteId
+     * @return array
+     * @throws Exception
+     * @author Jose Vargas
+     * @version 1.3
+     */
+
     public function obtenerPerfilEstudiante($estudianteId) {
+
         $sql = "SELECT 
                 e.estudiante_id,
                 e.nombre,
