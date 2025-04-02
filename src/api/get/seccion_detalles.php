@@ -16,6 +16,7 @@
  * 
  */
 
+header("Access-Control-Allow-Origin: *");
 header('Content-Type: application/json');
 
 $clase_id = isset($_GET['clase_id']) ? intval($_GET['clase_id']) : null;

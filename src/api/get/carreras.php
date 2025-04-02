@@ -30,6 +30,7 @@
  * 
  */
 
+header("Access-Control-Allow-Origin: *");
 header('Content-Type: application/json');
 
 // Obtener el parámetro centro_id si se envía; si no, será null.

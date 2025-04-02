@@ -242,6 +242,7 @@ class EstudianteController {
         }
     }
 
+
     /**
      * Procesa solicitud de cambio de carrera
      * 
@@ -296,5 +297,85 @@ class EstudianteController {
         }
     }
 
+    //Prueba
+
+
+    /**
+     * Procesa el archivo CSV, crea usuarios, registra estudiantes y los asigna a carreras.
+     */
+    public function procesarCSVEstudiantes() {
+        // Asegurarse de que el archivo CSV se haya recibido correctamente
+        if (!isset($_FILES['estudiantes_csv'])) {
+            echo json_encode(['error' => 'Archivo CSV no recibido.']);
+            return;
+        }
+
+        // Ruta temporal del archivo
+        $filePath = $_FILES['estudiantes_csv']['tmp_name'];
+        $file = fopen($filePath, 'r');
+
+        // Lee el archivo CSV y comienza el procesamiento
+        $successCount = 0;
+        $errorCount = 0;
+        
+        // Saltar la cabecera
+        fgetcsv($file);
+        
+        while (($row = fgetcsv($file)) !== false) {
+            $nombre = $row[0];
+            $apellido = $row[1];
+            $documento = $row[2];
+            $correo = $row[3];
+            $telefono = $row[4];
+            $centro_id = $row[5];
+            $carrera_principal = $row[6];
+            $carrera_secundaria = $row[7];
+
+            try {
+                // Crear el usuario
+                $usuario = $this->modelo->crearUsuarioEstudiante($nombre, $apellido);
+            
+                // Registrar el estudiante
+                $estudiante_id = $this->modelo->registrarEstudiante(
+                    $usuario['usuario_id'], 
+                    $documento, 
+                    $nombre, 
+                    $apellido, 
+                    $correo, 
+                    $telefono, 
+                    $centro_id
+                );
+            
+                // Asignar las carreras al estudiante
+                $carreras = [];
+                if (!empty($carrera_principal)) {
+                    $carreras[] = $carrera_principal;
+                }
+                if (!empty($carrera_secundaria)) {
+                    $carreras[] = $carrera_secundaria;
+                }
+                
+                if (!empty($carreras)) {
+                    $this->modelo->relacionarEstudianteConCarreras($estudiante_id, $carreras);
+                }
+            
+                // Enviar correo con las credenciales
+                $this->modelo->enviarCorreoConCredenciales($correo, $nombre, $apellido, $usuario['username'], $usuario['password']);
+                
+                $successCount++;
+            } catch (Exception $e) {
+                $errorCount++;
+                error_log("Error procesando estudiante $nombre $apellido: " . $e->getMessage());
+            }
+        }
+
+        fclose($file);
+
+        echo json_encode([
+            'message' => 'Estudiantes procesados correctamente.',
+            'success_count' => $successCount,
+            'error_count' => $errorCount
+        ]);
+    }
 }
 ?>

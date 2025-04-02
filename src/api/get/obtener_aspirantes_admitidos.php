@@ -25,6 +25,7 @@
  * GET /api/get/obtener_aspirantes_admitidos.php
  */
 
+header("Access-Control-Allow-Origin: *");
 header('Content-Type: text/csv; charset=utf-8');
 header('Content-Disposition: attachment; filename="aspirantes_admitidos.csv"');
 

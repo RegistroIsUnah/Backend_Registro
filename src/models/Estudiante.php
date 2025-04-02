@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../modules/config/DataBase.php';
+require_once __DIR__ . '/../mail/mail_sender.php';
 
 /**
  * Clase Estudiante
@@ -227,7 +228,6 @@ public function actualizarPerfil($estudianteId, $datosActualizados) {
         }
     }
 
-
     /**
      * Registra una solicitud de cambio de carrera
      * 
@@ -298,7 +298,322 @@ public function actualizarPerfil($estudianteId, $datosActualizados) {
         return $result->fetch_all(MYSQLI_ASSOC);
     }
 
+    //Prueba
+
+    /**
+     * Crea un nuevo usuario con username formato: primerNombre.primerApellido + 3 dígitos
+     * 
+     * @param string $nombre Nombre completo del estudiante
+     * @param string $apellido Apellido completo del estudiante
+     * @return array Datos del usuario creado
+     */
+    public function crearUsuarioEstudiante($nombre, $apellido) {
+        // Extraer solo el primer nombre y primer apellido
+        $primerNombre = $this->extraerPrimerNombre($nombre);
+        $primerApellido = $this->extraerPrimerApellido($apellido);
+        
+        // Generar username (ej: ruben.diaz123)
+        $username = strtolower($primerNombre . '.' . $primerApellido . rand(100, 999));
+        
+        // Generar contraseña segura
+        $password = $this->generarPasswordTemporal();
+        $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
+
+        // Insertar usuario
+        $sql = "INSERT INTO Usuario (username, password) VALUES (?, ?)";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param("ss", $username, $hashedPassword);
+        $stmt->execute();
+
+        // Asignar rol de estudiante
+        $usuario_id = $stmt->insert_id;
+        $this->asignarRolEstudiante($usuario_id);
+
+        return [
+            'usuario_id' => $usuario_id,
+            'username' => $username,
+            'password' => $password
+        ];
+    }
+
+    /**
+     * Extrae el primer nombre de un nombre completo
+     */
+    private function extraerPrimerNombre($nombreCompleto) {
+        $nombres = explode(' ', trim($nombreCompleto));
+        return $nombres[0]; // Devuelve el primer elemento del array
+    }
+
+    /**
+     * Extrae el primer apellido de un apellido completo
+     */
+    private function extraerPrimerApellido($apellidoCompleto) {
+        $apellidos = explode(' ', trim($apellidoCompleto));
+        return $apellidos[0]; // Devuelve el primer apellido
+    }
+
+    /**
+     * Genera una contraseña temporal más segura
+     */
+    private function generarPasswordTemporal() {
+        $prefix = 'Unah@'; // Prefijo institucional
+        $random = bin2hex(random_bytes(2)); // 4 caracteres aleatorios
+        return $prefix . $random; // Ej: Unah@a3f5
+    }
+
+    /**
+     * Asigna el rol de estudiante a un usuario
+     */
+    private function asignarRolEstudiante($usuario_id) {
+        $sql = "SELECT rol_id FROM Rol WHERE nombre = 'Estudiante' LIMIT 1";
+        $result = $this->conn->query($sql);
+        
+        if ($result->num_rows > 0) {
+            $rol_id = $result->fetch_assoc()['rol_id'];
+            $stmt = $this->conn->prepare("INSERT INTO UsuarioRol (usuario_id, rol_id) VALUES (?, ?)");
+            $stmt->bind_param("ii", $usuario_id, $rol_id);
+            $stmt->execute();
+        } else {
+            throw new Exception("Rol 'Estudiante' no encontrado");
+        }
+    }
 
 
+    /**
+     * Inserta el estudiante en la tabla Estudiante.
+     *
+     * @param int $usuario_id ID del usuario.
+     * @param string $identidad Documento del estudiante.
+     * @param string $nombre Nombre del estudiante.
+     * @param string $apellido Apellido del estudiante.
+     * @param string $correo Correo del estudiante.
+     * @param string $telefono Teléfono del estudiante.
+     * @param int $centro_id ID del centro.
+     * @return int ID del estudiante creado.
+     */
+    public function registrarEstudiante($usuario_id, $identidad, $nombre, $apellido, $correo, $telefono, $centro_id) {
+        // Inserción en la tabla Estudiante
+        $sqlCheck = "SELECT centro_id FROM Centro WHERE centro_id = ?";
+        $stmtCheck = $this->conn->prepare($sqlCheck);
+        $stmtCheck->bind_param("i", $centro_id);
+        $stmtCheck->execute();
+        
+        if ($stmtCheck->get_result()->num_rows == 0) {
+            throw new Exception("El centro con ID $centro_id no existe");
+        }
+        $sql = "INSERT INTO Estudiante (usuario_id, identidad, nombre, apellido, correo_personal, telefono, direccion, centro_id, indice_global, indice_periodo) 
+                VALUES (?, ?, ?, ?, ?, ?, 'No disponible', ?, 100, 0)";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param("issssii", $usuario_id, $identidad, $nombre, $apellido, $correo, $telefono, $centro_id);
+        $stmt->execute();
 
-}?>
+        // Obtener el ID del estudiante
+        return $stmt->insert_id;
+    }
+
+    /**
+     * Relaciona al estudiante con las carreras que tiene asignadas.
+     *
+     * @param int $estudiante_id ID del estudiante.
+     * @param array $carreras Arreglo de IDs de carreras a asignar.
+     */
+    public function relacionarEstudianteConCarreras($estudiante_id, $carreras) {
+        $sql = "INSERT INTO EstudianteCarrera (estudiante_id, carrera_id) VALUES (?, ?)";
+        $stmt = $this->conn->prepare($sql);
+    
+        foreach ($carreras as $nombre_carrera) {
+            // Buscar el ID de la carrera por nombre
+            $sqlCarrera = "SELECT carrera_id FROM Carrera WHERE nombre = ?";
+            $stmtCarrera = $this->conn->prepare($sqlCarrera);
+            $stmtCarrera->bind_param("s", $nombre_carrera);
+            $stmtCarrera->execute();
+            $result = $stmtCarrera->get_result();
+            
+            if ($result->num_rows > 0) {
+                $carrera_id = $result->fetch_assoc()['carrera_id'];
+                $stmt->bind_param("ii", $estudiante_id, $carrera_id);
+                $stmt->execute();
+            } else {
+                // Registrar error: carrera no encontrada
+            }
+        }
+    }
+
+    /**
+     * Envía un correo con las credenciales del estudiante de forma clara
+     * 
+     * @param string $correo Correo de destino
+     * @param string $nombre Nombre del estudiante
+     * @param string $apellido Apellido del estudiante
+     * @param string $username Nombre de usuario (sin nombre/apellido)
+     * @param string $password Contraseña generada
+     */
+    public function enviarCorreoConCredenciales($correo, $nombre, $apellido, $username, $password) {
+        $nombreCompleto = trim("$nombre $apellido");
+        $subject = 'Credenciales de Acceso al Sistema Universitario';
+        
+        // Versión HTML mejorada con CSS más atractivo
+        $message = "
+            <html>
+            <head>
+                <style>
+                    body { 
+                        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+                        line-height: 1.6;
+                        color: #333;
+                        background-color: #f5f5f5;
+                        margin: 0;
+                        padding: 0;
+                    }
+                    .container {
+                        max-width: 600px;
+                        margin: 0 auto;
+                        padding: 20px;
+                        background-color: #ffffff;
+                        border-radius: 8px;
+                        box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+                    }
+                    .header {
+                        text-align: center;
+                        padding: 20px 0;
+                        border-bottom: 2px solid #4a6fdc;
+                    }
+                    .header img {
+                        max-height: 60px;
+                        margin-bottom: 10px;
+                    }
+                    .header h1 {
+                        color: #4a6fdc;
+                        margin: 0;
+                        font-size: 24px;
+                    }
+                    .content {
+                        padding: 20px 0;
+                    }
+                    .card { 
+                        background: #f8faff; 
+                        border-left: 4px solid #4a6fdc;
+                        border-radius: 4px; 
+                        padding: 25px;
+                        margin: 25px 0;
+                        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+                    }
+                    .credential-item { 
+                        margin-bottom: 15px; 
+                        padding-bottom: 15px; 
+                        border-bottom: 1px solid #eaedf7;
+                        display: flex;
+                        align-items: center;
+                    }
+                    .credential-item:last-child {
+                        border-bottom: none;
+                        margin-bottom: 0;
+                        padding-bottom: 0;
+                    }
+                    .label { 
+                        font-weight: bold; 
+                        color: #4a6fdc;
+                        min-width: 150px;
+                        display: inline-block;
+                    }
+                    .value {
+                        font-family: 'Courier New', monospace;
+                        padding: 5px 8px;
+                        background-color: #f0f4ff;
+                        border-radius: 3px;
+                    }
+                    .important { 
+                        background-color: #fff5f5;
+                        border-left: 4px solid #e53e3e;
+                        color: #e53e3e; 
+                        padding: 12px 15px;
+                        margin-top: 20px;
+                        border-radius: 4px;
+                        font-weight: 500;
+                    }
+                    .button {
+                        display: inline-block;
+                        background-color: #4a6fdc;
+                        color: white;
+                        text-decoration: none;
+                        padding: 12px 25px;
+                        border-radius: 4px;
+                        margin: 20px 0;
+                        font-weight: bold;
+                        text-align: center;
+                        transition: background-color 0.3s;
+                    }
+                    .button:hover {
+                        background-color: #3a5cbc;
+                    }
+                    .footer {
+                        text-align: center;
+                        padding-top: 20px;
+                        border-top: 1px solid #eaedf7;
+                        color: #666;
+                        font-size: 14px;
+                    }
+                </style>
+            </head>
+            <body>
+                <div class='container'>
+                    <div class='header'>
+                        <h1>Sistema de Gestión Universitaria</h1>
+                    </div>
+                    
+                    <div class='content'>
+                        <p>Estimado/a <strong>$nombreCompleto</strong>,</p>
+                        
+                        <p>Le damos la bienvenida al Sistema de Gestión Universitaria. A continuación, encontrará sus credenciales de acceso:</p>
+                        
+                        <div class='card'>
+                            <div class='credential-item'>
+                                <span class='label'>Nombre completo:</span>
+                                <span class='value'>$nombreCompleto</span>
+                            </div>
+                            <div class='credential-item'>
+                                <span class='label'>Usuario:</span>
+                                <span class='value'>$username</span>
+                            </div>
+                            <div class='credential-item'>
+                                <span class='label'>Contraseña temporal:</span>
+                                <span class='value'>$password</span>
+                            </div>
+                        </div>
+                        
+                        <div class='important'>
+                            <strong>IMPORTANTE:</strong> Por seguridad, debe cambiar esta contraseña después de su primer acceso al sistema.
+                        </div>
+                        
+                        <div style='text-align: center; margin: 30px 0;'>
+                            <a href='https://registroisunah.xyz' class='button'>Acceder al Portal Estudiantil</a>
+                        </div>
+                        
+                        <p>Si tiene alguna duda o inconveniente, no dude en contactar con nuestro equipo de soporte técnico.</p>
+                    </div>
+                    
+                    <div class='footer'>
+                        <p>Atentamente,<br><strong>Departamento de Registro</strong></p>
+                        <p>© 2025 Universidad. Todos los derechos reservados.</p>
+                    </div>
+                </div>
+            </body>
+            </html>
+        ";
+        
+        // Versión texto plano clara
+        $altMessage = "Credenciales de Acceso - $nombreCompleto\n\n"
+                    . "Nombre completo: $nombreCompleto\n"
+                    . "Usuario del sistema: $username\n"
+                    . "Contraseña temporal: $password\n\n"
+                    . "IMPORTANTE: Debe cambiar esta contraseña después de su primer acceso.\n\n"
+                    . "Acceso al sistema: https://registroisunah.xyz\n\n"
+                    . "Atentamente,\nDepartamento de Registro";
+    
+        // Envío asíncrono
+        register_shutdown_function(function() use ($correo, $nombreCompleto, $subject, $message, $altMessage) {
+            sendmail($correo, $nombreCompleto, $subject, $message, $altMessage);
+        });
+    }
+}
+?>
