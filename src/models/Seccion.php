@@ -199,15 +199,9 @@ class Seccion {
             throw new Exception("El ID de clase debe ser un número válido.");
         }
 
-<<<<<<< Updated upstream
-        // Consulta SQL para obtener las secciones con detalles del docente, aula, edificio y estado
-        $query = "
-            SELECT 
-=======
         // Consulta SQL para obtener las secciones con detalles del docente, aula, edificio y estado y los cupos disponibles
         $query = "
         SELECT 
->>>>>>> Stashed changes
                 s.seccion_id,
                 s.hora_inicio,
                 s.hora_fin,
@@ -215,14 +209,10 @@ class Seccion {
                 es.nombre AS estado_seccion,  -- Obtenemos el nombre del estado
                 s.video_url,
                 s.motivo_cancelacion,
-<<<<<<< Updated upstream
-                s.cupos,
-=======
                 s.cupos - IFNULL(
                     (SELECT COUNT(*) 
                     FROM Matricula m
                     WHERE m.seccion_id = s.seccion_id), 0) AS cupos_disponibles, -- Cálculo de cupos disponibles
->>>>>>> Stashed changes
                 d.nombre AS docente_nombre,
                 d.apellido AS docente_apellido,
                 a.nombre AS aula_nombre,
@@ -232,12 +222,8 @@ class Seccion {
             LEFT JOIN Aula a ON s.aula_id = a.aula_id
             LEFT JOIN Edificio e ON a.edificio_id = e.edificio_id
             LEFT JOIN EstadoSeccion es ON s.estado_seccion_id = es.estado_seccion_id  -- Relación con EstadoSeccion
-<<<<<<< Updated upstream
-            WHERE es.nombre = 'ACTIVA' AND s.clase_id = ?
-=======
             WHERE es.nombre = 'ACTIVA' 
             AND s.clase_id = ?
->>>>>>> Stashed changes
         ";
 
         $stmt = $this->conn->prepare($query);
