@@ -16,28 +16,32 @@
  * @author Jose Vargas
  * @version 1.0
  servidor:puerto/api/get/datos_estudiante.php?estudianteId=5
- {
+{
     "success": true,
     "data": {
         "informacion_personal": {
             "nombre_completo": "Juan Pérez",
-            "identidad": "0801-1990-12345",
+            "identidad": "0801199901234",
             "correo": "juan@example.com",
-            "telefono": "+504 1234-5678",
-            "direccion": "Tegucigalpa, Honduras"
+            "telefono": "+504 9876-5432",
+            "direccion": "Tegucigalpa, Honduras",
+            "numero_cuenta": "20230001"
         },
         "academico": {
-            "indice_global": 85.50,
-            "indice_periodo": 90.00,
+            "indice_global": 85.5,
+            "indice_periodo": 90.0,
             "centro": "Centro Universitario Tegucigalpa",
-            "carreras": [
-                "Ingeniería en Sistemas",
-                "Administración de Empresas"
-            ]
+            "carreras": ["Ingeniería en Sistemas", "Administración"],
+            "año_ingreso": 2023,
+            "solicitudes_pendientes": 2
         },
         "cuenta": {
-            "username": "jperez2023"
-        }
+            "username": "juan.perez"
+        },
+        "fotos": [
+            "/uploads/fotos/20230001_1.jpg",
+            "/uploads/fotos/20230001_2.jpg"
+        ]
     }
 }
  */
