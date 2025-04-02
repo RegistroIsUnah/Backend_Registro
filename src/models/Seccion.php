@@ -206,6 +206,7 @@ class Seccion {
 =======
         // Consulta SQL para obtener las secciones con detalles del docente, aula, edificio y estado y los cupos disponibles
         $query = "
+<<<<<<< Updated upstream
         SELECT 
 >>>>>>> Stashed changes
                 s.seccion_id,
@@ -237,6 +238,37 @@ class Seccion {
 =======
             WHERE es.nombre = 'ACTIVA' 
             AND s.clase_id = ?
+>>>>>>> Stashed changes
+=======
+                    SELECT
+                            s.seccion_id,
+                            s.hora_inicio,
+                            s.hora_fin,
+                            DATE_FORMAT(s.hora_inicio, '%H%i') AS seccion_codigo,
+                            s.estado_seccion_id,
+                            es.nombre AS estado_seccion,
+                            s.video_url,
+                            s.motivo_cancelacion,
+                            s.cupos - IFNULL(
+                                (SELECT COUNT(*) 
+                                FROM Matricula m
+                                WHERE m.seccion_id = s.seccion_id), 0) AS cupos_disponibles,
+                            d.nombre AS docente_nombre,
+                            d.apellido AS docente_apellido,
+                            a.nombre AS aula_nombre,
+                            e.nombre AS edificio_nombre,
+                            GROUP_CONCAT(ds.nombre ORDER BY ds.nombre ASC) AS dias_seccion  -- Obtener los días de la sección
+                        FROM Seccion s
+                        LEFT JOIN Docente d ON s.docente_id = d.docente_id
+                        LEFT JOIN Aula a ON s.aula_id = a.aula_id
+                        LEFT JOIN Edificio e ON a.edificio_id = e.edificio_id
+                        LEFT JOIN EstadoSeccion es ON s.estado_seccion_id = es.estado_seccion_id
+                        LEFT JOIN SeccionDia sd ON s.seccion_id = sd.seccion_id
+                        LEFT JOIN DiaSemana ds ON sd.dia_id = ds.dia_id
+                        WHERE es.nombre = 'ACTIVA' 
+                        AND s.clase_id = ?
+                        GROUP BY s.seccion_id, s.hora_inicio, s.hora_fin, es.nombre, s.video_url, s.motivo_cancelacion, 
+                                d.nombre, d.apellido, a.nombre, e.nombre
 >>>>>>> Stashed changes
         ";
 

@@ -373,5 +373,27 @@ class EstudianteController {
             'error_count' => $errorCount
         ]);
     }
+
+    /**
+     * Obtiene el historial de un estudiante.
+     * 
+     * @param int $estudiante_id ID del estudiante para el cual se obtiene el historial.
+     * @return void Responde con un JSON que contiene el historial del estudiante.
+     */
+    public function obtenerHistorialEstudiante($estudiante_id) {
+        try {
+            // Llamar al modelo para obtener el historial del estudiante
+            $modelo = new Estudiante();
+            $historial = $modelo->obtenerHistorialEstudiante($estudiante_id);
+            
+            // Responder con los datos en formato JSON
+            http_response_code(200);
+            echo json_encode($historial);
+        } catch (Exception $e) {
+            // En caso de error, responder con un mensaje de error
+            http_response_code(500);
+            echo json_encode(['error' => 'Error al obtener el historial: ' . $e->getMessage()]);
+        }
+    }
 }
 ?>

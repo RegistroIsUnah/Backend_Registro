@@ -151,5 +151,119 @@ class Matricula {
 
         return $data;
     }
+
+    /**
+     * Obtiene todas las clases matriculadas por el estudiante.
+     * 
+     * @param int $estudiante_id El ID del estudiante.
+     * @return array El resultado de la consulta con las clases matriculadas.
+     */
+    public function obtenerClasesMatriculadas($estudiante_id) {
+        $sql = "
+            SELECT
+                c.codigo AS codigo,
+                c.nombre AS asignatura,
+                DATE_FORMAT(se.hora_inicio, '%H%i') AS seccion,
+                se.hora_inicio AS hora_inicio,
+                se.hora_fin AS hora_fin,
+                GROUP_CONCAT(ds.nombre ORDER BY ds.dia_id) AS dias_seccion,
+                e.nombre AS edificio_nombre,
+                a.nombre AS aula_nombre,
+                c.creditos AS creditos
+            FROM
+                Matricula m
+            JOIN
+                Seccion se ON m.seccion_id = se.seccion_id
+            JOIN
+                Clase c ON se.clase_id = c.clase_id
+            JOIN
+                Aula a ON se.aula_id = a.aula_id
+            JOIN
+                Edificio e ON a.edificio_id = e.edificio_id
+            LEFT JOIN
+                SeccionDia sd ON se.seccion_id = sd.seccion_id
+            LEFT JOIN
+                DiaSemana ds ON sd.dia_id = ds.dia_id
+            WHERE
+                m.estudiante_id = ? AND m.estado_matricula_id = (SELECT estado_matricula_id FROM EstadoMatricula WHERE nombre = 'MATRICULADO')
+            GROUP BY
+                se.seccion_id, c.clase_id, a.nombre, e.nombre
+            ORDER BY
+                se.seccion_id;
+        ";
+
+        // Preparar la consulta
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param("i", $estudiante_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        // Recoger todos los resultados
+        $clasesMatriculadas = [];
+        while ($row = $result->fetch_assoc()) {
+            $clasesMatriculadas[] = $row;
+        }
+
+        // Cerrar la conexión
+        $stmt->close();
+        return $clasesMatriculadas;
+    }
+
+     /**
+     * Obtiene todas las clases matriculadas en estado 'EN_ESPERA' por el estudiante.
+     * 
+     * @param int $estudiante_id El ID del estudiante.
+     * @return array El resultado de la consulta con las clases matriculadas en estado 'EN_ESPERA'.
+     */
+    public function obtenerClasesEnEspera($estudiante_id) {
+        $sql = "
+            SELECT
+                c.codigo AS codigo,
+                c.nombre AS asignatura,
+                DATE_FORMAT(se.hora_inicio, '%H%i') AS seccion,
+                se.hora_inicio AS hora_inicio,
+                se.hora_fin AS hora_fin,
+                GROUP_CONCAT(ds.nombre ORDER BY ds.dia_id) AS dias_seccion,
+                e.nombre AS edificio_nombre,
+                a.nombre AS aula_nombre,
+                c.creditos AS creditos
+            FROM
+                Matricula m
+            JOIN
+                Seccion se ON m.seccion_id = se.seccion_id
+            JOIN
+                Clase c ON se.clase_id = c.clase_id
+            JOIN
+                Aula a ON se.aula_id = a.aula_id
+            JOIN
+                Edificio e ON a.edificio_id = e.edificio_id
+            LEFT JOIN
+                SeccionDia sd ON se.seccion_id = sd.seccion_id
+            LEFT JOIN
+                DiaSemana ds ON sd.dia_id = ds.dia_id
+            WHERE
+                m.estudiante_id = ? AND m.estado_matricula_id = (SELECT estado_matricula_id FROM EstadoMatricula WHERE nombre = 'EN_ESPERA')
+            GROUP BY
+                se.seccion_id, c.clase_id, a.nombre, e.nombre
+            ORDER BY
+                se.seccion_id;
+        ";
+
+        // Preparar la consulta
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param("i", $estudiante_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        // Recoger todos los resultados
+        $clasesEnEspera = [];
+        while ($row = $result->fetch_assoc()) {
+            $clasesEnEspera[] = $row;
+        }
+
+        // Cerrar la conexión
+        $stmt->close();
+        return $clasesEnEspera;
+    }
 }
 ?>
