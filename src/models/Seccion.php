@@ -185,5 +185,70 @@ class Seccion {
         $stmt->close();
         return $secciones;
     }
+
+    /**
+     * Obtiene las secciones de una clase en estado activo con los detalles del docente, aula y edificio.
+     *
+     * @param int $clase_id ID de la clase.
+     * @return array Lista de secciones con sus detalles.
+     * @throws Exception Si ocurre un error en la consulta.
+     */
+    public function obtenerSeccionesPorClaseMatricula($clase_id) {
+        // Validar que el ID de clase sea un número válido.
+        if (!is_numeric($clase_id)) {
+            throw new Exception("El ID de clase debe ser un número válido.");
+        }
+
+        // Consulta SQL para obtener las secciones con detalles del docente, aula, edificio y estado
+        $query = "
+            SELECT 
+                s.seccion_id,
+                s.hora_inicio,
+                s.hora_fin,
+                s.estado_seccion_id,
+                es.nombre AS estado_seccion,  -- Obtenemos el nombre del estado
+                s.video_url,
+                s.motivo_cancelacion,
+                s.cupos,
+                d.nombre AS docente_nombre,
+                d.apellido AS docente_apellido,
+                a.nombre AS aula_nombre,
+                e.nombre AS edificio_nombre
+            FROM Seccion s
+            LEFT JOIN Docente d ON s.docente_id = d.docente_id
+            LEFT JOIN Aula a ON s.aula_id = a.aula_id
+            LEFT JOIN Edificio e ON a.edificio_id = e.edificio_id
+            LEFT JOIN EstadoSeccion es ON s.estado_seccion_id = es.estado_seccion_id  -- Relación con EstadoSeccion
+            WHERE es.nombre = 'ACTIVA' AND s.clase_id = ?
+        ";
+
+        $stmt = $this->conn->prepare($query);
+        if (!$stmt) {
+            throw new Exception("Error preparando la consulta: " . $this->conn->error);
+        }
+
+        // Vinculamos el parámetro
+        $stmt->bind_param("i", $clase_id);
+        if (!$stmt->execute()) {
+            throw new Exception("Error ejecutando la consulta: " . $stmt->error);
+        }
+
+        // Obtener los resultados
+        $result = $stmt->get_result();
+        $secciones = [];
+
+        // Recorrer los resultados y almacenarlos en el array
+        while ($row = $result->fetch_assoc()) {
+            $secciones[] = $row;
+        }
+
+        // Si no se encontraron secciones, retornar un mensaje más claro
+        if (empty($secciones)) {
+            return ['message' => 'No se encontraron secciones para esta clase.'];
+        }
+
+        $stmt->close();
+        return $secciones;
+    }
 }
 ?>
