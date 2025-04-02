@@ -637,5 +637,57 @@ public function actualizarPerfil($estudianteId, $datosActualizados) {
             }
         });
     }
+
+    /**
+     * Obtiene el historial de un estudiante basado en su ID.
+     * 
+     * @param int $estudiante_id ID del estudiante para el cual se obtiene el historial.
+     * @return array El historial del estudiante.
+     * @throws Exception Si ocurre un error en la consulta.
+     */
+    public function obtenerHistorialEstudiante($estudiante_id) {
+        try {
+            // Consulta SQL para obtener el historial del estudiante
+            $sql = "
+                SELECT 
+                    c.codigo AS codigo,
+                    c.nombre AS asignatura,
+                    c.creditos AS creditos,
+                    DATE_FORMAT(s.hora_inicio, '%H%i') AS seccion,
+                    p.anio,
+					p.numero_periodo_id,
+                    h.calificacion,
+                    ec.nombre AS observacion
+                FROM HistorialEstudiante h
+                JOIN Seccion s ON h.seccion_id = s.seccion_id
+                JOIN Clase c ON s.clase_id = c.clase_id
+                JOIN PeriodoAcademico p ON s.periodo_academico_id = p.periodo_academico_id
+                JOIN EstadoCurso ec ON h.estado_curso_id = ec.estado_curso_id
+                WHERE h.estudiante_id = ?
+            ";
+            
+            // Preparar y ejecutar la consulta
+            $stmt = $this->conn->prepare($sql);
+            $stmt->bind_param("i", $estudiante_id);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            
+            // Si no hay resultados, lanzar una excepción
+            if ($result->num_rows == 0) {
+                throw new Exception("No se encontraron registros para este estudiante.");
+            }
+
+            // Obtener los resultados
+            $historial = [];
+            while ($row = $result->fetch_assoc()) {
+                $historial[] = $row;
+            }
+
+            $stmt->close();
+            return $historial;
+        } catch (Exception $e) {
+            throw new Exception("Error al obtener el historial del estudiante: " . $e->getMessage());
+        }
+    }
 }
 ?>

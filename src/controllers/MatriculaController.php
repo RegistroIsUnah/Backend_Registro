@@ -161,5 +161,83 @@ class MatriculaController {
             echo json_encode(['error' => $e->getMessage()]);
         }
     }
+
+    /**
+     * Endpoint que obtiene las clases matriculadas de un estudiante
+     * Recibe el ID del estudiante y devuelve las clases matriculadas.
+     * 
+     * @param int $estudiante_id El ID del estudiante
+     * @return void Responde con un JSON con las clases matriculadas
+     */
+    public function obtenerClasesMatriculadas($estudiante_id) {
+        // Verificar que el estudiante ID es válido
+        if (empty($estudiante_id) || !is_numeric($estudiante_id)) {
+            http_response_code(400);
+            echo json_encode(['error' => 'El parámetro estudiante_id es inválido']);
+            return;
+        }
+
+        // Instanciar el modelo de matrícula
+        $matriculaModel = new Matricula();
+
+        try {
+            // Obtener las clases matriculadas
+            $clasesMatriculadas = $matriculaModel->obtenerClasesMatriculadas($estudiante_id);
+
+            // Si no hay clases matriculadas, responder con mensaje
+            if (empty($clasesMatriculadas)) {
+                http_response_code(404);
+                echo json_encode(['message' => 'No se encontraron clases matriculadas']);
+                return;
+            }
+
+            // Si se encontraron clases, devolver la respuesta en formato JSON
+            echo json_encode($clasesMatriculadas);
+
+        } catch (Exception $e) {
+            // Si ocurre algún error, responder con un error
+            http_response_code(500);
+            echo json_encode(['error' => $e->getMessage()]);
+        }
+    }
+
+     /**
+     * Endpoint que obtiene las clases matriculadas en estado 'EN_ESPERA' de un estudiante
+     * Recibe el ID del estudiante y devuelve las clases en estado 'EN_ESPERA'.
+     * 
+     * @param int $estudiante_id El ID del estudiante
+     * @return void Responde con un JSON con las clases matriculadas en estado 'EN_ESPERA'
+     */
+    public function obtenerClasesEnEspera($estudiante_id) {
+        // Verificar que el estudiante ID es válido
+        if (empty($estudiante_id) || !is_numeric($estudiante_id)) {
+            http_response_code(400);
+            echo json_encode(['error' => 'El parámetro estudiante_id es inválido']);
+            return;
+        }
+
+        // Instanciar el modelo de matrícula
+        $matriculaModel = new Matricula();
+
+        try {
+            // Obtener las clases en espera
+            $clasesEnEspera = $matriculaModel->obtenerClasesEnEspera($estudiante_id);
+
+            // Si no hay clases en espera, responder con mensaje
+            if (empty($clasesEnEspera)) {
+                http_response_code(404);
+                echo json_encode(['message' => 'No se encontraron clases en espera']);
+                return;
+            }
+
+            // Si se encontraron clases en espera, devolver la respuesta en formato JSON
+            echo json_encode($clasesEnEspera);
+
+        } catch (Exception $e) {
+            // Si ocurre algún error, responder con un error
+            http_response_code(500);
+            echo json_encode(['error' => $e->getMessage()]);
+        }
+    }
 }
 ?>
