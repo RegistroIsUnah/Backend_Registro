@@ -56,7 +56,14 @@ class EstudianteController {
             ]);
         }
     }
-
+    /**
+     * Obtiene el perfil del estudiante
+     * 
+     * @param int $estudianteId ID del estudiante (opcional)
+     * @return void
+     * @author Jose Vargas
+     * @version 1.3
+     */
     public function obtenerPerfilEstudiante($estudianteId) {
         header('Content-Type: application/json');
         
@@ -79,7 +86,8 @@ class EstudianteController {
             // Obtener datos del modelo
             $perfil = $this->modelo->obtenerPerfilEstudiante($idFinal);
             
-            // Formatear respuesta
+            // Formatear respuesta Actualizada
+
             $response = [
                 'success' => true,
                 'data' => [
@@ -88,17 +96,21 @@ class EstudianteController {
                         'identidad' => $perfil['identidad'],
                         'correo' => $perfil['correo_personal'],
                         'telefono' => $perfil['telefono'],
-                        'direccion' => $perfil['direccion']
+                        'direccion' => $perfil['direccion'],
+                        'numero_cuenta' => $perfil['numero_cuenta']
                     ],
                     'academico' => [
                         'indice_global' => (float)$perfil['indice_global'],
                         'indice_periodo' => (float)$perfil['indice_periodo'],
                         'centro' => $perfil['centro'],
-                        'carreras' => explode(', ', $perfil['carreras'])
+                        'carreras' => explode(', ', $perfil['carreras']),
+                        'año_ingreso' => (int)$perfil['anio_ingreso'],
+                        'solicitudes_pendientes' => (int)$perfil['solicitudes_pendientes']
                     ],
                     'cuenta' => [
                         'username' => $perfil['username']
-                    ]
+                    ],
+                    'fotos' => $perfil['fotos'] ? explode(', ', $perfil['fotos']) : [] // Nuevo campo (array)
                 ]
             ];
     
