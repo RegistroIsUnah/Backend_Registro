@@ -32,37 +32,46 @@ class Matricula {
      *
      * @param int $estudiante_id ID del estudiante.
      * @param int $seccion_id ID de la sección principal.
-     * @param string $tipo_proceso Tipo de proceso (ej. "MATRICULA").
-     * @param int $laboratorio_id ID del laboratorio seleccionado (0 si no se seleccionó ninguno).
+     * @param string $tipo_proceso_nombre Nombre del tipo de proceso ('MATRICULA' o 'ADICIONES_CANCELACIONES').
+     * @param int|null $laboratorio_id ID del laboratorio seleccionado (null si no aplica).
      * @return array Resultado de la matrícula (matricula_id, estado, orden_inscripcion).
      * @throws Exception Si ocurre un error en la preparación o ejecución del SP.
      */
-    public function matricularEstudiante($estudiante_id, $seccion_id, $tipo_proceso, $laboratorio_id) {
-        // Preparar la llamada al procedimiento almacenado SP_matricular_estudiante
+    public function matricularEstudiante($estudiante_id, $seccion_id, $tipo_proceso_nombre, $laboratorio_id = null) {
+        // Validar tipo de proceso antes de ejecutar
+        $tiposPermitidos = ['MATRICULA', 'ADICIONES_CANCELACIONES'];
+        if (!in_array(strtoupper($tipo_proceso_nombre), $tiposPermitidos)) {
+            throw new Exception('Tipo de proceso no válido. Debe ser: ' . implode(', ', $tiposPermitidos));
+        }
+
+        // Convertir null a 0 para el SP (que espera INT)
+        $lab_id = $laboratorio_id ?? 0;
+
         $stmt = $this->conn->prepare("CALL SP_matricular_estudiante(?, ?, ?, ?)");
         if (!$stmt) {
             throw new Exception('Error preparando la consulta: ' . $this->conn->error);
         }
 
-        // Vincular los parámetros
-        $stmt->bind_param("iisi", $estudiante_id, $seccion_id, $tipo_proceso, $laboratorio_id);
+        $stmt->bind_param("iisi", $estudiante_id, $seccion_id, $tipo_proceso_nombre, $lab_id);
 
-        // Ejecutar el procedimiento almacenado
         if (!$stmt->execute()) {
-            throw new Exception('Error ejecutando el procedimiento: ' . $stmt->error);
+            throw new Exception('Error ejecutando matrícula: ' . $stmt->error);
         }
 
-        // Obtener el resultado
         $result = $stmt->get_result();
-        if ($result) {
-            // Recuperamos los datos de la matrícula
-            $row = $result->fetch_assoc();
+        if (!$result) {
             $stmt->close();
-            return $row;
-        } else {
-            $stmt->close();
-            throw new Exception('No se obtuvo respuesta del procedimiento almacenado');
+            throw new Exception('Error al obtener resultados de la matrícula');
         }
+
+        $row = $result->fetch_assoc();
+        $stmt->close();
+        
+        if (!$row) {
+            throw new Exception('No se recibieron datos de la matrícula');
+        }
+
+        return $row;
     }
 
     /**

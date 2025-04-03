@@ -42,47 +42,71 @@ class MatriculaController {
      * @return void Envía la respuesta en formato JSON.
      */
     public function matricularEstudiante() {
-        // Validación de los parámetros recibidos
-        if (!isset($_POST['estudiante_id']) || !is_numeric($_POST['estudiante_id'])) {
-            http_response_code(400);
-            echo json_encode(['error' => 'Parámetro estudiante_id inválido o faltante']);
-            exit;
+         // Permitir recibir datos JSON o form-data
+        $input = json_decode(file_get_contents('php://input'), true) ?: $_POST;
+
+        // Validación completa
+        $required = [
+            'estudiante_id' => 'integer',
+            'seccion_id' => 'integer',
+            'tipo_proceso' => 'string'
+        ];
+        
+        $errors = [];
+        foreach ($required as $field => $type) {
+            if (!isset($input[$field])) {
+                $errors[] = "Campo requerido faltante: $field";
+                continue;
+            }
+            
+            if ($type === 'integer' && !is_numeric($input[$field])) {
+                $errors[] = "El campo $field debe ser numérico";
+            }
         }
-
-        if (!isset($_POST['seccion_id']) || !is_numeric($_POST['seccion_id'])) {
+        
+        if (!empty($errors)) {
             http_response_code(400);
-            echo json_encode(['error' => 'Parámetro seccion_id inválido o faltante']);
-            exit;
+            echo json_encode(['errors' => $errors]);
+            return;
         }
-
-        if (!isset($_POST['tipo_proceso']) || empty($_POST['tipo_proceso'])) {
+        
+        // Procesar datos
+        $data = [
+            'estudiante_id' => intval($input['estudiante_id']),
+            'seccion_id' => intval($input['seccion_id']),
+            'tipo_proceso' => strtoupper(trim($input['tipo_proceso'])),
+            'laboratorio_id' => isset($input['laboratorio_id']) ? intval($input['laboratorio_id']) : null
+        ];
+       
+    
+        // Validar tipo de proceso
+        if (!in_array($data['tipo_proceso'], ['MATRICULA', 'ADICIONES_CANCELACIONES'])) {
             http_response_code(400);
-            echo json_encode(['error' => 'Falta el parámetro tipo_proceso']);
-            exit;
+            echo json_encode(['error' => 'Tipo de proceso no válido. Use MATRICULA o ADICIONES_CANCELACIONES']);
+            return;
         }
-
-        // Recoger datos de la solicitud
-        $estudiante_id = intval($_POST['estudiante_id']);
-        $seccion_id = intval($_POST['seccion_id']);
-        $tipo_proceso = $_POST['tipo_proceso'];  // Debería ser 'MATRICULA'
-        $laboratorio_id = isset($_POST['lab_seccion_id']) ? intval($_POST['lab_seccion_id']) : 0;
-
+    
         try {
-            // Llamar al modelo para realizar la matrícula
-            $resultado = $this->model->matricularEstudiante($estudiante_id, $seccion_id, $tipo_proceso, $laboratorio_id);
-
-            // Responder con éxito
+            $resultado = $this->model->matricularEstudiante(
+                $data['estudiante_id'],
+                $data['seccion_id'],
+                $data['tipo_proceso'],
+                $data['laboratorio_id']
+            );
+    
             http_response_code(200);
             echo json_encode([
-                'matricula_id' => $resultado['matricula_id'],
-                'estado' => $resultado['estado'],
-                'orden_inscripcion' => $resultado['orden_inscripcion'],
+                'success' => true,
+                'data' => $resultado,
                 'message' => 'Matrícula realizada exitosamente'
             ]);
         } catch (Exception $e) {
-            // Capturar y manejar errores
             http_response_code(500);
-            echo json_encode(['error' => $e->getMessage()]);
+            echo json_encode([
+                'success' => false,
+                'error' => $e->getMessage(),
+                'details' => $data // Opcional: para debugging
+            ]);
         }
     }
 
