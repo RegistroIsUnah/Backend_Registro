@@ -93,6 +93,7 @@ class EstudianteController {
                 'data' => [
                     'informacion_personal' => [
                         'nombre_completo' => $perfil['nombre'] . ' ' . $perfil['apellido'],
+                        'numero_cuenta' => $perfil['numero_cuenta'],  // Nuevo campo añadido a la base
                         'identidad' => $perfil['identidad'],
                         'correo' => $perfil['correo_personal'],
                         'telefono' => $perfil['telefono'],
