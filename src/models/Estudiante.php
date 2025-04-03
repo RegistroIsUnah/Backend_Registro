@@ -132,6 +132,7 @@ class Estudiante {
 
         $sql = "SELECT 
                 e.estudiante_id,
+                e.numero_cuenta,
                 e.nombre,
                 e.apellido,
                 e.identidad,
