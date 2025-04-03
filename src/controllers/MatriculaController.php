@@ -42,106 +42,86 @@ class MatriculaController {
      * @return void Envía la respuesta en formato JSON.
      */
     public function matricularEstudiante() {
-         // Permitir recibir datos JSON o form-data
-        $input = json_decode(file_get_contents('php://input'), true) ?: $_POST;
-
-        // Validación completa
-        $required = [
-            'estudiante_id' => 'integer',
-            'seccion_id' => 'integer',
-            'tipo_proceso' => 'string'
-        ];
+        header('Content-Type: application/json');
         
-        $errors = [];
-        foreach ($required as $field => $type) {
-            if (!isset($input[$field])) {
-                $errors[] = "Campo requerido faltante: $field";
-                continue;
+        try {
+            // Obtener y validar datos de entrada
+            $input = json_decode(file_get_contents('php://input'), true) ?: $_POST;
+            
+            // Validación básica
+            $errors = [];
+            
+            if (empty($input['estudiante_id'])) {
+                $errors[] = 'El ID del estudiante es requerido';
+            } elseif (!is_numeric($input['estudiante_id'])) {
+                $errors[] = 'El ID del estudiante debe ser numérico';
             }
             
-            if ($type === 'integer' && !is_numeric($input[$field])) {
-                $errors[] = "El campo $field debe ser numérico";
+            if (empty($input['seccion_id'])) {
+                $errors[] = 'El ID de la sección es requerido';
+            } elseif (!is_numeric($input['seccion_id'])) {
+                $errors[] = 'El ID de la sección debe ser numérico';
             }
-        }
-        
-        if (!empty($errors)) {
-            http_response_code(400);
-            echo json_encode(['errors' => $errors]);
-            return;
-        }
-        
-        // Procesar datos
-        $data = [
-            'estudiante_id' => intval($input['estudiante_id']),
-            'seccion_id' => intval($input['seccion_id']),
-            'tipo_proceso' => strtoupper(trim($input['tipo_proceso'])),
-            'laboratorio_id' => isset($input['laboratorio_id']) ? intval($input['laboratorio_id']) : null
-        ];
-       
-    
-        // Validar tipo de proceso
-        if (!in_array($data['tipo_proceso'], ['MATRICULA', 'ADICIONES_CANCELACIONES'])) {
-            http_response_code(400);
-            echo json_encode(['error' => 'Tipo de proceso no válido. Use MATRICULA o ADICIONES_CANCELACIONES']);
-            return;
-        }
-    
-        try {
+            
+            if (empty($input['tipo_proceso'])) {
+                $errors[] = 'El tipo de proceso es requerido';
+            } elseif (!in_array(strtoupper($input['tipo_proceso']), ['MATRICULA', 'ADICIONES_CANCELACIONES'])) {
+                $errors[] = 'Tipo de proceso no válido. Debe ser MATRICULA o ADICIONES_CANCELACIONES';
+            }
+            
+            // Validar laboratorio_id si está presente
+            $laboratorio_id = null;
+            if (isset($input['laboratorio_id']) && $input['laboratorio_id'] !== '') {
+                if (!is_numeric($input['laboratorio_id'])) {
+                    $errors[] = 'El ID del laboratorio debe ser numérico';
+                } else {
+                    $laboratorio_id = (int)$input['laboratorio_id'];
+                }
+            }
+            
+            // Si hay errores, retornarlos
+            if (!empty($errors)) {
+                http_response_code(400);
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Errores de validación',
+                    'errors' => $errors
+                ]);
+                return;
+            }
+            
+            // Preparar datos para el modelo
+            $data = [
+                'estudiante_id' => (int)$input['estudiante_id'],
+                'seccion_id' => (int)$input['seccion_id'],
+                'tipo_proceso' => strtoupper(trim($input['tipo_proceso'])),
+                'laboratorio_id' => $laboratorio_id
+            ];
+            
+            // Llamar al modelo
             $resultado = $this->model->matricularEstudiante(
                 $data['estudiante_id'],
                 $data['seccion_id'],
                 $data['tipo_proceso'],
                 $data['laboratorio_id']
             );
-    
+            
+            // Respuesta exitosa
             http_response_code(200);
             echo json_encode([
                 'success' => true,
                 'data' => $resultado,
                 'message' => 'Matrícula realizada exitosamente'
             ]);
+            
         } catch (Exception $e) {
+            // Manejo de errores del modelo o del sistema
             http_response_code(500);
             echo json_encode([
                 'success' => false,
-                'error' => $e->getMessage(),
-                'details' => $data // Opcional: para debugging
+                'message' => 'Error al procesar la matrícula',
+                'error' => $e->getMessage()
             ]);
-        }
-    }
-
-   /**
-     * Obtiene la lista de espera por ID de sección.
-     *
-     * @return void
-     */
-    public function obtenerListaPorSeccion() {
-        if (!isset($_GET['seccionId']) || !is_numeric($_GET['seccionId'])) {
-            http_response_code(400);  // Parámetro inválido
-            echo json_encode(['error' => 'Parámetro seccionId inválido o faltante']);
-            exit;
-        }
-
-        try {
-            $seccionId = (int)$_GET['seccionId'];
-            $data = $this->model->obtenerListaEsperaPorSeccion($seccionId);
-
-            if (empty($data)) {
-                http_response_code(404);  // No encontrado
-                echo json_encode(['error' => 'No hay estudiantes en lista de espera para esta sección']);
-                exit;
-            }
-
-            http_response_code(200);  // OK
-            echo json_encode([
-                'seccion_id' => $seccionId,
-                'lista_espera' => $data
-            ]);
-            
-        } catch (Exception $e) {
-            error_log("Error: " . $e->getMessage());
-            http_response_code(500);  // Error interno del servidor
-            echo json_encode(['error' => 'Error interno del servidor']);
         }
     }
 

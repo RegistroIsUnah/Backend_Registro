@@ -325,8 +325,8 @@ DELIMITER //
 CREATE PROCEDURE SP_matricular_estudiante(
     IN p_estudiante_id INT,
     IN p_seccion_id INT,
-    IN p_tipo_proceso_nombre VARCHAR(50),  -- Cambiado a nombre en lugar de ID
-    IN p_lab_seccion_id INT
+    IN p_tipo_proceso_nombre VARCHAR(50),
+    IN p_laboratorio_id INT
 )
 BEGIN
     -- Declaración de variables
@@ -348,6 +348,14 @@ BEGIN
     DECLARE v_tipo_proceso_id INT;
     DECLARE v_tiene_lab BOOLEAN;
     DECLARE v_seccion_clase_id INT;
+    DECLARE v_seccion_hora_inicio TIME;
+    DECLARE v_seccion_hora_fin TIME;
+    DECLARE v_seccion_dias VARCHAR(100);
+    DECLARE v_lab_hora_inicio TIME;
+    DECLARE v_lab_hora_fin TIME;
+    DECLARE v_lab_dias VARCHAR(100);
+    DECLARE v_creditos_seccion INT;
+    DECLARE v_total_creditos INT;
     
     -- 1. Verificar tipo de proceso y obtener su ID
     SELECT tipo_proceso_id INTO v_tipo_proceso_id 
@@ -367,7 +375,25 @@ BEGIN
     LIMIT 1;
     
     IF v_proceso_id IS NULL THEN
-       SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = CONCAT('No hay proceso activo para ', p_tipo_proceso_nombre);
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'No hay proceso activo para el tipo especificado';
+    END IF;
+    
+    -- Verificar que la sección pertenece al periodo académico del proceso activo
+    IF NOT EXISTS (
+        SELECT 1 FROM Seccion 
+        WHERE seccion_id = p_seccion_id 
+        AND periodo_academico_id = v_periodo_academico_id
+    ) THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'La sección no pertenece al periodo académico activo';
+    END IF;
+    
+    -- Verificar que la sección está activa
+    IF NOT EXISTS (
+        SELECT 1 FROM Seccion 
+        WHERE seccion_id = p_seccion_id 
+        AND estado_seccion_id = (SELECT estado_seccion_id FROM EstadoSeccion WHERE nombre = 'ACTIVA')
+    ) THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'La sección no está activa';
     END IF;
     
     -- 3. Validar estudiante
@@ -413,6 +439,43 @@ BEGIN
        END IF;
     END IF;
     
+    -- Verificar que el estudiante no está ya matriculado en esta sección
+    IF EXISTS (
+        SELECT 1 FROM Matricula 
+        WHERE estudiante_id = p_estudiante_id 
+        AND seccion_id = p_seccion_id
+        AND estado_matricula_id IN (
+            SELECT estado_matricula_id FROM EstadoMatricula 
+            WHERE nombre IN ('MATRICULADO', 'EN ESPERA')
+        )
+    ) THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El estudiante ya está matriculado en esta sección';
+    END IF;
+    
+    -- Verificar límite de créditos (25 máximo) - Solo secciones (clases), laboratorios no suman créditos
+    -- Obtener créditos de la sección actual
+    SELECT c.creditos INTO v_creditos_seccion 
+    FROM Clase c
+    JOIN Seccion s ON c.clase_id = s.clase_id
+    WHERE s.seccion_id = p_seccion_id;
+    
+    -- Calcular créditos actuales del estudiante en el periodo (solo secciones)
+    SELECT IFNULL(SUM(c.creditos), 0) INTO v_total_creditos
+    FROM Matricula m
+    JOIN Seccion s ON m.seccion_id = s.seccion_id
+    JOIN Clase c ON s.clase_id = c.clase_id
+    WHERE m.estudiante_id = p_estudiante_id
+    AND s.periodo_academico_id = v_periodo_academico_id
+    AND m.estado_matricula_id IN (
+        SELECT estado_matricula_id FROM EstadoMatricula 
+        WHERE nombre IN ('MATRICULADO', 'EN ESPERA')
+    );
+    
+    -- Verificar si supera el límite con esta nueva matrícula
+    IF (v_total_creditos + v_creditos_seccion) > 25 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'La matrícula excede el límite de 25 créditos';
+    END IF;
+    
     -- Obtener horarios de la sección principal
     SELECT hora_inicio, hora_fin INTO v_seccion_hora_inicio, v_seccion_hora_fin 
     FROM Seccion WHERE seccion_id = p_seccion_id;
@@ -447,16 +510,16 @@ BEGIN
     END IF;
     
     -- Si hay laboratorio, verificar sus traslapes
-    IF p_lab_seccion_id IS NOT NULL AND p_lab_seccion_id != 0 THEN
+    IF p_laboratorio_id IS NOT NULL AND p_laboratorio_id != 0 THEN
         -- Obtener horarios del laboratorio
         SELECT hora_inicio, hora_fin INTO v_lab_hora_inicio, v_lab_hora_fin 
-        FROM Laboratorio WHERE laboratorio_id = p_lab_seccion_id;
+        FROM Laboratorio WHERE laboratorio_id = p_laboratorio_id;
         
         -- Obtener días del laboratorio
         SELECT GROUP_CONCAT(d.nombre ORDER BY d.nombre SEPARATOR ',') INTO v_lab_dias
         FROM LaboratorioDia ld
         JOIN DiaSemana d ON ld.dia_id = d.dia_id
-        WHERE ld.laboratorio_id = p_lab_seccion_id;
+        WHERE ld.laboratorio_id = p_laboratorio_id;
         
         -- Verificar traslapes del laboratorio con otras secciones/laboratorios
         IF EXISTS (
@@ -470,12 +533,12 @@ BEGIN
             AND (s.periodo_academico_id = v_periodo_academico_id OR 
                  l.periodo_academico_id = v_periodo_academico_id)
             AND m.estado_matricula_id IN (
-                SELECT estado_matricula_id FROM EstadoMatricula 
-                WHERE nombre IN ('MATRICULADO', 'EN ESPERA')
-            )
-            AND d.nombre IN (SELECT nombre FROM DiaSemana ds 
+				SELECT estado_matricula_id FROM EstadoMatricula  -- Correcto
+					WHERE nombre IN ('MATRICULADO', 'EN ESPERA')
+					)
+			AND d.nombre IN (SELECT nombre FROM DiaSemana ds 
                             JOIN LaboratorioDia ldd ON ds.dia_id = ldd.dia_id 
-                            WHERE ldd.laboratorio_id = p_lab_seccion_id)
+                            WHERE ldd.laboratorio_id = p_laboratorio_id)
             AND (
                 (TIME_TO_SEC(v_lab_hora_fin) > TIME_TO_SEC(COALESCE(s.hora_inicio, l.hora_inicio)) AND
                  TIME_TO_SEC(v_lab_hora_inicio) < TIME_TO_SEC(COALESCE(s.hora_fin, l.hora_fin)))
@@ -492,7 +555,7 @@ BEGIN
                               WHERE sdd.seccion_id = p_seccion_id)
             AND d.nombre IN (SELECT nombre FROM DiaSemana ds 
                             JOIN LaboratorioDia ldd ON ds.dia_id = ldd.dia_id 
-                            WHERE ldd.laboratorio_id = p_lab_seccion_id)
+                            WHERE ldd.laboratorio_id = p_laboratorio_id)
             AND (
                 (TIME_TO_SEC(v_seccion_hora_fin) > TIME_TO_SEC(v_lab_hora_inicio) AND
                 TIME_TO_SEC(v_seccion_hora_inicio) < TIME_TO_SEC(v_lab_hora_fin))
@@ -528,45 +591,56 @@ BEGIN
     SET v_matricula_id = LAST_INSERT_ID();
     
     -- 9. Procesar la matrícula en el laboratorio (si la clase tiene laboratorio)
-    SELECT tiene_laboratorio, clase_id INTO v_tiene_lab, v_seccion_clase_id 
-      FROM Clase 
-      WHERE clase_id = (SELECT clase_id FROM Seccion WHERE seccion_id = p_seccion_id);
-      
-    IF v_tiene_lab = 1 THEN
-        IF p_lab_seccion_id IS NULL OR p_lab_seccion_id = 0 THEN
-            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Se requiere seleccionar un laboratorio para esta clase';
-        END IF;
-        
-        -- Verificar cupos en el laboratorio
-        SELECT cupos INTO v_cupos FROM Laboratorio WHERE laboratorio_id = p_lab_seccion_id;
-        IF v_cupos IS NULL THEN
-            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Laboratorio no encontrado';
-        END IF;
-        
-        SELECT COUNT(*) INTO v_totalMatriculados 
-        FROM Matricula 
-        WHERE seccion_id = p_lab_seccion_id 
-          AND estado_matricula_id = (SELECT estado_matricula_id FROM EstadoMatricula WHERE nombre = 'MATRICULADO');
-        
-        IF v_totalMatriculados >= v_cupos THEN
-            SET v_estadoMatricula = 'EN ESPERA';
-            SELECT IFNULL(MAX(orden_inscripcion), 0) + 1 INTO v_orden_inscripcion 
-            FROM Matricula WHERE seccion_id = p_lab_seccion_id;
-        ELSE
-            SET v_estadoMatricula = 'MATRICULADO';
-        END IF;
-        
-        INSERT INTO Matricula (estudiante_id, seccion_id, laboratorio_id, estado_matricula_id, orden_inscripcion, fecha)
-            VALUES (p_estudiante_id, NULL, p_lab_seccion_id, 
-                   (SELECT estado_matricula_id FROM EstadoMatricula WHERE nombre = v_estadoMatricula), 
-                   v_orden_inscripcion, CURDATE());
-    END IF;
+	SELECT tiene_laboratorio, clase_id INTO v_tiene_lab, v_seccion_clase_id 
+	FROM Clase 
+	WHERE clase_id = (SELECT clase_id FROM Seccion WHERE seccion_id = p_seccion_id);
+  
+	IF v_tiene_lab = 1 THEN
+	IF p_laboratorio_id IS NULL OR p_laboratorio_id = 0 THEN
+		SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Se requiere seleccionar un laboratorio para esta clase';
+	END IF;
+	
+	-- Verificar que el laboratorio pertenece a la clase
+	IF NOT EXISTS (
+	SELECT 1 FROM Laboratorio 
+	WHERE laboratorio_id = p_laboratorio_id 
+	AND clase_id = v_seccion_clase_id
+	) THEN
+		SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El laboratorio no pertenece a esta clase';
+	END IF;
+	
+	-- Verificar cupos en el laboratorio
+	SELECT cupos INTO v_cupos FROM Laboratorio WHERE laboratorio_id = p_laboratorio_id;
+	IF v_cupos IS NULL THEN
+		SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Laboratorio no encontrado';
+	END IF;
+	
+	-- Corrección aquí: usar laboratorio_id en lugar de seccion_id
+	SELECT COUNT(*) INTO v_totalMatriculados 
+	FROM Matricula 
+	WHERE laboratorio_id = p_laboratorio_id
+	  AND estado_matricula_id = (SELECT estado_matricula_id FROM EstadoMatricula WHERE nombre = 'MATRICULADO');
+	
+	IF v_totalMatriculados >= v_cupos THEN
+		SET v_estadoMatricula = 'EN ESPERA';
+		SELECT IFNULL(MAX(orden_inscripcion), 0) + 1 INTO v_orden_inscripcion 
+		FROM Matricula WHERE laboratorio_id = p_laboratorio_id;  -- Corrección aquí también
+	ELSE
+		SET v_estadoMatricula = 'MATRICULADO';
+	END IF;
+	
+	INSERT INTO Matricula (estudiante_id, laboratorio_id, estado_matricula_id, orden_inscripcion, fecha)
+		VALUES (p_estudiante_id, p_laboratorio_id, 
+			   (SELECT estado_matricula_id FROM EstadoMatricula WHERE nombre = v_estadoMatricula), 
+			   v_orden_inscripcion, CURDATE());
+	END IF;
     
     -- 10. Retornar resultados al endpoint
     SELECT v_matricula_id AS matricula_id, v_estadoMatricula AS estado, v_orden_inscripcion AS orden_inscripcion;
 END //
 
 DELIMITER ;
+
 
 
 DELIMITER //
