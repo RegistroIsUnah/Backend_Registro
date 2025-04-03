@@ -265,5 +265,57 @@ class Matricula {
         $stmt->close();
         return $clasesEnEspera;
     }
+
+       /**
+     * Obtener los detalles de los laboratorios matriculados.
+     *
+     * @param int $estudiante_id ID del estudiante
+     * @return array Detalles de los laboratorios matriculados
+     */
+    public function obtenerLaboratoriosMatriculados($estudiante_id) {
+        $sql = "SELECT
+                    c.codigo AS codigo,
+                    c.nombre AS asignatura,
+                    DATE_FORMAT(l.hora_inicio, '%H%i') AS laboratorio_codigo,
+                    l.hora_inicio AS hora_inicio,
+                    l.hora_fin AS hora_fin,
+                    GROUP_CONCAT(ds.nombre ORDER BY ds.dia_id) AS dias_laboratorio,
+                    e.nombre AS edificio_nombre,
+                    a.nombre AS aula_nombre,
+                    c.creditos AS creditos
+                FROM
+                    Matricula m
+                JOIN
+                    Laboratorio l ON m.laboratorio_id = l.laboratorio_id
+                JOIN
+                    Clase c ON l.clase_id = c.clase_id
+                JOIN
+                    Aula a ON l.aula_id = a.aula_id
+                JOIN
+                    Edificio e ON a.edificio_id = e.edificio_id
+                LEFT JOIN
+                    SeccionDia sd ON l.laboratorio_id = sd.seccion_id
+                LEFT JOIN
+                    DiaSemana ds ON sd.dia_id = ds.dia_id
+                WHERE
+                    m.estudiante_id = ? 
+                    AND m.estado_matricula_id = (SELECT estado_matricula_id FROM EstadoMatricula WHERE nombre = 'MATRICULADO')
+                GROUP BY
+                    l.laboratorio_id, c.clase_id, a.nombre, e.nombre
+                ORDER BY
+                    l.laboratorio_id";
+
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param("i", $estudiante_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        $laboratorios = [];
+        while ($row = $result->fetch_assoc()) {
+            $laboratorios[] = $row;
+        }
+
+        return $laboratorios;
+    }
 }
 ?>
