@@ -45,14 +45,14 @@ class Matricula {
         }
 
         // Convertir null a 0 para el SP (que espera INT)
-        $lab_id = $laboratorio_id ?? 0;
+        
 
         $stmt = $this->conn->prepare("CALL SP_matricular_estudiante(?, ?, ?, ?)");
         if (!$stmt) {
             throw new Exception('Error preparando la consulta: ' . $this->conn->error);
         }
 
-        $stmt->bind_param("iisi", $estudiante_id, $seccion_id, $tipo_proceso_nombre, $lab_id);
+        $stmt->bind_param("iisi", $estudiante_id, $seccion_id, $tipo_proceso_nombre, $laboratorio_id);
 
         if (!$stmt->execute()) {
             throw new Exception('Error ejecutando matrícula: ' . $stmt->error);
