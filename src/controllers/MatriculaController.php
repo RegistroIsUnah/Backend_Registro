@@ -239,5 +239,23 @@ class MatriculaController {
             echo json_encode(['error' => $e->getMessage()]);
         }
     }
+
+    /**
+     * Obtener los laboratorios matriculados de un estudiante.
+     *
+     * @param int $estudiante_id ID del estudiante
+     * @return void Responde con los detalles de los laboratorios matriculados
+     */
+    public function obtenerLaboratoriosMatriculados($estudiante_id) {
+        $laboratorios = $this->model->obtenerLaboratoriosMatriculados($estudiante_id);
+
+        if (!empty($laboratorios)) {
+            http_response_code(200);
+            echo json_encode(['laboratorios' => $laboratorios]);
+        } else {
+            http_response_code(404);
+            echo json_encode(['error' => 'No se encontraron laboratorios matriculados para este estudiante']);
+        }
+    }
 }
 ?>

@@ -405,6 +405,9 @@ public function actualizarPerfil($estudianteId, $datosActualizados) {
      * @return int ID del estudiante creado.
      */
     public function registrarEstudiante($usuario_id, $identidad, $nombre, $apellido, $correo, $telefono, $centro_id) {
+        // Generar el número de cuenta único
+        $numeroCuenta = $this->generarNumeroCuenta();
+
         // Inserción en la tabla Estudiante
         $sqlCheck = "SELECT centro_id FROM Centro WHERE centro_id = ?";
         $stmtCheck = $this->conn->prepare($sqlCheck);
@@ -414,14 +417,42 @@ public function actualizarPerfil($estudianteId, $datosActualizados) {
         if ($stmtCheck->get_result()->num_rows == 0) {
             throw new Exception("El centro con ID $centro_id no existe");
         }
-        $sql = "INSERT INTO Estudiante (usuario_id, identidad, nombre, apellido, correo_personal, telefono, direccion, centro_id, indice_global, indice_periodo) 
-                VALUES (?, ?, ?, ?, ?, ?, 'No disponible', ?, 100, 0)";
+
+        $sql = "INSERT INTO Estudiante (usuario_id, identidad, nombre, apellido, correo_personal, telefono, direccion, centro_id, indice_global, indice_periodo, numero_cuenta) 
+                VALUES (?, ?, ?, ?, ?, ?, 'No disponible', ?, 100, 0, ?)";
         $stmt = $this->conn->prepare($sql);
-        $stmt->bind_param("issssii", $usuario_id, $identidad, $nombre, $apellido, $correo, $telefono, $centro_id);
+        $stmt->bind_param("issssii", $usuario_id, $identidad, $nombre, $apellido, $correo, $telefono, $centro_id, $numeroCuenta);
         $stmt->execute();
 
         // Obtener el ID del estudiante
-        return $stmt->insert_id;
+        $estudiante_id = $stmt->insert_id;
+
+        return [
+            'estudiante_id' => $estudiante_id,
+            'numero_cuenta' => $numeroCuenta // Regresar el número de cuenta
+        ];
+    }
+
+    /**
+     * Genera un número de cuenta único
+     * 
+     * @return string Número de cuenta generado
+     */
+    private function generarNumeroCuenta() {
+        // Año actual
+        $year = date("Y");
+        
+        // Generar 7 números aleatorios únicos
+        $randomNumbers = '';
+        while (strlen($randomNumbers) < 7) {
+            $num = rand(0, 9);
+            if (strpos($randomNumbers, (string)$num) === false) { // Asegura que el número no se repita
+                $randomNumbers .= $num;
+            }
+        }
+
+        // Concatenar el año con los 7 números aleatorios
+        return $year . " " . $randomNumbers;
     }
 
     /**
@@ -461,7 +492,7 @@ public function actualizarPerfil($estudianteId, $datosActualizados) {
      * @param string $username Nombre de usuario (sin nombre/apellido)
      * @param string $password Contraseña generada
      */
-    public function enviarCorreoConCredenciales($correo, $nombre, $apellido, $username, $password) {
+    public function enviarCorreoConCredenciales($correo, $nombre, $apellido, $username, $password, $numeroCuenta) {
         $nombreCompleto = trim("$nombre $apellido");
         $subject = 'Credenciales de Acceso al Sistema Universitario';
         
@@ -592,6 +623,10 @@ public function actualizarPerfil($estudianteId, $datosActualizados) {
                                 <span class='label'>Contraseña temporal:</span>
                                 <span class='value'>$password</span>
                             </div>
+                            <div class='credential-item'>
+                                <span class='label'>Número de cuenta:</span>
+                                <span class='value'>$numeroCuenta</span>
+                            </div>
                         </div>
                         
                         <div class='important'>
@@ -618,7 +653,8 @@ public function actualizarPerfil($estudianteId, $datosActualizados) {
         $altMessage = "Credenciales de Acceso - $nombreCompleto\n\n"
                     . "Nombre completo: $nombreCompleto\n"
                     . "Usuario del sistema: $username\n"
-                    . "Contraseña temporal: $password\n\n"
+                    . "Contraseña temporal: $password\n"
+                    . "Numero de Cuenta: $numeroCuenta\n\n"
                     . "IMPORTANTE: Debe cambiar esta contraseña después de su primer acceso.\n\n"
                     . "Acceso al sistema: https://registroisunah.xyz\n\n"
                     . "Atentamente,\nDepartamento de Registro";

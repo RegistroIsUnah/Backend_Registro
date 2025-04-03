@@ -852,7 +852,7 @@ DELIMITER ;
 
 DELIMITER //
 
-CREATE PROCEDURE SP_matricular_estudiante(
+CREATE PROCEDURE SP_matricular_estudianteV2(
     IN p_estudiante_id INT,
     IN p_seccion_id INT,
     IN p_tipo_proceso VARCHAR(50),
