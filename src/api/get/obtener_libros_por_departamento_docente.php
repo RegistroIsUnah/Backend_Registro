@@ -5,7 +5,7 @@
  * La solicitud debe incluir el parámetro GET 'departamentoId'.
  *
  * Ejemplo de URL:
- *    servidor:puerto/api/get/obtener_libros_por_departamento.php?departamentoId=2
+ *    servidor:puerto/api/get/obtener_libros_por_departamento_docente.php?departamentoId=2
  *
  * Respuestas:
  *  - 200 OK: Devuelve un JSON con las clases y sus libros.
@@ -32,5 +32,5 @@ $departamentoId = (int) $_GET['departamentoId'];
 require_once __DIR__ . '/../../controllers/LibroController.php';
 
 $controller = new LibroController();
-$controller->obtenerLibrosPorDepartamento($departamentoId);
+$controller->obtenerLibrosPorDepartamentoDocente($departamentoId);
 ?>

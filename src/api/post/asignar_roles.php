@@ -7,7 +7,7 @@
  *   - roles: JSON string (ej. [1,2,3])
  * 
  * Ejemplo de URL:
- * servidor:puerto/api/post/asignar_roles
+ * servidor:puerto/api/post/asignar_roles.php
  *
  * Ejemplo de solicitud:
  *   usuario_id: 5

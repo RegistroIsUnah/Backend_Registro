@@ -3,7 +3,7 @@
  * Endpoint para obtener los detalles completos de un libro para un encargado de biblioteca.
  *
  * Ejemplo de URL:
- * servidor:puerto/api/get/obtener_libro_encargado?libro_id=5
+ * servidor:puerto/api/get/obtener_libro_encargado.php?libro_id=5
  *
  * Respuestas:
  *  - 200 OK: Devuelve el libro en formato JSON.

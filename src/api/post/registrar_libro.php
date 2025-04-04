@@ -3,7 +3,7 @@
  * API para registrar un libro.
  * 
  * Ejemplo de URL 
- * servidor:puerto/api/post/registrar_libro
+ * servidor:puerto/api/post/registrar_libro.php
  * 
  * Metodos soportados:
  *  POST

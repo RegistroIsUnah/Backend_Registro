@@ -8,7 +8,7 @@
  * Si no hay solicitudes pendientes, se devuelve un mensaje indicándolo.
  *
  * Ejemplo de URL:
- * servidor:puerto/api/get/obtener_solicitud_aspirante?revisor_id=3
+ * servidor:puerto/api/get/obtener_solicitud_aspirante.php?revisor_id=3
  *
  * Responde en formato JSON.
  *

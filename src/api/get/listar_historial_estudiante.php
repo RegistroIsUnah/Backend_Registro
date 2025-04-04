@@ -7,7 +7,7 @@
  * con su código, nombre, créditos, sección, hora de la clase, periodo, calificación y estado del curso.
  *
  * Ejemplo de URL:
- * servidor:puerto/api/get/historial_estudiante?estudiante_id=3
+ * servidor:puerto/api/get/historial_estudiante.php?estudiante_id=3
  *
  * Responde en formato JSON.
  *

@@ -5,7 +5,7 @@
  * Se espera recibir el ID del edificio mediante el parámetro "edificio_id" en la query string.
  *
  * Ejemplo de URL:
- *   servidor:puerto/api/get/aulas_edificio?edificio_id=2
+ *   servidor:puerto/api/get/aulas_edificio.php?edificio_id=2
  *
  * Respuestas HTTP:
  * - 200 OK: Devuelve la lista de aulas en formato JSON.

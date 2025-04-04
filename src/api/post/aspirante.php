@@ -11,7 +11,7 @@
  * carrera_secundaria_id y centro_id.
  * 
  * Ejemplo de URL:
- * servidor:puerto/api/post/aspirante
+ * servidor:puerto/api/post/aspirante.php
  *
  * Método:
  *   POST

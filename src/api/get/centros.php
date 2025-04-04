@@ -5,7 +5,7 @@
  * Retorna la lista de centros en formato JSON.
  *
  * Ejemplo de URL:
- * servidor:puerto/api/get/centros
+ * servidor:puerto/api/get/centros.php
  *
  * Respuestas HTTP:
  * - 200 OK: Devuelve la lista de centros.
