@@ -22,7 +22,7 @@ class EstudianteController {
      * Obtiene los docentes de las clases del estudiante y envía a la vista
      */
     public function obtenerDocentesClases() {
-        header('Content-Type: application/json');
+        //header('Content-Type: application/json');
         
         try {
             // Obtener ID del estudiante desde sesión
@@ -68,23 +68,9 @@ class EstudianteController {
         header('Content-Type: application/json');
         
         try {
-            session_start();
-            
-            // Validar autenticación
-            if (!isset($_SESSION['usuario_id'])) {
-                throw new Exception('Debe iniciar sesión', 401);
-            }
-    
-            // Determinar ID a usar
-            $idFinal = $estudianteId ?? $_SESSION['estudiante_id'];
-            
-            // Validar permisos
-            if ($_SESSION['rol'] !== 'admin' && $_SESSION['estudiante_id'] != $idFinal) {
-                throw new Exception('No tiene permisos para ver este perfil', 403);
-            }
-    
+
             // Obtener datos del modelo
-            $perfil = $this->modelo->obtenerPerfilEstudiante($idFinal);
+            $perfil = $this->modelo->obtenerPerfilEstudiante($estudianteId);
             
             // Formatear respuesta Actualizada
 
@@ -93,24 +79,23 @@ class EstudianteController {
                 'data' => [
                     'informacion_personal' => [
                         'nombre_completo' => $perfil['nombre'] . ' ' . $perfil['apellido'],
+                        'numero_cuenta' => $perfil['numero_cuenta'],  // Nuevo campo añadido a la base
                         'identidad' => $perfil['identidad'],
                         'correo' => $perfil['correo_personal'],
                         'telefono' => $perfil['telefono'],
-                        'direccion' => $perfil['direccion'],
-                        'numero_cuenta' => $perfil['numero_cuenta']
+                        'direccion' => $perfil['direccion']
                     ],
                     'academico' => [
                         'indice_global' => (float)$perfil['indice_global'],
                         'indice_periodo' => (float)$perfil['indice_periodo'],
                         'centro' => $perfil['centro'],
                         'carreras' => explode(', ', $perfil['carreras']),
-                        'año_ingreso' => (int)$perfil['anio_ingreso'],
                         'solicitudes_pendientes' => (int)$perfil['solicitudes_pendientes']
                     ],
                     'cuenta' => [
                         'username' => $perfil['username']
                     ],
-                    'fotos' => $perfil['fotos'] ? explode(', ', $perfil['fotos']) : [] // Nuevo campo (array)
+                    'fotos' => $perfil['fotos'] ? explode(', ', $perfil['fotos']) : []
                 ]
             ];
     

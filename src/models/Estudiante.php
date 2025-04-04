@@ -94,10 +94,45 @@ class Estudiante {
      * @version 1.3
      */
 
+
+     /*
+
+        SELECT 
+			e.estudiante_id,
+            e.nombre,
+            e.apellido,
+            e.identidad,
+            e.correo_personal,
+            e.telefono,
+            e.direccion,
+            e.indice_global,
+            e.indice_periodo,
+            c.nombre AS centro,
+            u.username,
+            GROUP_CONCAT(DISTINCT ca.nombre SEPARATOR ', ') AS carreras,
+            GROUP_CONCAT(DISTINCT fe.ruta_foto SEPARATOR ', ') AS fotos,
+            (SELECT COUNT(*) 
+            FROM Solicitud s 
+            WHERE s.estudiante_id = e.estudiante_id 
+            AND s.estado_solicitud_id = 1) AS solicitudes_pendientes
+        FROM Estudiante e
+        INNER JOIN Usuario u ON e.usuario_id = u.usuario_id
+        INNER JOIN Centro c ON e.centro_id = c.centro_id
+        LEFT JOIN EstudianteCarrera ec ON e.estudiante_id = ec.estudiante_id
+        LEFT JOIN Carrera ca ON ec.carrera_id = ca.carrera_id
+        LEFT JOIN FotosEstudiante fe ON e.estudiante_id = fe.estudiante_id
+        WHERE e.estudiante_id = ?
+        GROUP BY e.estudiante_id
+
+
+
+
+     */
     public function obtenerPerfilEstudiante($estudianteId) {
 
         $sql = "SELECT 
                 e.estudiante_id,
+                e.numero_cuenta,
                 e.nombre,
                 e.apellido,
                 e.identidad,
@@ -106,22 +141,22 @@ class Estudiante {
                 e.direccion,
                 e.indice_global,
                 e.indice_periodo,
-                e.numero_cuenta,
-                e.anio_ingreso,
                 c.nombre AS centro,
                 u.username,
-                GROUP_CONCAT(ca.nombre SEPARATOR ', ') AS carreras,
-                GROUP_CONCAT(fe.ruta_foto SEPARATOR ', ') AS fotos, // Nueva columna
-                (SELECT COUNT(*) 
-                 FROM Solicitudes s 
-                 WHERE s.estudiante_id = e.estudiante_id 
-                 AND s.estado = 'pendiente') AS solicitudes_pendientes
+                GROUP_CONCAT(DISTINCT ca.nombre SEPARATOR ', ') AS carreras,
+                GROUP_CONCAT(DISTINCT fe.ruta_foto SEPARATOR ', ') AS fotos,
+                (
+                    SELECT COUNT(*) 
+                    FROM Solicitud s 
+                    WHERE s.estudiante_id = e.estudiante_id 
+                    AND s.estado_solicitud_id = 1
+                ) AS solicitudes_pendientes
             FROM Estudiante e
             INNER JOIN Usuario u ON e.usuario_id = u.usuario_id
             INNER JOIN Centro c ON e.centro_id = c.centro_id
             LEFT JOIN EstudianteCarrera ec ON e.estudiante_id = ec.estudiante_id
             LEFT JOIN Carrera ca ON ec.carrera_id = ca.carrera_id
-            LEFT JOIN FotosEstudiante fe ON e.estudiante_id = fe.estudiante_id // Nuevo JOIN
+            LEFT JOIN FotosEstudiante fe ON e.estudiante_id = fe.estudiante_id
             WHERE e.estudiante_id = ?
             GROUP BY e.estudiante_id";
     

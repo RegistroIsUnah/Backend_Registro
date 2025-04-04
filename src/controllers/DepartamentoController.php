@@ -15,8 +15,10 @@ require_once __DIR__ . '/../models/Departamento.php';
 class DepartamentoController {
     private $model;
 
+
     public function __construct() {
         $this->model = new Departamento();
+        
     }
 
     /**
@@ -84,43 +86,50 @@ class DepartamentoController {
         $this->responder(['error' => $mensaje], $statusCode);
     }
 
-    public function obtenerClasesPorDepartamento() {
-        $params = ['departamentoId', 'anio', 'periodo'];
+
+
+    /**
+     * Obtiene clases y secciones activas por departamento, año y período.
+     * @author Jose Vargas
+     * @param int $deptId ID del departamento.
+     * @param int $anio Año académico.
+     * @param int $periodoId ID del período académico.
+     */
+    public function obtenerClasesPorDepartamento($departamentoId, $anio, $periodo) {
+        header('Content-Type: application/json');
         
-        // Validar que todos los parámetros estén presentes
-        foreach ($params as $param) {
-            if (!isset($_GET[$param]) || empty($_GET[$param])) {
-                return $this->error("Parámetro requerido: $param", 400);
-            }
-        }
-    
         try {
-            $deptId = (int)$_GET['departamentoId'];
-            $anio = (int)$_GET['anio'];
-            $periodo = $_GET['periodo'];
-    
-            // Validar el parámetro 'periodo'
-            if (!in_array($periodo, ['1', '2', '3'])) {
-                return $this->error('Período inválido (valores permitidos: 1, 2, 3)', 400);
-            }
-    
-            // Llamar al modelo para obtener las clases y secciones filtradas por departamento, año y período
-            $data = $this->model->obtenerClasesYSecciones($deptId, $anio, $periodo);
-    
-            // Si no hay datos, devolver un error
-            if (empty($data)) {
-                return $this->error('No se encontraron clases activas', 404);
-            }
-    
-            // Procesar los datos y devolverlos
-            $response = $this->procesarDatos($data);
-            $this->responder($response);
-    
+            $clases = $this->model->obtenerClasesYSecciones($departamentoId, $anio, $periodo);
+            
+            // Formateo más sencillo ya que el modelo ya agrupó
+            return array_map(function($clase) {
+                return [
+                    'clase_id' => (int)$clase['clase_id'],
+                    'nombre_clase' => $clase['nombre_clase'],
+                    'secciones' => array_map(function($seccion) {
+                        return [
+                            'seccion_id' => (int)$seccion['seccion_id'],
+                            'codigo' => $seccion['codigo'],
+                            'horario' => [
+                                'inicio' => $seccion['hora_inicio'],
+                                'fin' => $seccion['hora_fin']
+                            ],
+                            'aula' => $seccion['aula'],
+                            'docente' => $seccion['docente']
+                        ];
+                    }, $clase['secciones'])
+                ];
+            }, $clases);
+            
         } catch (Exception $e) {
-            error_log("Error: " . $e->getMessage());
-            $this->error('Error interno del servidor', 500);
+            http_response_code(500);
+            echo json_encode([
+                'success' => false,
+                'error' => 'Error al obtener las clases: ' . $e->getMessage()
+            ]);
+            exit;
         }
     }
-    
+
 }
 ?>

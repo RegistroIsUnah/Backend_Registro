@@ -15,11 +15,9 @@
  * @package API
  * @author Jose Vargas
  * @version 1.0
-<<<<<<< Updated upstream
+
  servidor:puerto/api/get/datos_estudiante.php?estudianteId=5
-=======
- * servidor:puerto/api/get/datos_estudiante.php?estudianteid=5
->>>>>>> Stashed changes
+
 {
     "success": true,
     "data": {
@@ -54,24 +52,16 @@ header("Access-Control-Allow-Origin: *");
 header('Content-Type: application/json');
 
 
-if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-    $data = [
-        'estudianteid' => isset($_GET['estudianteid']) ? $_GET['estudianteid'] : null
-    ];
-} else {
-    http_response_code(405);
-    echo json_encode(['error' => 'Método no permitido']);
+if (!isset($_GET['estudianteid']) || !is_numeric($_GET['estudianteid'])) {
+    http_response_code(400);
+    echo json_encode(['error' => 'El parámetro estudianteid es inválido o faltante']);
     exit;
 }
 
-if (!$data || !isset($data['estudianteid'])) {
-    http_response_code(400);
-    echo json_encode(['error' => 'El parámetro estudianteid es requerido']);
-    exit;
-}
+$estudianteid = (int) $_GET['estudianteid'];
 
 require_once __DIR__ . '/../../controllers/EstudianteController.php';
 
 $controller = new EstudianteController();
-$controller->obtenerPerfilEstudiante($data);
+$controller->obtenerPerfilEstudiante($estudianteid);
 ?>
