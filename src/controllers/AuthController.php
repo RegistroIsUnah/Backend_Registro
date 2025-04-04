@@ -80,7 +80,8 @@ require_once __DIR__ . '/../models/Usuario.php';
     
         // Obtener datos de Docente (si aplica)
         if (in_array('Docente', $roles)) {
-            $stmtDocente = $conn->prepare('SELECT docente_id, nombre, apellido, correo, foto FROM Docente WHERE usuario_id = ?');
+            $stmtDocente = $conn->prepare('SELECT d.docente_id, d.nombre, d.apellido, d.correo, d.foto, dept.nombre AS departamento, d.dept_id FROM 
+            Docente d INNER JOIN Departamento dept ON d.dept_id = dept.dept_id WHERE usuario_id = ?');
             $stmtDocente->bind_param('i', $user['usuario_id']);
             $stmtDocente->execute();
             $resultDocente = $stmtDocente->get_result();

@@ -15,7 +15,11 @@
  * @package API
  * @author Jose Vargas
  * @version 1.0
+<<<<<<< Updated upstream
  servidor:puerto/api/get/datos_estudiante.php?estudianteId=5
+=======
+ * servidor:puerto/api/get/datos_estudiante.php?estudianteid=5
+>>>>>>> Stashed changes
 {
     "success": true,
     "data": {

@@ -8,12 +8,16 @@
  * Métodos
  *  POST
  * 
+ * Se espera recibir en la solicitud (multipart/form-data)
+ * Llave: archivo_csv  
+ * Valor: el archivo.csv 
+ * 
  * Se espera recibir:
  *   - archivo_csv: Archivo CSV con formato:
- *     Documento,Tipo de Examen,Nota
- *     1807-1999-01278,Examen de Física,85
- *     1807-1999-01278,Examen de Matemáticas,100
- *   - rol: string (rol del usuario)
+ *     Documento,Tipo de Examen,Carerra,Nota
+ *     1807-1999-01278,Examen de Física,Ingenieria,85
+ *     1807-1999-01278,Examen de Matemáticas,Fisica,100
+ *   
  * 
  * Respuestas:
  *   - 200 OK: CSV procesado correctamente
@@ -22,7 +26,9 @@
  *   - 500 Internal Server Error: Error interno
  * 
  * @package API
+ * @author Ruben Diaz
  * @version 1.0
+ * 
  */
 
 header("Access-Control-Allow-Origin: *");

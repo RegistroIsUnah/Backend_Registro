@@ -8,7 +8,7 @@
  * - Requisitos (si la clase tiene requisito, el estudiante debe haber aprobado alguna sección de esa clase)
  *
  * Ejemplo de URL:
- * servidor:puerto/api/get/listar_clases_matriculables?departamento_id=3&estudiante_id=10
+ * servidor:puerto/api/get/listar_clases_matriculables.php?departamento_id=3&estudiante_id=10
  *
  * Respuestas HTTP:
  * - 200 OK: Devuelve un arreglo de clases.

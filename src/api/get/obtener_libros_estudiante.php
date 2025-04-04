@@ -3,7 +3,7 @@
  * Endpoint para obtener los libros asociados a las clases en las que el estudiante está matriculado o que ya cursó.
  *
  * Ejemplo de URL:
- * servidor:puerto/api/get/obtener_libros_estudiante?estudiante_id=7
+ * servidor:puerto/api/get/obtener_libros_estudiante.php?estudiante_id=7
  *
  * Responde en formato JSON.
  *

@@ -617,5 +617,23 @@ class LibroController {
             echo json_encode(['error' => $e->getMessage()]);
         }
     }
+
+    /**
+     * Obtiene las clases y los libros asociados para un departamento.
+     *
+     * @param int $departamentoId ID del departamento.
+     * @return void Envía la respuesta en formato JSON.
+     */
+    public function obtenerLibrosPorDepartamentoDocente($departamentoId) {
+        try {
+            $libroModel = new Libro();
+            $resultado = $libroModel->obtenerLibrosPorDepartamentoDocente($departamentoId);
+            http_response_code(200);
+            echo json_encode($resultado);
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => $e->getMessage()]);
+        }
+    }
 }
 ?>

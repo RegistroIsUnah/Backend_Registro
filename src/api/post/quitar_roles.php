@@ -3,7 +3,7 @@
  * API para quitar roles a un usuario.
  * 
  * Ejemplo de URL 
- * servidor:puerto/api/post/quitar_roles
+ * servidor:puerto/api/post/quitar_roles.php
  * 
  * Metodos soportados:
  *  POST

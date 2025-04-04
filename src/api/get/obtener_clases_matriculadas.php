@@ -3,7 +3,7 @@
  * API para obtener las clases matriculadas de un estudiante.
  *
  * Ejemplo de URL:
- * servidor:puerto/api/get/clases_matriculadas.php?estudiante_id=123
+ * servidor:puerto/api/get/obtener_clases_matriculadas.php?estudiante_id=123
  *
  * Responde en formato JSON.
  *

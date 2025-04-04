@@ -1,11 +1,11 @@
 <?php
 /**
- * API para obtener los detalles del aspirante por su documento.
- *
+ * API para obtener los detalles del aspirante por su correo.
+ 
  * Este endpoint recibe el parámetro documento y devuelve los detalles del aspirante en formato JSON.
  *
  * Ejemplo de URL:
- * servidor:puerto/api/get/recuperar_datos_aspirante?documento=0801199909876
+ * servidor:puerto/api/get/recuperar_datos_aspirante.php?documento=correo
  *
  * Respuestas HTTP:
  * - 200 OK: Devuelve los detalles del aspirante.

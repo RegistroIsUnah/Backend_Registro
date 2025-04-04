@@ -5,7 +5,7 @@
  * Este endpoint recibe el parámetro clase_id y devuelve la lista de laboratorios con todos sus detalles.
  *
  * Ejemplo de URL:
- * servidor:puerto/api/get/listar_laboratorios_clase?clase_id=5
+ * servidor:puerto/api/get/listar_laboratorios_clase.php?clase_id=5
  *
  * Respuestas HTTP:
  * - 200 OK: Devuelve un arreglo de laboratorios.

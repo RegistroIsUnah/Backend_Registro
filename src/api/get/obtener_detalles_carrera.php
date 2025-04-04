@@ -5,7 +5,7 @@
  * Este endpoint recibe el parámetro carrera_id y devuelve los detalles de la carrera en formato JSON.
  *
  * Ejemplo de URL:
- * servidor:puerto/api/get/obtener_detalles_carrera?carrera_id=1
+ * servidor:puerto/api/get/obtener_detalles_carrera.php?carrera_id=1
  *
  * Respuestas HTTP:
  * - 200 OK: Devuelve los detalles de la carrera, coordinador y jefe de departamento.

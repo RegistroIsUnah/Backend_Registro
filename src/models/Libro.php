@@ -768,5 +768,82 @@ class Libro {
         }
     }
 
+    /**
+     * Obtiene todas las clases de un departamento y los libros asociados a cada clase activos para un Docente
+     *
+     * La consulta junta la tabla Clase (filtrando por dept_id), la tabla ClaseLibro y la tabla Libro.
+     * Se agrupan los resultados por clase para devolver un arreglo donde cada entrada representa una clase con sus libros.
+     *
+     * @param int $departamentoId ID del departamento.
+     * @return array Arreglo de clases con sus libros. Ejemplo:
+     *   [
+     *     {
+     *       "clase_id": 1,
+     *       "clase_nombre": "Matemáticas I",
+     *       "libros": [
+     *          { "libro_id": 3, "titulo": "Álgebra", "editorial": "Editorial X", "libro_url": "/uploads/libros/...", ... },
+     *          { "libro_id": 5, "titulo": "Cálculo", "editorial": "Editorial Y", "libro_url": "/uploads/libros/...", ... }
+     *       ]
+     *     },
+     *     ...
+     *   ]
+     * @throws Exception Si ocurre un error en la consulta.
+     */
+    public function obtenerLibrosPorDepartamentoDocente($departamentoId) {
+        $sql = "SELECT 
+                    c.clase_id,
+                    c.nombre AS clase_nombre,
+                    l.libro_id,
+                    l.titulo,
+                    l.editorial,
+                    l.isbn_libro,
+                    l.libro_url,
+                    l.fecha_publicacion,
+                    l.descripcion,
+                    estl.nombre AS estado
+                FROM Clase c
+                INNER JOIN ClaseLibro cl ON c.clase_id = cl.clase_id
+                INNER JOIN Libro l ON cl.libro_id = l.libro_id
+                INNER JOIN EstadoLibro estl ON estl.estado_libro_id = l.estado_libro_id
+                WHERE c.dept_id = ? AND estl.nombre = 'ACTIVO'
+                ORDER BY c.clase_id
+                LIMIT 100";
+        $stmt = $this->conn->prepare($sql);
+        if (!$stmt) {
+            throw new Exception("Error preparando la consulta: " . $this->conn->error);
+        }
+        $stmt->bind_param("i", $departamentoId);
+        if (!$stmt->execute()) {
+            throw new Exception("Error ejecutando la consulta: " . $stmt->error);
+        }
+        $result = $stmt->get_result();
+        $data = $result->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
+        
+        // Agrupar los resultados por clase
+        $clases = [];
+        foreach ($data as $row) {
+            $clase_id = $row['clase_id'];
+            if (!isset($clases[$clase_id])) {
+                $clases[$clase_id] = [
+                    'clase_id' => $clase_id,
+                    'clase_nombre' => $row['clase_nombre'],
+                    'libros' => []
+                ];
+            }
+            // Agregar libro a la clase, incluyendo el campo editorial
+            $clases[$clase_id]['libros'][] = [
+                'libro_id' => $row['libro_id'],
+                'titulo' => $row['titulo'],
+                'editorial' => $row['editorial'],
+                'isbn_libro' => $row['isbn_libro'],
+                'libro_url' => $row['libro_url'],
+                'fecha_publicacion' => $row['fecha_publicacion'],
+                'descripcion' => $row['descripcion'],
+                'estado' => $row['estado']
+            ];
+        }
+        return array_values($clases);
+    }
 }
 ?>

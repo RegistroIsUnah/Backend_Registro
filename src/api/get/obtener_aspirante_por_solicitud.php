@@ -5,7 +5,7 @@
  * Este endpoint recibe el parámetro numSolicitud y devuelve los detalles del aspirante en formato JSON.
  *
  * Ejemplo de URL:
- * servidor:puerto/api/get/obtener_aspirante_por_solicitud?numSolicitud=SOL-1631772378
+ * servidor:puerto/api/get/obtener_aspirante_por_solicitud.php?numSolicitud=SOL-1631772378
  *
  * Respuestas HTTP:
  * - 200 OK: Devuelve los detalles del aspirante.

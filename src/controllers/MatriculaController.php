@@ -261,5 +261,40 @@ class MatriculaController {
             echo json_encode(['error' => 'No se encontraron laboratorios matriculados para este estudiante']);
         }
     }
+
+    /**
+     * Obtiene la lista de espera por ID de sección.
+     *
+     * @return void
+     */
+    public function obtenerListaPorSeccion() {
+        if (!isset($_GET['seccionId']) || !is_numeric($_GET['seccionId'])) {
+            http_response_code(400);  // Parámetro inválido
+            echo json_encode(['error' => 'Parámetro seccionId inválido o faltante']);
+            exit;
+        }
+
+        try {
+            $seccionId = (int)$_GET['seccionId'];
+            $data = $this->model->obtenerListaEsperaPorSeccion($seccionId);
+
+            if (empty($data)) {
+                http_response_code(404);  // No encontrado
+                echo json_encode(['error' => 'No hay estudiantes en lista de espera para esta sección']);
+                exit;
+            }
+
+            http_response_code(200);  // OK
+            echo json_encode([
+                'seccion_id' => $seccionId,
+                'lista_espera' => $data
+            ]);
+            
+        } catch (Exception $e) {
+            error_log("Error: " . $e->getMessage());
+            http_response_code(500);  // Error interno del servidor
+            echo json_encode(['error' => 'Error interno del servidor']);
+        }
+    }
 }
 ?>

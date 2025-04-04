@@ -2,7 +2,7 @@
 /**
  * API para reenviar el correo de confirmación a un aspirante por email.
  * 
- * Ejemplo de URL: servidor:puerto/api/post/reenviar_correo
+ * Ejemplo de URL: servidor:puerto/api/post/reenviar_correo.php
  * 
  * Método: POST
  * 

@@ -12,7 +12,7 @@
  *  - laboratorio_id (int, opcional): ID del laboratorio seleccionado.
  * 
  * Ejemplo de URL 
- * servidor:puerto/api/post/matricular_estudiante
+ * servidor:puerto/api/post/matricular_estudiante.php
  * 
  * Metodos soportados:
  *  POST

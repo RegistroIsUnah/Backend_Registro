@@ -4,7 +4,7 @@
  *
  * Permite filtrar carreras por centro a través del parámetro GET 'centro_id'.
  * Ejemplo de URL:
- * servidor:puerto/api/get/carreras?centro_id=1
+ * servidor:puerto/api/get/carreras.php?centro_id=1
  * Si no se especifica, retorna todas las carreras.
  *
  * Respuestas HTTP:

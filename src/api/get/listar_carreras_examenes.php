@@ -5,7 +5,7 @@
  * Este endpoint devuelve la lista de todas las carreras con los exámenes asociados y sus puntajes correspondientes.
  *
  * Ejemplo de URL:
- * servidor:puerto/api/get/listar_carreras_examenes
+ * servidor:puerto/api/get/listar_carreras_examenes.php
  *
  * Respuestas HTTP:
  * - 200 OK: Devuelve la lista de carreras con exámenes y puntajes.
