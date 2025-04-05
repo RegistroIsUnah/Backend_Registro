@@ -208,12 +208,11 @@ class Seccion {
                             DATE_FORMAT(s.hora_inicio, '%H%i') AS seccion_codigo,
                             s.estado_seccion_id,
                             es.nombre AS estado_seccion,
-                            s.video_url,
-                            s.motivo_cancelacion,
                             s.cupos - IFNULL(
                                 (SELECT COUNT(*) 
                                 FROM Matricula m
-                                WHERE m.seccion_id = s.seccion_id), 0) AS cupos_disponibles,
+                                JOIN EstadoMatricula em ON m.estado_matricula_id = em.estado_matricula_id
+                                WHERE m.seccion_id = s.seccion_id AND em.nombre = 'Matriculado'), 0) AS cupos_disponibles,
                             d.nombre AS docente_nombre,
                             d.apellido AS docente_apellido,
                             a.nombre AS aula_nombre,
