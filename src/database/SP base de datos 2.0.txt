@@ -128,7 +128,7 @@ CREATE PROCEDURE SP_crearSeccion(
     IN p_hora_fin TIME,
     IN p_cupos INT,
     IN p_dias VARCHAR(255),  -- Cadena de días separados por comas (ej: "1,2,3")
-    IN p_video_url VARCHAR(255)
+    IN p_video_url VARCHAR(255) DEFAULT NULL  -- Parámetro ahora opcional
 )
 BEGIN
     DECLARE v_creditos INT;
@@ -138,7 +138,9 @@ BEGIN
     DECLARE v_counter INT DEFAULT 1;
     DECLARE v_day INT;
     DECLARE v_section_id INT;
-    DECLARE v_estado_proceso_id INT;
+    DECLARE v_estado_proceso VARCHAR(30);
+    DECLARE v_capacidad_aula INT;
+    DECLARE v_estado_seccion VARCHAR(20);
 
     -- Validar parámetros obligatorios
     IF p_clase_id IS NULL THEN
@@ -149,12 +151,13 @@ BEGIN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El ID del docente no puede estar vacío';
     END IF;
 
-    -- Verificar que el período académico esté activo
-    SELECT estado_proceso_id INTO v_estado_proceso_id
-    FROM PeriodoAcademico 
-    WHERE periodo_academico_id = p_periodo_academico_id;
+    -- Verificar que el período académico esté activo (usando nombre en lugar de ID)
+    SELECT ep.nombre INTO v_estado_proceso
+    FROM PeriodoAcademico pa
+    JOIN EstadoProceso ep ON pa.estado_proceso_id = ep.estado_proceso_id
+    WHERE pa.periodo_academico_id = p_periodo_academico_id;
 
-    IF v_estado_proceso_id <> 1 THEN -- Suponiendo que 1 es 'ACTIVO' en la tabla EstadoProceso
+    IF v_estado_proceso <> 'ACTIVO' THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El período académico no está activo';
     END IF;
 
@@ -167,6 +170,16 @@ BEGIN
     SELECT creditos INTO v_creditos FROM Clase WHERE clase_id = p_clase_id;
     IF v_creditos IS NULL THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Clase no encontrada';
+    END IF;
+
+    -- Verificar capacidad del aula
+    SELECT capacidad INTO v_capacidad_aula FROM Aula WHERE aula_id = p_aula_id;
+    IF v_capacidad_aula IS NULL THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Aula no encontrada';
+    END IF;
+    
+    IF p_cupos > v_capacidad_aula THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = CONCAT('Los cupos (', p_cupos, ') exceden la capacidad del aula (', v_capacidad_aula, ')');
     END IF;
 
     -- Calcular duración en horas
@@ -203,30 +216,32 @@ BEGIN
     WHILE v_counter <= v_totalDays DO
         SET v_day = CAST(TRIM(SUBSTRING_INDEX(SUBSTRING_INDEX(p_dias, ',', v_counter), ',', -1)) AS UNSIGNED);
 
-        -- Verificar traslape en el aula
+        -- Verificar traslape en el aula (usando nombre de estado en lugar de ID)
         IF EXISTS (
             SELECT 1
             FROM Seccion s
-            INNER JOIN SeccionDia sd ON s.seccion_id = sd.seccion_id
+            JOIN SeccionDia sd ON s.seccion_id = sd.seccion_id
+            JOIN EstadoSeccion es ON s.estado_seccion_id = es.estado_seccion_id
             WHERE s.aula_id = p_aula_id
               AND sd.dia_id = v_day
               AND s.periodo_academico_id = p_periodo_academico_id
-              AND s.estado_seccion_id = 1  -- Activo en la tabla EstadoSeccion
+              AND es.nombre = 'ACTIVA'
               AND (TIME_TO_SEC(p_hora_inicio) < TIME_TO_SEC(s.hora_fin)
                    AND TIME_TO_SEC(p_hora_fin) > TIME_TO_SEC(s.hora_inicio))
         ) THEN
             SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Conflicto de horario en el aula para el día especificado';
         END IF;
 
-        -- Verificar traslape en el docente
+        -- Verificar traslape en el docente (usando nombre de estado en lugar de ID)
         IF EXISTS (
             SELECT 1
             FROM Seccion s
-            INNER JOIN SeccionDia sd ON s.seccion_id = sd.seccion_id
+            JOIN SeccionDia sd ON s.seccion_id = sd.seccion_id
+            JOIN EstadoSeccion es ON s.estado_seccion_id = es.estado_seccion_id
             WHERE s.docente_id = p_docente_id
               AND sd.dia_id = v_day
               AND s.periodo_academico_id = p_periodo_academico_id
-              AND s.estado_seccion_id = 1  -- Activo en la tabla EstadoSeccion
+              AND es.nombre = 'ACTIVA'
               AND (TIME_TO_SEC(p_hora_inicio) < TIME_TO_SEC(s.hora_fin)
                    AND TIME_TO_SEC(p_hora_fin) > TIME_TO_SEC(s.hora_inicio))
         ) THEN
@@ -236,12 +251,23 @@ BEGIN
         SET v_counter = v_counter + 1;
     END WHILE;
 
+    -- Obtener ID del estado "ACTIVA" para la inserción
+    SELECT estado_seccion_id INTO v_estado_seccion
+    FROM EstadoSeccion
+    WHERE nombre = 'ACTIVA';
+    
+    IF v_estado_seccion IS NULL THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'No se encontró el estado ACTIVA en la tabla EstadoSeccion';
+    END IF;
+
     -- Insertar la sección (incluyendo cupos)
     INSERT INTO Seccion (
-        clase_id, docente_id, periodo_academico_id, hora_inicio, hora_fin, aula_id, estado_seccion_id, cupos, video_url
+        clase_id, docente_id, periodo_academico_id, hora_inicio, hora_fin, 
+        aula_id, estado_seccion_id, cupos, video_url
     )
     VALUES (
-        p_clase_id, p_docente_id, p_periodo_academico_id, p_hora_inicio, p_hora_fin, p_aula_id, 1, p_cupos, p_video_url
+        p_clase_id, p_docente_id, p_periodo_academico_id, p_hora_inicio, 
+        p_hora_fin, p_aula_id, v_estado_seccion, p_cupos, p_video_url
     );
     SET v_section_id = LAST_INSERT_ID();
 
@@ -264,19 +290,59 @@ DELIMITER //
 
 CREATE PROCEDURE SP_modificarSeccion(
     IN p_seccion_id INT,
-    IN p_docente_id INT,          -- Si se desea actualizar, se envía un valor; de lo contrario, NULL.
-    IN p_aula_id INT,             -- Igual que p_docente_id.
-    IN p_estado VARCHAR(20),      -- Se espera 'ACTIVA' o 'CANCELADA'. Si es NULL, no se modifica.
-    IN p_motivo_cancelacion TEXT, -- Se utiliza si p_estado es 'CANCELADA'.
-    IN p_cupos INT,               -- Para actualizar el número de cupos.
-    IN p_video_url VARCHAR(255)   -- Nuevo parámetro para actualizar o agregar la URL del video.
+    IN p_docente_id INT DEFAULT NULL,          -- Parámetro opcional
+    IN p_aula_id INT DEFAULT NULL,             -- Parámetro opcional
+    IN p_estado VARCHAR(20) DEFAULT NULL,      -- 'ACTIVA' o 'CANCELADA'
+    IN p_motivo_cancelacion TEXT DEFAULT NULL, -- Obligatorio si p_estado es 'CANCELADA'
+    IN p_cupos INT DEFAULT NULL,               -- Para actualizar cupos
+    IN p_video_url VARCHAR(255) DEFAULT NULL   -- Ahora es opcional
 )
 BEGIN
     DECLARE v_estado_seccion_id INT;
-
+    DECLARE v_capacidad_aula INT;
+    DECLARE v_hora_inicio TIME;
+    DECLARE v_hora_fin TIME;
+    DECLARE v_periodo_academico_id INT;
+    DECLARE v_dias_seccion VARCHAR(255);
+    DECLARE v_current_aula_id INT;
+    DECLARE v_current_docente_id INT;
+    
     -- Validar parámetros obligatorios
     IF p_seccion_id IS NULL THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El ID de la sección no puede estar vacío';
+    END IF;
+
+    -- Obtener información actual de la sección para validaciones
+    SELECT 
+        s.hora_inicio, s.hora_fin, s.periodo_academico_id, 
+        s.aula_id, s.docente_id,
+        GROUP_CONCAT(sd.dia_id ORDER BY sd.dia_id SEPARATOR ',')
+    INTO 
+        v_hora_inicio, v_hora_fin, v_periodo_academico_id,
+        v_current_aula_id, v_current_docente_id,
+        v_dias_seccion
+    FROM Seccion s
+    LEFT JOIN SeccionDia sd ON s.seccion_id = sd.seccion_id
+    WHERE s.seccion_id = p_seccion_id
+    GROUP BY s.seccion_id;
+    
+    IF v_hora_inicio IS NULL THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Sección no encontrada';
+    END IF;
+
+    -- Validar capacidad del aula si se cambian cupos o aula
+    IF p_cupos IS NOT NULL OR p_aula_id IS NOT NULL THEN
+        -- Determinar qué aula verificar (la nueva o la actual)
+        SET v_current_aula_id = COALESCE(p_aula_id, v_current_aula_id);
+        
+        SELECT capacidad INTO v_capacidad_aula 
+        FROM Aula 
+        WHERE aula_id = v_current_aula_id;
+        
+        IF p_cupos IS NOT NULL AND p_cupos > v_capacidad_aula THEN
+            SIGNAL SQLSTATE '45000' 
+            SET MESSAGE_TEXT = CONCAT('Los cupos (', p_cupos, ') exceden la capacidad del aula (', v_capacidad_aula, ')');
+        END IF;
     END IF;
 
     -- Si se intenta cancelar, se requiere un motivo de cancelación
@@ -284,15 +350,40 @@ BEGIN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Debe proporcionar motivo de cancelación';
     END IF;
 
-    -- Obtener el estado_seccion_id correspondiente a 'ACTIVA' o 'CANCELADA'
+    -- Obtener el estado_seccion_id correspondiente al nombre proporcionado
     IF p_estado IS NOT NULL THEN
         SELECT estado_seccion_id INTO v_estado_seccion_id
         FROM EstadoSeccion
         WHERE nombre = p_estado;
         
-        -- Si el estado no es válido
         IF v_estado_seccion_id IS NULL THEN
-            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Estado de sección inválido';
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Estado de sección inválido. Use ACTIVA o CANCELADA';
+        END IF;
+    END IF;
+
+    -- Validar conflictos de horario si se cambia aula o docente
+    IF p_aula_id IS NOT NULL OR p_docente_id IS NOT NULL THEN
+        -- Determinar qué aula y docente verificar (los nuevos o los actuales)
+        SET v_current_aula_id = COALESCE(p_aula_id, v_current_aula_id);
+        SET v_current_docente_id = COALESCE(p_docente_id, v_current_docente_id);
+        
+        -- Verificar conflictos para cada día de la sección
+        IF EXISTS (
+            SELECT 1
+            FROM Seccion s
+            JOIN SeccionDia sd ON s.seccion_id = sd.seccion_id
+            JOIN EstadoSeccion es ON s.estado_seccion_id = es.estado_seccion_id
+            WHERE ((p_aula_id IS NOT NULL AND s.aula_id = v_current_aula_id) OR 
+                   (p_docente_id IS NOT NULL AND s.docente_id = v_current_docente_id))
+              AND s.seccion_id != p_seccion_id
+              AND s.periodo_academico_id = v_periodo_academico_id
+              AND es.nombre = 'ACTIVA'
+              AND FIND_IN_SET(sd.dia_id, v_dias_seccion) > 0
+              AND (TIME_TO_SEC(v_hora_inicio) < TIME_TO_SEC(s.hora_fin) AND 
+                   TIME_TO_SEC(v_hora_fin) > TIME_TO_SEC(s.hora_inicio))
+        ) THEN
+            SIGNAL SQLSTATE '45000' 
+            SET MESSAGE_TEXT = 'Conflicto de horario con otra sección activa';
         END IF;
     END IF;
 
@@ -304,6 +395,7 @@ BEGIN
         estado_seccion_id = COALESCE(v_estado_seccion_id, estado_seccion_id),
         motivo_cancelacion = CASE 
             WHEN p_estado = 'CANCELADA' THEN p_motivo_cancelacion
+            WHEN p_estado = 'ACTIVA' THEN NULL -- Limpiar motivo si se reactiva
             ELSE motivo_cancelacion
         END,
         cupos = COALESCE(p_cupos, cupos),
@@ -312,7 +404,7 @@ BEGIN
 
     -- Si no se actualizó ninguna fila, se lanza un error
     IF ROW_COUNT() = 0 THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Sección no encontrada o no se realizaron cambios';
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'No se realizaron cambios en la sección';
     END IF;
 END //
 

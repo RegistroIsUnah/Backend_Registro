@@ -326,5 +326,66 @@ class Matricula {
 
         return $laboratorios;
     }
+
+    /**
+     * Cancela la matrícula de un estudiante en una sección.
+     * 
+     * Si el estudiante tiene un laboratorio matriculado, también se cancela su matrícula en el laboratorio.
+     *
+     * @param int $estudiante_id ID del estudiante.
+     * @param int $seccion_id ID de la sección.
+     * @return void
+     * @throws Exception Si ocurre un error al cancelar la matrícula.
+     */
+    public function cancelarMatrícula($data) {
+        if (!isset($data['estudiante_id']) || !isset($data['seccion_id'])) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Faltan datos: estudiante_id y seccion_id son requeridos']);
+            exit;
+        }
+    
+        $estudiante_id = intval($data['estudiante_id']);
+        $seccion_id = intval($data['seccion_id']);
+        
+        try {
+            // Paso 1: Verificar si el estudiante está matriculado en la sección
+            $sqlVerificarMatricula = "SELECT 1 FROM Matricula WHERE estudiante_id = ? AND seccion_id = ?";
+            $stmt = $this->conn->prepare($sqlVerificarMatricula);
+            $stmt->bind_param("ii", $estudiante_id, $seccion_id);
+            $stmt->execute();
+            $result = $stmt->get_result();
+    
+            // Si no se encuentra la matrícula, retornar error
+            if ($result->num_rows == 0) {
+                http_response_code(404);
+                echo json_encode(['error' => 'El estudiante no está matriculado en esta sección']);
+                exit;
+            }
+    
+            // Paso 2: Obtener el estado de matrícula "CANCELADA"
+            $sqlEstadoCancelada = "SELECT estado_matricula_id FROM EstadoMatricula WHERE nombre = 'CANCELADA'";
+            $stmt = $this->conn->prepare($sqlEstadoCancelada);
+            $stmt->execute();
+            $estadoCancelada = $stmt->get_result()->fetch_assoc()['estado_matricula_id'];
+    
+            if (!$estadoCancelada) {
+                throw new Exception("Estado 'CANCELADA' no encontrado en la tabla EstadoMatricula");
+            }
+    
+            // Paso 3: Cancelar la matrícula en la sección
+            $sqlCancelarSeccion = "UPDATE Matricula SET estado_matricula_id = ? WHERE estudiante_id = ? AND seccion_id = ?";
+            $stmt = $this->conn->prepare($sqlCancelarSeccion);
+            $stmt->bind_param("iii", $estadoCancelada, $estudiante_id, $seccion_id);
+            if (!$stmt->execute()) {
+                throw new Exception("Error al cancelar la matrícula en la sección");
+            }
+    
+            http_response_code(200);
+            echo json_encode(['message' => 'Matrícula en la sección cancelada correctamente.']);
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => $e->getMessage()]);
+        }
+    }    
 }
 ?>

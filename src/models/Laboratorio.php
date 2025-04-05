@@ -38,15 +38,15 @@ class Laboratorio {
     public function obtenerLaboratorios($clase_id) {
         $sql = "SELECT
                     l.laboratorio_id,
-                    l.codigo_laboratorio,
                     DATE_FORMAT(l.hora_inicio, '%H%i') AS laboratorio_codigo,
                     l.hora_inicio,
                     l.hora_fin,
-                    l.motivo_cancelacion,
                     l.cupos - IFNULL(
                         (SELECT COUNT(*) 
-                         FROM Matricula m
-                         WHERE m.laboratorio_id = l.laboratorio_id), 0) AS cupos_disponibles,
+                        FROM Matricula m
+                        JOIN EstadoMatricula em ON m.estado_matricula_id = em.estado_matricula_id
+                        WHERE m.laboratorio_id = l.laboratorio_id
+                        AND em.nombre = 'Matriculado'), 0) AS cupos_disponibles,
                     a.nombre AS aula_nombre,
                     e.nombre AS edificio_nombre,
                     GROUP_CONCAT(ds.nombre ORDER BY ds.dia_id ASC) AS dias_laboratorio
@@ -59,7 +59,8 @@ class Laboratorio {
                 WHERE es.nombre = 'ACTIVA' 
                 AND l.clase_id = ?
                 GROUP BY l.laboratorio_id, l.hora_inicio, l.hora_fin, es.nombre, l.motivo_cancelacion, 
-                         a.nombre, e.nombre";
+                        a.nombre, e.nombre
+                                          ";
 
         $stmt = $this->conn->prepare($sql);
         $stmt->bind_param("i", $clase_id);
