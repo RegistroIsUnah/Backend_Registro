@@ -392,5 +392,71 @@ class EstudianteController {
             echo json_encode(['error' => 'Error al obtener el historial: ' . $e->getMessage()]);
         }
     }
+
+    /**
+     * Obtiene los estudiantes matriculados en una sección.
+     *
+     * Se espera recibir en $data:
+     * - seccion_id: ID de la sección.
+     *
+     * @param array $data Datos recibidos del endpoint.
+     * @return void
+     */
+    public function obtenerEstudiantesMatriculadosEnSeccion($data) {
+        if (!isset($data['seccion_id'])) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Falta el parámetro: seccion_id']);
+            exit;
+        }
+
+        $seccion_id = intval($data['seccion_id']);
+
+        try {
+            $modelo = new Estudiante(); // Cambia esto a tu clase de modelo correcta
+            $estudiantes = $modelo->obtenerEstudiantesPorSeccion($seccion_id);
+
+            // Si se encuentran estudiantes, devolverlos como respuesta
+            if (!empty($estudiantes)) {
+                http_response_code(200);
+                echo json_encode(['estudiantes' => $estudiantes]);
+            } else {
+                http_response_code(404);
+                echo json_encode(['error' => 'No se encontraron estudiantes matriculados en esta sección']);
+            }
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => $e->getMessage()]);
+        }
+    }
+
+     /**
+     * Genera un archivo CSV con los estudiantes matriculados en una sección.
+     *
+     * @param array $data Datos recibidos del endpoint (sección ID).
+     * @return void
+     */
+    public function generarCSVEstudiantesPorSeccion($data) {
+        if (!isset($data['seccion_id'])) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Falta el parámetro: seccion_id']);
+            exit;
+        }
+
+        $seccion_id = intval($data['seccion_id']);
+
+        try {
+            // Generar el archivo CSV y obtener la ruta
+            $fileName = $this->modelo->generarCSVEstudiantesPorSeccion($seccion_id);
+
+            // Devolver la respuesta con la ubicación del archivo
+            http_response_code(200);
+            echo json_encode(['message' => 'Archivo CSV generado correctamente', 'file' => $fileName]);
+
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => $e->getMessage()]);
+        }
+    }
+
 }
 ?>

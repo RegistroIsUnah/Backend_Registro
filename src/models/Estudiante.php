@@ -124,9 +124,6 @@ class Estudiante {
         WHERE e.estudiante_id = ?
         GROUP BY e.estudiante_id
 
-
-
-
      */
     public function obtenerPerfilEstudiante($estudianteId) {
 
@@ -174,55 +171,53 @@ class Estudiante {
     }
 
     /**
- * Actualiza los datos del perfil del estudiante
- * 
- * @param int $estudianteId
- * @param array $datosActualizados
- * @return bool
- * @throws Exception
- * @author Jose Vargas
- * @version 1.0
- */
-public function actualizarPerfil($estudianteId, $datosActualizados) {
-    // Validar campos permitidos para actualización
-    $camposPermitidos = [
-        'telefono', 
-        'direccion', 
-        'correo_personal'
-    ];
-    
-    $camposActualizar = [];
-    $valores = [];
-    $tipos = '';
-    
-    foreach ($datosActualizados as $campo => $valor) {
-        if (in_array($campo, $camposPermitidos)) {
-            $camposActualizar[] = "$campo = ?";
-            $valores[] = $valor;
-            $tipos .= 's'; // Todos los campos permitidos son strings
+     * Actualiza los datos del perfil del estudiante
+     * 
+     * @param int $estudianteId
+     * @param array $datosActualizados
+     * @return bool
+     * @throws Exception
+     * @author Jose Vargas
+     * @version 1.0
+     */
+    public function actualizarPerfil($estudianteId, $datosActualizados) {
+        // Validar campos permitidos para actualización
+        $camposPermitidos = [
+            'telefono', 
+            'direccion', 
+            'correo_personal'
+        ];
+        
+        $camposActualizar = [];
+        $valores = [];
+        $tipos = '';
+        
+        foreach ($datosActualizados as $campo => $valor) {
+            if (in_array($campo, $camposPermitidos)) {
+                $camposActualizar[] = "$campo = ?";
+                $valores[] = $valor;
+                $tipos .= 's'; // Todos los campos permitidos son strings
+            }
         }
+        
+        if (empty($camposActualizar)) {
+            throw new Exception("No hay campos válidos para actualizar");
+        }
+        
+        // Construir la consulta SQL
+        $sql = "UPDATE Estudiante SET " . implode(', ', $camposActualizar) . " WHERE estudiante_id = ?";
+        $valores[] = $estudianteId;
+        $tipos .= 'i';
+        
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param($tipos, ...$valores);
+        
+        if (!$stmt->execute()) {
+            throw new Exception("Error al actualizar perfil: " . $stmt->error);
+        }
+        
+        return true;
     }
-    
-    if (empty($camposActualizar)) {
-        throw new Exception("No hay campos válidos para actualizar");
-    }
-    
-    // Construir la consulta SQL
-    $sql = "UPDATE Estudiante SET " . implode(', ', $camposActualizar) . " WHERE estudiante_id = ?";
-    $valores[] = $estudianteId;
-    $tipos .= 'i';
-    
-    $stmt = $this->conn->prepare($sql);
-    $stmt->bind_param($tipos, ...$valores);
-    
-    if (!$stmt->execute()) {
-        throw new Exception("Error al actualizar perfil: " . $stmt->error);
-    }
-    
-    return true;
-}
-
-
 
 
     /**
@@ -759,6 +754,174 @@ public function actualizarPerfil($estudianteId, $datosActualizados) {
         } catch (Exception $e) {
             throw new Exception("Error al obtener el historial del estudiante: " . $e->getMessage());
         }
+    }
+
+    /**
+     * Obtiene los estudiantes matriculados en una sección específica.
+     *
+     * @param int $seccion_id ID de la sección.
+     * @return array Lista de estudiantes matriculados en la sección.
+     * @throws Exception Si ocurre un error en la consulta.
+     */
+    public function obtenerEstudiantesPorSeccion($seccion_id) {
+        $sql = "
+            SELECT
+                e.estudiante_id,
+                e.nombre,
+                e.apellido,
+                e.numero_cuenta,
+                e.correo_personal,
+                GROUP_CONCAT(c.nombre ORDER BY c.nombre ASC) AS carreras,  -- Obtener las carreras asociadas
+                GROUP_CONCAT(c.carrera_id ORDER BY c.carrera_id ASC) AS carrera_ids  -- Obtener los IDs de las carreras
+            FROM Estudiante e
+            INNER JOIN Matricula m ON e.estudiante_id = m.estudiante_id
+            LEFT JOIN EstudianteCarrera ec ON e.estudiante_id = ec.estudiante_id
+            LEFT JOIN Carrera c ON ec.carrera_id = c.carrera_id
+            WHERE m.seccion_id = ?
+            GROUP BY e.estudiante_id, e.nombre, e.apellido, e.numero_cuenta, e.correo_personal
+        ";
+
+        $stmt = $this->conn->prepare($sql);
+        if (!$stmt) {
+            throw new Exception("Error preparando la consulta: " . $this->conn->error);
+        }
+
+        $stmt->bind_param("i", $seccion_id);
+        if (!$stmt->execute()) {
+            throw new Exception("Error ejecutando la consulta: " . $stmt->error);
+        }
+        $result = $stmt->get_result();
+        $estudiantes = [];
+        while ($row = $result->fetch_assoc()) {
+            $estudiantes[] = $row;
+        }
+        $stmt->close();
+        return $estudiantes;
+    }
+
+   /**
+     * Obtiene los estudiantes matriculados en una sección para generar un CSV.
+     *
+     * @param int $seccion_id ID de la sección
+     * @return array Lista de estudiantes matriculados
+     */
+    public function obtenerEstudiantesPorSeccionCSV($seccion_id) {
+        $sql = "
+            SELECT
+                e.nombre,
+                e.apellido,
+                e.numero_cuenta,
+                e.correo_personal,
+                GROUP_CONCAT(c.nombre ORDER BY c.nombre ASC) AS carreras
+            FROM
+                Matricula m
+            JOIN
+                Estudiante e ON m.estudiante_id = e.estudiante_id
+            JOIN
+                EstudianteCarrera ec ON e.estudiante_id = ec.estudiante_id
+            JOIN
+                Carrera c ON ec.carrera_id = c.carrera_id
+            WHERE
+                m.seccion_id = ?
+            GROUP BY
+                e.estudiante_id
+        ";
+
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param("i", $seccion_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        $estudiantes = [];
+        while ($row = $result->fetch_assoc()) {
+            // No es necesario usar implode() porque GROUP_CONCAT ya devuelve una cadena separada por comas
+            $row['carreras'] = $row['carreras']; // Simplemente deja el valor tal como está
+            $estudiantes[] = $row;
+        }
+        
+        $stmt->close();
+        
+        return $estudiantes;
+    }
+
+    /**
+     * Genera un archivo CSV con los estudiantes matriculados en una sección.
+     *
+     * @param int $seccion_id ID de la sección
+     * @return string Ruta del archivo generado
+     */
+    public function generarCSVEstudiantesPorSeccion($seccion_id) {
+        // Obtener los estudiantes
+        $estudiantes = $this->obtenerEstudiantesPorSeccionCSV($seccion_id);
+
+        if (empty($estudiantes)) {
+            throw new Exception('No hay estudiantes matriculados en esta sección');
+        }
+
+        // Obtener los detalles de la sección
+        $seccion = $this->obtenerDetallesSeccion($seccion_id);
+        $clase_nombre = $seccion['nombre_clase']; // Nombre de la clase
+        $hora_inicio = $seccion['hora_inicio'];
+        $codigo_seccion = date('Hi', strtotime($hora_inicio)); // Convertir hora a formato 0800
+
+        // Crear el nombre del archivo CSV
+        $fileName = __DIR__ . "/../../uploads/listado_estudiantes/{$clase_nombre}_{$codigo_seccion}.csv";
+
+        // Verificar si la carpeta existe, si no, crearla con permisos adecuados
+        $uploadsDir = __DIR__ . '/../../uploads/listado_estudiantes/';
+        if (!is_dir($uploadsDir)) {
+            mkdir($uploadsDir, 0755, true);  // Crear directorio con permisos 0755
+        }
+
+        // Abrir el archivo CSV para escritura
+        $file = fopen($fileName, 'w');
+
+        // Verificar si el archivo se ha abierto correctamente
+        if ($file === false) {
+            throw new Exception('No se pudo crear el archivo CSV');
+        }
+
+        // Escribir los encabezados en el archivo CSV
+        fputcsv($file, ['Nombre', 'Apellido', 'Número de Cuenta', 'Correo', 'Carreras']); 
+
+        // Escribir los datos de los estudiantes
+        foreach ($estudiantes as $estudiante) {
+            // Las carreras ya están separadas por comas, así que no necesitamos usar implode
+            fputcsv($file, [
+                $estudiante['nombre'],
+                $estudiante['apellido'],
+                $estudiante['numero_cuenta'],
+                $estudiante['correo_personal'],
+                $estudiante['carreras'] // Ya es una cadena separada por comas
+            ]);
+        }
+
+        fclose($file);
+
+        return $fileName;
+    }
+
+
+    /**
+     * Obtiene los detalles de la sección, incluyendo nombre de clase y hora de inicio.
+     *
+     * @param int $seccion_id ID de la sección.
+     * @return array Detalles de la sección.
+     */
+    private function obtenerDetallesSeccion($seccion_id) {
+        $sql = "SELECT c.nombre AS nombre_clase, s.hora_inicio
+                FROM Seccion s
+                INNER JOIN Clase c ON s.clase_id = c.clase_id
+                WHERE s.seccion_id = ?";
+
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param("i", $seccion_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $seccion = $result->fetch_assoc();
+        $stmt->close();
+
+        return $seccion;
     }
 }
 ?>
