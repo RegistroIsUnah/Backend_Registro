@@ -5,7 +5,7 @@
  * Este endpoint devuelve la lista de tags con su información en formato JSON.
  *
  * Ejemplo de URL:
- * servidor:puerto/api/get/listar_tags
+ * servidor:puerto/api/get/listar_tags.php
  *
  * Respuestas HTTP:
  * - 200 OK: Devuelve la lista de tags.

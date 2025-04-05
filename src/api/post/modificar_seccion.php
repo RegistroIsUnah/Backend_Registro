@@ -5,7 +5,7 @@
  * Este endpoint recibe datos en formato JSON, valida la información y llama al controlador para modificar la sección.
  *
  * Ejemplo de URL 
- * servidor:puerto/api/post/modificar_seccion
+ * servidor:puerto/api/post/modificar_seccion.php
  * 
  * Metodos soportados:
  *  POST

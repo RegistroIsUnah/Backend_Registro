@@ -2,6 +2,7 @@
 require_once __DIR__ . '/../modules/config/DataBase.php';
 require_once __DIR__ . '/../mail/mail_sender.php';
 
+
 /**
  * Clase Aspirante
  *
@@ -205,7 +206,15 @@ class Aspirante {
     
         // Usar register_shutdown_function para ejecutar después de la respuesta
         register_shutdown_function(function() use ($correo, $nombre, $apellido, $subject, $message, $altmess) {
-            sendmail($correo, "{$nombre} {$apellido}", $subject, $message, $altmess);
+            // Crear una instancia de MailSender
+            $emailService = new \Mail\MailSender();
+            
+            // Enviar el correo utilizando el método sendMail
+            $result = $emailService->sendMail($correo, "{$nombre} {$apellido}", $subject, $message, $altmess);
+            
+            if (!$result) {
+                error_log("Error al enviar el correo a {$correo}");
+            }
         });
     }
 
@@ -1345,11 +1354,18 @@ class Aspirante {
         }
     
         // Enviar el correo
-        $enviado = sendmail($aspirante['correo'], "{$aspirante['nombre']} {$aspirante['apellido']}", $subject, $message, $altmess);
-        
-        if (!$enviado) {
-            throw new Exception("Error al enviar el correo a {$aspirante['correo']}");
-        }
+        // Usar register_shutdown_function para ejecutar después de la respuesta
+        register_shutdown_function(function() use ($aspirante, $subject, $message, $altmess) {
+            // Crear una instancia de MailSender
+            $emailService = new \Mail\MailSender();
+            
+            // Enviar el correo utilizando el método sendMail
+            $result = $emailService->sendMail($aspirante['correo'], "{$aspirante['nombre']} {$aspirante['apellido']}", $subject, $message, $altmess);
+            
+            if (!$result) {
+                error_log("Error al enviar el correo a {$aspirante['correo']}");
+            }
+        });
     }
 }
 ?>

@@ -42,82 +42,86 @@ class MatriculaController {
      * @return void Envía la respuesta en formato JSON.
      */
     public function matricularEstudiante() {
-        // Validación de los parámetros recibidos
-        if (!isset($_POST['estudiante_id']) || !is_numeric($_POST['estudiante_id'])) {
-            http_response_code(400);
-            echo json_encode(['error' => 'Parámetro estudiante_id inválido o faltante']);
-            exit;
-        }
-
-        if (!isset($_POST['seccion_id']) || !is_numeric($_POST['seccion_id'])) {
-            http_response_code(400);
-            echo json_encode(['error' => 'Parámetro seccion_id inválido o faltante']);
-            exit;
-        }
-
-        if (!isset($_POST['tipo_proceso']) || empty($_POST['tipo_proceso'])) {
-            http_response_code(400);
-            echo json_encode(['error' => 'Falta el parámetro tipo_proceso']);
-            exit;
-        }
-
-        // Recoger datos de la solicitud
-        $estudiante_id = intval($_POST['estudiante_id']);
-        $seccion_id = intval($_POST['seccion_id']);
-        $tipo_proceso = $_POST['tipo_proceso'];  // Debería ser 'MATRICULA'
-        $laboratorio_id = isset($_POST['lab_seccion_id']) ? intval($_POST['lab_seccion_id']) : 0;
-
+        header('Content-Type: application/json');
+        
         try {
-            // Llamar al modelo para realizar la matrícula
-            $resultado = $this->model->matricularEstudiante($estudiante_id, $seccion_id, $tipo_proceso, $laboratorio_id);
-
-            // Responder con éxito
+            // Obtener y validar datos de entrada
+            $input = json_decode(file_get_contents('php://input'), true) ?: $_POST;
+            
+            // Validación básica
+            $errors = [];
+            
+            if (empty($input['estudiante_id'])) {
+                $errors[] = 'El ID del estudiante es requerido';
+            } elseif (!is_numeric($input['estudiante_id'])) {
+                $errors[] = 'El ID del estudiante debe ser numérico';
+            }
+            
+            if (empty($input['seccion_id'])) {
+                $errors[] = 'El ID de la sección es requerido';
+            } elseif (!is_numeric($input['seccion_id'])) {
+                $errors[] = 'El ID de la sección debe ser numérico';
+            }
+            
+            if (empty($input['tipo_proceso'])) {
+                $errors[] = 'El tipo de proceso es requerido';
+            } elseif (!in_array(strtoupper($input['tipo_proceso']), ['MATRICULA', 'ADICIONES_CANCELACIONES'])) {
+                $errors[] = 'Tipo de proceso no válido. Debe ser MATRICULA o ADICIONES_CANCELACIONES';
+            }
+            
+            // Validar laboratorio_id si está presente
+            $laboratorio_id = null;
+            if (isset($input['laboratorio_id']) && $input['laboratorio_id'] !== '') {
+                if (!is_numeric($input['laboratorio_id'])) {
+                    $errors[] = 'El ID del laboratorio debe ser numérico';
+                } else {
+                    $laboratorio_id = (int)$input['laboratorio_id'];
+                }
+            }
+            
+            // Si hay errores, retornarlos
+            if (!empty($errors)) {
+                http_response_code(400);
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Errores de validación',
+                    'errors' => $errors
+                ]);
+                return;
+            }
+            
+            // Preparar datos para el modelo
+            $data = [
+                'estudiante_id' => (int)$input['estudiante_id'],
+                'seccion_id' => (int)$input['seccion_id'],
+                'tipo_proceso' => strtoupper(trim($input['tipo_proceso'])),
+                'laboratorio_id' => $laboratorio_id
+            ];
+            
+            // Llamar al modelo
+            $resultado = $this->model->matricularEstudiante(
+                $data['estudiante_id'],
+                $data['seccion_id'],
+                $data['tipo_proceso'],
+                $data['laboratorio_id']
+            );
+            
+            // Respuesta exitosa
             http_response_code(200);
             echo json_encode([
-                'matricula_id' => $resultado['matricula_id'],
-                'estado' => $resultado['estado'],
-                'orden_inscripcion' => $resultado['orden_inscripcion'],
+                'success' => true,
+                'data' => $resultado,
                 'message' => 'Matrícula realizada exitosamente'
-            ]);
-        } catch (Exception $e) {
-            // Capturar y manejar errores
-            http_response_code(500);
-            echo json_encode(['error' => $e->getMessage()]);
-        }
-    }
-
-   /**
-     * Obtiene la lista de espera por ID de sección.
-     *
-     * @return void
-     */
-    public function obtenerListaPorSeccion() {
-        if (!isset($_GET['seccionId']) || !is_numeric($_GET['seccionId'])) {
-            http_response_code(400);  // Parámetro inválido
-            echo json_encode(['error' => 'Parámetro seccionId inválido o faltante']);
-            exit;
-        }
-
-        try {
-            $seccionId = (int)$_GET['seccionId'];
-            $data = $this->model->obtenerListaEsperaPorSeccion($seccionId);
-
-            if (empty($data)) {
-                http_response_code(404);  // No encontrado
-                echo json_encode(['error' => 'No hay estudiantes en lista de espera para esta sección']);
-                exit;
-            }
-
-            http_response_code(200);  // OK
-            echo json_encode([
-                'seccion_id' => $seccionId,
-                'lista_espera' => $data
             ]);
             
         } catch (Exception $e) {
-            error_log("Error: " . $e->getMessage());
-            http_response_code(500);  // Error interno del servidor
-            echo json_encode(['error' => 'Error interno del servidor']);
+            // Manejo de errores del modelo o del sistema
+            http_response_code(500);
+            echo json_encode([
+                'success' => false,
+                'message' => 'Error al procesar la matrícula',
+                'error' => $e->getMessage()
+            ]);
         }
     }
 
@@ -159,6 +163,137 @@ class MatriculaController {
             // Capturar y manejar excepciones
             http_response_code(500);
             echo json_encode(['error' => $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Endpoint que obtiene las clases matriculadas de un estudiante
+     * Recibe el ID del estudiante y devuelve las clases matriculadas.
+     * 
+     * @param int $estudiante_id El ID del estudiante
+     * @return void Responde con un JSON con las clases matriculadas
+     */
+    public function obtenerClasesMatriculadas($estudiante_id) {
+        // Verificar que el estudiante ID es válido
+        if (empty($estudiante_id) || !is_numeric($estudiante_id)) {
+            http_response_code(400);
+            echo json_encode(['error' => 'El parámetro estudiante_id es inválido']);
+            return;
+        }
+
+        // Instanciar el modelo de matrícula
+        $matriculaModel = new Matricula();
+
+        try {
+            // Obtener las clases matriculadas
+            $clasesMatriculadas = $matriculaModel->obtenerClasesMatriculadas($estudiante_id);
+
+            // Si no hay clases matriculadas, responder con mensaje
+            if (empty($clasesMatriculadas)) {
+                http_response_code(404);
+                echo json_encode(['message' => 'No se encontraron clases matriculadas']);
+                return;
+            }
+
+            // Si se encontraron clases, devolver la respuesta en formato JSON
+            echo json_encode($clasesMatriculadas);
+
+        } catch (Exception $e) {
+            // Si ocurre algún error, responder con un error
+            http_response_code(500);
+            echo json_encode(['error' => $e->getMessage()]);
+        }
+    }
+
+     /**
+     * Endpoint que obtiene las clases matriculadas en estado 'EN_ESPERA' de un estudiante
+     * Recibe el ID del estudiante y devuelve las clases en estado 'EN_ESPERA'.
+     * 
+     * @param int $estudiante_id El ID del estudiante
+     * @return void Responde con un JSON con las clases matriculadas en estado 'EN_ESPERA'
+     */
+    public function obtenerClasesEnEspera($estudiante_id) {
+        // Verificar que el estudiante ID es válido
+        if (empty($estudiante_id) || !is_numeric($estudiante_id)) {
+            http_response_code(400);
+            echo json_encode(['error' => 'El parámetro estudiante_id es inválido']);
+            return;
+        }
+
+        // Instanciar el modelo de matrícula
+        $matriculaModel = new Matricula();
+
+        try {
+            // Obtener las clases en espera
+            $clasesEnEspera = $matriculaModel->obtenerClasesEnEspera($estudiante_id);
+
+            // Si no hay clases en espera, responder con mensaje
+            if (empty($clasesEnEspera)) {
+                http_response_code(404);
+                echo json_encode(['message' => 'No se encontraron clases en espera']);
+                return;
+            }
+
+            // Si se encontraron clases en espera, devolver la respuesta en formato JSON
+            echo json_encode($clasesEnEspera);
+
+        } catch (Exception $e) {
+            // Si ocurre algún error, responder con un error
+            http_response_code(500);
+            echo json_encode(['error' => $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Obtener los laboratorios matriculados de un estudiante.
+     *
+     * @param int $estudiante_id ID del estudiante
+     * @return void Responde con los detalles de los laboratorios matriculados
+     */
+    public function obtenerLaboratoriosMatriculados($estudiante_id) {
+        $laboratorios = $this->model->obtenerLaboratoriosMatriculados($estudiante_id);
+
+        if (!empty($laboratorios)) {
+            http_response_code(200);
+            echo json_encode(['laboratorios' => $laboratorios]);
+        } else {
+            http_response_code(404);
+            echo json_encode(['error' => 'No se encontraron laboratorios matriculados para este estudiante']);
+        }
+    }
+
+    /**
+     * Obtiene la lista de espera por ID de sección.
+     *
+     * @return void
+     */
+    public function obtenerListaPorSeccion() {
+        if (!isset($_GET['seccionId']) || !is_numeric($_GET['seccionId'])) {
+            http_response_code(400);  // Parámetro inválido
+            echo json_encode(['error' => 'Parámetro seccionId inválido o faltante']);
+            exit;
+        }
+
+        try {
+            $seccionId = (int)$_GET['seccionId'];
+            $data = $this->model->obtenerListaEsperaPorSeccion($seccionId);
+
+            if (empty($data)) {
+                http_response_code(404);  // No encontrado
+                echo json_encode(['error' => 'No hay estudiantes en lista de espera para esta sección']);
+                exit;
+            }
+
+            http_response_code(200);  // OK
+            echo json_encode([
+                'seccion_id' => $seccionId,
+                'lista_espera' => $data
+            ]);
+            
+        } catch (Exception $e) {
+            error_log("Error: " . $e->getMessage());
+            http_response_code(500);  // Error interno del servidor
+            echo json_encode(['error' => 'Error interno del servidor']);
         }
     }
 }

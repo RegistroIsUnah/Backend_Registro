@@ -3,7 +3,7 @@
  * API para crear un período académico.
  * 
  * Ejemplo de URL:
- * servidor:puerto/api/post/crear_periodo
+ * servidor:puerto/api/post/crear_periodo.php
  *
  * Este endpoint recibe datos en formato JSON:
  * {

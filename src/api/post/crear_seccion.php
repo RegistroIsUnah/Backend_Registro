@@ -5,7 +5,7 @@
  * Este endpoint recibe datos en formato JSON, valida la información y llama al controlador para crear la sección.
  * 
  * Ejemplo de URL:
- * servidor:puerto/api/post/crear_seccion
+ * servidor:puerto/api/post/crear_seccion.php
  *
  * Ejemplo de JSON de entrada:
  * {

@@ -119,12 +119,12 @@ INSERT INTO ResetPasswordRequest (usuario_id, token, fecha_solicitud, fecha_expi
 (4, 'token012', '2023-10-04 12:00:00', '2023-10-05 12:00:00', 4),
 (5, 'token345', '2023-10-05 12:00:00', '2023-10-06 12:00:00', 5);
 
-INSERT INTO Estudiante (usuario_id, identidad, nombre, apellido, correo_personal, telefono, direccion, centro_id, indice_global, indice_periodo) VALUES 
-(1, '123456789', 'Juan', 'Pérez', 'juan.perez@example.com', '555-1234', 'Calle 123, Ciudad', 1, 8.5, 8.7),
-(2, '987654321', 'María', 'Gómez', 'maria.gomez@example.com', '555-5678', 'Avenida 456, Ciudad', 2, 9.0, 9.2),
-(3, '456789123', 'Carlos', 'López', 'carlos.lopez@example.com', '555-9101', 'Calle 789, Ciudad', 3, 7.8, 8.0),
-(4, '321654987', 'Ana', 'Martínez', 'ana.martinez@example.com', '555-1122', 'Avenida 101, Ciudad', 4, 8.9, 9.1),
-(5, '654321987', 'Luis', 'Rodríguez', 'luis.rodriguez@example.com', '555-3344', 'Calle 202, Ciudad', 5, 8.2, 8.4);
+INSERT INTO Estudiante (usuario_id, numero_cuenta, identidad, nombre, apellido, correo_personal, telefono, direccion, centro_id, indice_global, indice_periodo) VALUES 
+(1, 201256878433, '123456789', 'Juan', 'Pérez', 'juan.perez@example.com', '555-1234', 'Calle 123, Ciudad', 1, 8.5, 8.7),
+(2, 206728450183, '987654321', 'María', 'Gómez', 'maria.gomez@example.com', '555-5678', 'Avenida 456, Ciudad', 2, 9.0, 9.2),
+(3, 202387443658, '456789123', 'Carlos', 'López', 'carlos.lopez@example.com', '555-9101', 'Calle 789, Ciudad', 3, 7.8, 8.0),
+(4, 201587444598, '321654987', 'Ana', 'Martínez', 'ana.martinez@example.com', '555-1122', 'Avenida 101, Ciudad', 4, 8.9, 9.1),
+(5, 201587453658, '654321987', 'Luis', 'Rodríguez', 'luis.rodriguez@example.com', '555-3344', 'Calle 202, Ciudad', 5, 8.2, 8.4);
 
 INSERT INTO FotosEstudiante (ruta_foto, estudiante_id) VALUES 
 ('fotos/juan_perez.jpg', 1),
@@ -294,12 +294,12 @@ INSERT INTO SeccionDia (seccion_id, dia_id) VALUES
 (4, 4),
 (5, 5);
 
-INSERT INTO Laboratorio (clase_id, codigo_laboratorio, periodo_academico_id, hora_inicio, hora_fin, aula_id, estado_seccion_id, motivo_cancelacion) VALUES 
-(1, 'LAB101', 1, '08:00:00', '10:00:00', 1, 1, NULL),
-(2, 'LAB201', 2, '10:00:00', '12:00:00', 2, 2, NULL),
-(3, 'LAB301', 3, '14:00:00', '16:00:00', 3, 3, NULL),
-(4, 'LAB401', 4, '16:00:00', '18:00:00', 4, 4, NULL),
-(5, 'LAB501', 5, '18:00:00', '20:00:00', 5, 5, NULL);
+INSERT INTO Laboratorio (clase_id, codigo_laboratorio, periodo_academico_id, hora_inicio, hora_fin, aula_id, estado_seccion_id, motivo_cancelacion, cupos) VALUES 
+(1, 'LAB101', 1, '08:00:00', '10:00:00', 1, 1, NULL, 30),
+(2, 'LAB201', 2, '10:00:00', '12:00:00', 2, 2, NULL, 25),
+(3, 'LAB301', 3, '14:00:00', '16:00:00', 3, 3, NULL, 20),
+(4, 'LAB401', 4, '16:00:00', '18:00:00', 4, 4, NULL, 40),
+(5, 'LAB501', 5, '18:00:00', '20:00:00', 5, 5, NULL, 32);
 
 INSERT INTO LaboratorioDia (laboratorio_id, dia_id) VALUES 
 (1, 1),
@@ -402,7 +402,7 @@ INSERT INTO EstadoCurso (nombre) VALUES
 INSERT INTO EstadoMatricula (nombre) VALUES 
 ('MATRICULADO'),
 ('EN_ESPERA'),
-('Cancelado'),
+('CANCELADA'),
 ('Completado'),
 ('Pendiente');
 

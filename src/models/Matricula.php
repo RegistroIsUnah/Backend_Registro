@@ -32,37 +32,46 @@ class Matricula {
      *
      * @param int $estudiante_id ID del estudiante.
      * @param int $seccion_id ID de la sección principal.
-     * @param string $tipo_proceso Tipo de proceso (ej. "MATRICULA").
-     * @param int $laboratorio_id ID del laboratorio seleccionado (0 si no se seleccionó ninguno).
+     * @param string $tipo_proceso_nombre Nombre del tipo de proceso ('MATRICULA' o 'ADICIONES_CANCELACIONES').
+     * @param int|null $laboratorio_id ID del laboratorio seleccionado (null si no aplica).
      * @return array Resultado de la matrícula (matricula_id, estado, orden_inscripcion).
      * @throws Exception Si ocurre un error en la preparación o ejecución del SP.
      */
-    public function matricularEstudiante($estudiante_id, $seccion_id, $tipo_proceso, $laboratorio_id) {
-        // Preparar la llamada al procedimiento almacenado SP_matricular_estudiante
+    public function matricularEstudiante($estudiante_id, $seccion_id, $tipo_proceso_nombre, $laboratorio_id = null) {
+        // Validar tipo de proceso antes de ejecutar
+        $tiposPermitidos = ['MATRICULA', 'ADICIONES_CANCELACIONES'];
+        if (!in_array(strtoupper($tipo_proceso_nombre), $tiposPermitidos)) {
+            throw new Exception('Tipo de proceso no válido. Debe ser: ' . implode(', ', $tiposPermitidos));
+        }
+
+        // Convertir null a 0 para el SP (que espera INT)
+        
+
         $stmt = $this->conn->prepare("CALL SP_matricular_estudiante(?, ?, ?, ?)");
         if (!$stmt) {
             throw new Exception('Error preparando la consulta: ' . $this->conn->error);
         }
 
-        // Vincular los parámetros
-        $stmt->bind_param("iisi", $estudiante_id, $seccion_id, $tipo_proceso, $laboratorio_id);
+        $stmt->bind_param("iisi", $estudiante_id, $seccion_id, $tipo_proceso_nombre, $laboratorio_id);
 
-        // Ejecutar el procedimiento almacenado
         if (!$stmt->execute()) {
-            throw new Exception('Error ejecutando el procedimiento: ' . $stmt->error);
+            throw new Exception('Error ejecutando matrícula: ' . $stmt->error);
         }
 
-        // Obtener el resultado
         $result = $stmt->get_result();
-        if ($result) {
-            // Recuperamos los datos de la matrícula
-            $row = $result->fetch_assoc();
+        if (!$result) {
             $stmt->close();
-            return $row;
-        } else {
-            $stmt->close();
-            throw new Exception('No se obtuvo respuesta del procedimiento almacenado');
+            throw new Exception('Error al obtener resultados de la matrícula');
         }
+
+        $row = $result->fetch_assoc();
+        $stmt->close();
+        
+        if (!$row) {
+            throw new Exception('No se recibieron datos de la matrícula');
+        }
+
+        return $row;
     }
 
     /**
@@ -150,6 +159,172 @@ class Matricula {
         }
 
         return $data;
+    }
+
+    /**
+     * Obtiene todas las clases matriculadas por el estudiante.
+     * 
+     * @param int $estudiante_id El ID del estudiante.
+     * @return array El resultado de la consulta con las clases matriculadas.
+     */
+    public function obtenerClasesMatriculadas($estudiante_id) {
+        $sql = "
+            SELECT
+                c.codigo AS codigo,
+                c.nombre AS asignatura,
+                DATE_FORMAT(se.hora_inicio, '%H%i') AS seccion,
+                se.hora_inicio AS hora_inicio,
+                se.hora_fin AS hora_fin,
+                GROUP_CONCAT(ds.nombre ORDER BY ds.dia_id) AS dias_seccion,
+                e.nombre AS edificio_nombre,
+                a.nombre AS aula_nombre,
+                c.creditos AS creditos
+            FROM
+                Matricula m
+            JOIN
+                Seccion se ON m.seccion_id = se.seccion_id
+            JOIN
+                Clase c ON se.clase_id = c.clase_id
+            JOIN
+                Aula a ON se.aula_id = a.aula_id
+            JOIN
+                Edificio e ON a.edificio_id = e.edificio_id
+            LEFT JOIN
+                SeccionDia sd ON se.seccion_id = sd.seccion_id
+            LEFT JOIN
+                DiaSemana ds ON sd.dia_id = ds.dia_id
+            WHERE
+                m.estudiante_id = ? AND m.estado_matricula_id = (SELECT estado_matricula_id FROM EstadoMatricula WHERE nombre = 'MATRICULADO')
+            GROUP BY
+                se.seccion_id, c.clase_id, a.nombre, e.nombre
+            ORDER BY
+                se.seccion_id;
+        ";
+
+        // Preparar la consulta
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param("i", $estudiante_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        // Recoger todos los resultados
+        $clasesMatriculadas = [];
+        while ($row = $result->fetch_assoc()) {
+            $clasesMatriculadas[] = $row;
+        }
+
+        // Cerrar la conexión
+        $stmt->close();
+        return $clasesMatriculadas;
+    }
+
+     /**
+     * Obtiene todas las clases matriculadas en estado 'EN_ESPERA' por el estudiante.
+     * 
+     * @param int $estudiante_id El ID del estudiante.
+     * @return array El resultado de la consulta con las clases matriculadas en estado 'EN_ESPERA'.
+     */
+    public function obtenerClasesEnEspera($estudiante_id) {
+        $sql = "
+            SELECT
+                c.codigo AS codigo,
+                c.nombre AS asignatura,
+                DATE_FORMAT(se.hora_inicio, '%H%i') AS seccion,
+                se.hora_inicio AS hora_inicio,
+                se.hora_fin AS hora_fin,
+                GROUP_CONCAT(ds.nombre ORDER BY ds.dia_id) AS dias_seccion,
+                e.nombre AS edificio_nombre,
+                a.nombre AS aula_nombre,
+                c.creditos AS creditos
+            FROM
+                Matricula m
+            JOIN
+                Seccion se ON m.seccion_id = se.seccion_id
+            JOIN
+                Clase c ON se.clase_id = c.clase_id
+            JOIN
+                Aula a ON se.aula_id = a.aula_id
+            JOIN
+                Edificio e ON a.edificio_id = e.edificio_id
+            LEFT JOIN
+                SeccionDia sd ON se.seccion_id = sd.seccion_id
+            LEFT JOIN
+                DiaSemana ds ON sd.dia_id = ds.dia_id
+            WHERE
+                m.estudiante_id = ? AND m.estado_matricula_id = (SELECT estado_matricula_id FROM EstadoMatricula WHERE nombre = 'EN_ESPERA')
+            GROUP BY
+                se.seccion_id, c.clase_id, a.nombre, e.nombre
+            ORDER BY
+                se.seccion_id;
+        ";
+
+        // Preparar la consulta
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param("i", $estudiante_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        // Recoger todos los resultados
+        $clasesEnEspera = [];
+        while ($row = $result->fetch_assoc()) {
+            $clasesEnEspera[] = $row;
+        }
+
+        // Cerrar la conexión
+        $stmt->close();
+        return $clasesEnEspera;
+    }
+
+       /**
+     * Obtener los detalles de los laboratorios matriculados.
+     *
+     * @param int $estudiante_id ID del estudiante
+     * @return array Detalles de los laboratorios matriculados
+     */
+    public function obtenerLaboratoriosMatriculados($estudiante_id) {
+        $sql = "SELECT
+                    c.codigo AS codigo,
+                    c.nombre AS asignatura,
+                    DATE_FORMAT(l.hora_inicio, '%H%i') AS laboratorio_codigo,
+                    l.hora_inicio AS hora_inicio,
+                    l.hora_fin AS hora_fin,
+                    GROUP_CONCAT(ds.nombre ORDER BY ds.dia_id) AS dias_laboratorio,
+                    e.nombre AS edificio_nombre,
+                    a.nombre AS aula_nombre,
+                    c.creditos AS creditos
+                FROM
+                    Matricula m
+                JOIN
+                    Laboratorio l ON m.laboratorio_id = l.laboratorio_id
+                JOIN
+                    Clase c ON l.clase_id = c.clase_id
+                JOIN
+                    Aula a ON l.aula_id = a.aula_id
+                JOIN
+                    Edificio e ON a.edificio_id = e.edificio_id
+                LEFT JOIN
+                    SeccionDia sd ON l.laboratorio_id = sd.seccion_id
+                LEFT JOIN
+                    DiaSemana ds ON sd.dia_id = ds.dia_id
+                WHERE
+                    m.estudiante_id = ? 
+                    AND m.estado_matricula_id = (SELECT estado_matricula_id FROM EstadoMatricula WHERE nombre = 'MATRICULADO')
+                GROUP BY
+                    l.laboratorio_id, c.clase_id, a.nombre, e.nombre
+                ORDER BY
+                    l.laboratorio_id";
+
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param("i", $estudiante_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        $laboratorios = [];
+        while ($row = $result->fetch_assoc()) {
+            $laboratorios[] = $row;
+        }
+
+        return $laboratorios;
     }
 }
 ?>

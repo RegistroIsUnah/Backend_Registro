@@ -5,7 +5,7 @@
  * Permite obtener la información completa de un libro (datos principales, autores y tags).
  *
  * Ejemplo de URL:
- * servidor:puerto/api/get/obtener_libro?libro_id=5
+ * servidor:puerto/api/get/obtener_libro.php?libro_id=5
  *
  * Respuestas:
  *  - 200 OK: Devuelve el libro en formato JSON.

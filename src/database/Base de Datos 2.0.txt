@@ -132,6 +132,7 @@ CREATE TABLE ResetPasswordRequest (
 CREATE TABLE Estudiante (
     estudiante_id INT AUTO_INCREMENT PRIMARY KEY,
     usuario_id INT DEFAULT NULL,
+    numero_cuenta VARCHAR(20),
     identidad VARCHAR(50) NOT NULL,
     nombre VARCHAR(100) NOT NULL,
     apellido VARCHAR(100) NOT NULL,
@@ -371,6 +372,7 @@ CREATE TABLE Laboratorio (
     aula_id INT NOT NULL,
     estado_seccion_id INT NOT NULL,
     motivo_cancelacion TEXT,
+    cupos INT NOT NULL,
     FOREIGN KEY (clase_id) REFERENCES Clase(clase_id),
     FOREIGN KEY (estado_seccion_id) REFERENCES EstadoSeccion(estado_seccion_id),
     FOREIGN KEY (periodo_academico_id) REFERENCES PeriodoAcademico(periodo_academico_id),
@@ -486,13 +488,15 @@ CREATE TABLE Matricula (
     matricula_id INT AUTO_INCREMENT PRIMARY KEY,
     estudiante_id INT NOT NULL,
     seccion_id INT NOT NULL,
+    laboratorio_id INT DEFAULT NULL,
     fecha DATE NOT NULL,
     observacion TEXT,
     estado_matricula_id INT NOT NULL,
     orden_inscripcion INT,
     FOREIGN KEY (estudiante_id) REFERENCES Estudiante(estudiante_id),
     FOREIGN KEY (estado_matricula_id) REFERENCES EstadoMatricula(estado_matricula_id),
-    FOREIGN KEY (seccion_id) REFERENCES Seccion(seccion_id)
+    FOREIGN KEY (seccion_id) REFERENCES Seccion(seccion_id),
+    FOREIGN KEY (laboratorio_id) REFERENCES Laboratorio(laboratorio_id)
 ) ENGINE=InnoDB;
 
 CREATE TABLE HistorialEstudiante (
@@ -635,3 +639,4 @@ CREATE TABLE ClaseRequisito (
     FOREIGN KEY (clase_id) REFERENCES Clase(clase_id),
     FOREIGN KEY (prerequisito_clase_id) REFERENCES Clase(clase_id)
 ) ENGINE=InnoDB;
+

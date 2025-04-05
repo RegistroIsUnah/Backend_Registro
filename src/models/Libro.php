@@ -150,6 +150,23 @@ class Libro {
         $stmt->close();
         return $tagId;
     }
+
+    /**
+     * Verifica si un ISBN ya existe en la base de datos.
+     *
+     * @param string $isbn ISBN a verificar.
+     * @return bool True si el ISBN ya existe, false si no existe.
+     * @throws Exception Si ocurre un error en la consulta.
+     */
+    public function existeISBN($isbn) {
+        $stmt = $this->conn->prepare("SELECT libro_id FROM Libro WHERE isbn_libro = ?");
+        $stmt->bind_param("s", $isbn);
+        $stmt->execute();
+        $stmt->store_result();
+        $existe = $stmt->num_rows > 0;
+        $stmt->close();
+        return $existe;
+    }
     
     // Función para asociar un tag al libro
     private function asociarTagAlLibro($libro_id, $tag_id) {
@@ -160,7 +177,7 @@ class Libro {
     }
     
 
-  /**
+    /**
      * Actualiza un libro y sus asociaciones de forma parcial.
      *
      * Todos los parámetros (excepto $libro_id) son opcionales; solo se actualizan los que se proporcionen.
@@ -360,6 +377,29 @@ class Libro {
             $this->conn->rollback();
             throw $e;
         }
+    }
+
+    /**
+     * Obtiene el ISBN de un libro específico
+     *
+     * @param int $libro_id ID del libro
+     * @return string|null ISBN del libro o null si no existe
+     * @throws Exception Si ocurre un error en la consulta
+     */
+    public function obtenerISBNLibro($libro_id) {
+        $stmt = $this->conn->prepare("SELECT isbn_libro FROM Libro WHERE libro_id = ?");
+        $stmt->bind_param("i", $libro_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        if ($result->num_rows === 0) {
+            $stmt->close();
+            throw new Exception("Libro no encontrado");
+        }
+        
+        $row = $result->fetch_assoc();
+        $stmt->close();
+        return $row['isbn_libro'];
     }
         
     /**
@@ -728,5 +768,82 @@ class Libro {
         }
     }
 
+    /**
+     * Obtiene todas las clases de un departamento y los libros asociados a cada clase activos para un Docente
+     *
+     * La consulta junta la tabla Clase (filtrando por dept_id), la tabla ClaseLibro y la tabla Libro.
+     * Se agrupan los resultados por clase para devolver un arreglo donde cada entrada representa una clase con sus libros.
+     *
+     * @param int $departamentoId ID del departamento.
+     * @return array Arreglo de clases con sus libros. Ejemplo:
+     *   [
+     *     {
+     *       "clase_id": 1,
+     *       "clase_nombre": "Matemáticas I",
+     *       "libros": [
+     *          { "libro_id": 3, "titulo": "Álgebra", "editorial": "Editorial X", "libro_url": "/uploads/libros/...", ... },
+     *          { "libro_id": 5, "titulo": "Cálculo", "editorial": "Editorial Y", "libro_url": "/uploads/libros/...", ... }
+     *       ]
+     *     },
+     *     ...
+     *   ]
+     * @throws Exception Si ocurre un error en la consulta.
+     */
+    public function obtenerLibrosPorDepartamentoDocente($departamentoId) {
+        $sql = "SELECT 
+                    c.clase_id,
+                    c.nombre AS clase_nombre,
+                    l.libro_id,
+                    l.titulo,
+                    l.editorial,
+                    l.isbn_libro,
+                    l.libro_url,
+                    l.fecha_publicacion,
+                    l.descripcion,
+                    estl.nombre AS estado
+                FROM Clase c
+                INNER JOIN ClaseLibro cl ON c.clase_id = cl.clase_id
+                INNER JOIN Libro l ON cl.libro_id = l.libro_id
+                INNER JOIN EstadoLibro estl ON estl.estado_libro_id = l.estado_libro_id
+                WHERE c.dept_id = ? AND estl.nombre = 'ACTIVO'
+                ORDER BY c.clase_id
+                LIMIT 100";
+        $stmt = $this->conn->prepare($sql);
+        if (!$stmt) {
+            throw new Exception("Error preparando la consulta: " . $this->conn->error);
+        }
+        $stmt->bind_param("i", $departamentoId);
+        if (!$stmt->execute()) {
+            throw new Exception("Error ejecutando la consulta: " . $stmt->error);
+        }
+        $result = $stmt->get_result();
+        $data = $result->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
+        
+        // Agrupar los resultados por clase
+        $clases = [];
+        foreach ($data as $row) {
+            $clase_id = $row['clase_id'];
+            if (!isset($clases[$clase_id])) {
+                $clases[$clase_id] = [
+                    'clase_id' => $clase_id,
+                    'clase_nombre' => $row['clase_nombre'],
+                    'libros' => []
+                ];
+            }
+            // Agregar libro a la clase, incluyendo el campo editorial
+            $clases[$clase_id]['libros'][] = [
+                'libro_id' => $row['libro_id'],
+                'titulo' => $row['titulo'],
+                'editorial' => $row['editorial'],
+                'isbn_libro' => $row['isbn_libro'],
+                'libro_url' => $row['libro_url'],
+                'fecha_publicacion' => $row['fecha_publicacion'],
+                'descripcion' => $row['descripcion'],
+                'estado' => $row['estado']
+            ];
+        }
+        return array_values($clases);
+    }
 }
 ?>
