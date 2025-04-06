@@ -26,24 +26,21 @@
  * 
  */
 
-header("Access-Control-Allow-Origin: *");
-header('Content-Type: application/json');
-
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    http_response_code(405);
-    echo json_encode(['error' => 'Método no permitido']);
-    exit;
-}
-
-$input = json_decode(file_get_contents('php://input'), true);
-if (!$input) {
-    http_response_code(400);
-    echo json_encode(['error' => 'Datos JSON inválidos']);
-    exit;
-}
-
-require_once __DIR__ . '/../../controllers/ProcesoMatriculaController.php';
-
-$procesoController = new ProcesoMatriculaController();
-$procesoController->crearProcesoMatricula($input);
+ header("Access-Control-Allow-Origin: *");
+ header('Content-Type: application/json');
+ 
+ // Obtener los datos de la solicitud
+ $data = json_decode(file_get_contents("php://input"), true);
+ 
+ // Verificar que los datos sean correctos
+ if (empty($data)) {
+     http_response_code(400);
+     echo json_encode(['error' => 'No se enviaron datos.']);
+     exit;
+ }
+ 
+ require_once __DIR__ . '/../../controllers/ProcesoMatriculaController.php';
+ 
+ $procesoMatriculaController = new ProcesoMatriculaController();
+ $procesoMatriculaController->crearProcesoMatricula($data);
 ?>

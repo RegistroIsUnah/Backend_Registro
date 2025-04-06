@@ -29,7 +29,39 @@ class ProcesoMatricula {
         $this->conn = $database->getConnection();
     }
     
- /**
+    // Función para obtener el estado 'ACTIVO' de la base de datos
+    private function obtenerEstadoProcesoId($estado_nombre) {
+        $stmt = $this->conn->prepare("SELECT estado_proceso_id FROM EstadoProceso WHERE nombre = ?");
+        if (!$stmt) {
+            throw new Exception("Error preparando la consulta: " . $this->conn->error);
+        }
+        $stmt->bind_param("s", $estado_nombre);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        if ($result->num_rows == 0) {
+            throw new Exception("Estado del proceso no válido.");
+        }
+        $row = $result->fetch_assoc();
+        return $row['estado_proceso_id'];
+    }
+
+    // Función para obtener el tipo de proceso
+    private function obtenerTipoProcesoId($tipo_proceso) {
+        $stmt = $this->conn->prepare("SELECT tipo_proceso_id FROM TipoProcesoMatricula WHERE nombre = ?");
+        if (!$stmt) {
+            throw new Exception("Error preparando la consulta: " . $this->conn->error);
+        }
+        $stmt->bind_param("s", $tipo_proceso);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        if ($result->num_rows == 0) {
+            throw new Exception("Tipo de proceso no válido.");
+        }
+        $row = $result->fetch_assoc();
+        return $row['tipo_proceso_id'];
+    }
+
+     /**
      * Crea un nuevo proceso de matrícula.
      *
      * Si la fecha_fin ya pasó, se inserta con estado 'INACTIVO';
@@ -43,30 +75,18 @@ class ProcesoMatricula {
      * @throws Exception Si ocurre un error durante la inserción.
      */
     public function crearProcesoMatricula($periodo_academico_id, $tipo_proceso, $fecha_inicio, $fecha_fin) {
-        // Determinar el estado basado en la fecha_fin:
-        $estado_nombre = (strtotime($fecha_fin) < time()) ? 'INACTIVO' : 'ACTIVO';
+        // Obtener el estado 'ACTIVO'
+        $estado_proceso_id = $this->obtenerEstadoProcesoId('ACTIVO');
         
-        // Obtener el estado_proceso_id correspondiente al estado 'ACTIVO' o 'INACTIVO'
-        $stmt = $this->conn->prepare("SELECT estado_proceso_id FROM EstadoProceso WHERE nombre = ?");
-        if (!$stmt) {
-            throw new Exception("Error preparando la consulta: " . $this->conn->error);
-        }
-        $stmt->bind_param("s", $estado_nombre);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        if ($result->num_rows == 0) {
-            throw new Exception("Estado del proceso no válido.");
-        }
-        $row = $result->fetch_assoc();
-        $estado_proceso_id = $row['estado_proceso_id'];
-        $stmt->close();
+        // Obtener el tipo de proceso
+        $tipo_proceso_id = $this->obtenerTipoProcesoId($tipo_proceso);
 
-        // Insertar el nuevo proceso de matrícula con el estado correspondiente
-        $stmt = $this->conn->prepare("INSERT INTO ProcesoMatricula (periodo_academico_id, tipo_proceso, fecha_inicio, fecha_fin, estado_proceso_id) VALUES (?, ?, ?, ?, ?)");
+        // Insertar el nuevo proceso de matrícula con el estado y tipo de proceso
+        $stmt = $this->conn->prepare("INSERT INTO ProcesoMatricula (periodo_academico_id, tipo_proceso_id, fecha_inicio, fecha_fin, estado_proceso_id) VALUES (?, ?, ?, ?, ?)");
         if (!$stmt) {
             throw new Exception("Error preparando la consulta de inserción: " . $this->conn->error);
         }
-        $stmt->bind_param("isssi", $periodo_academico_id, $tipo_proceso, $fecha_inicio, $fecha_fin, $estado_proceso_id);
+        $stmt->bind_param("iissi", $periodo_academico_id, $tipo_proceso_id, $fecha_inicio, $fecha_fin, $estado_proceso_id);
         if (!$stmt->execute()) {
             throw new Exception("Error ejecutando la consulta: " . $stmt->error);
         }

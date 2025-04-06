@@ -42,7 +42,7 @@ class PeriodoAcademicoController {
             exit;
         }
 
-        // Determinar el estado del período (ACTIVO o INACTIVO)
+        // Determinar el estado del período (ACTIVO o INACTIVO) basado en la fecha actual
         $estado_nombre = (strtotime($fecha_fin) < time()) ? 'INACTIVO' : 'ACTIVO';
 
         // Llamar al modelo para obtener el estado_periodo_id

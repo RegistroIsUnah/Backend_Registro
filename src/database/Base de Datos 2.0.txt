@@ -662,3 +662,42 @@ CREATE TABLE ClaseRequisito (
     FOREIGN KEY (prerequisito_clase_id) REFERENCES Clase(clase_id)
 ) ENGINE=InnoDB;
 
+CREATE TABLE EstadoCorreo (
+    estado_id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(20) NOT NULL,
+    descripcion VARCHAR(100)
+) ENGINE=InnoDB;
+
+CREATE TABLE ColaCorreosAspirantes (
+    correo_id INT AUTO_INCREMENT PRIMARY KEY,
+    destinatario VARCHAR(100) NOT NULL,
+    nombre_destinatario VARCHAR(200) NOT NULL,
+    asunto VARCHAR(200) NOT NULL,
+    cuerpo_html TEXT NOT NULL,
+    cuerpo_texto TEXT NOT NULL,
+    fecha_creacion DATETIME NOT NULL,
+    fecha_envio DATETIME DEFAULT NULL,
+    estado_id INT NOT NULL DEFAULT 1, -- 1 = PENDIENTE
+    intentos INT NOT NULL DEFAULT 0,
+    ultimo_error TEXT,
+    FOREIGN KEY (estado_id) REFERENCES EstadoCorreo(estado_id)
+) ENGINE=InnoDB;
+
+CREATE TABLE ColaCorreosEstudiantes (
+    correo_id INT AUTO_INCREMENT PRIMARY KEY,
+    destinatario VARCHAR(100) NOT NULL,
+    nombre_destinatario VARCHAR(200) NOT NULL,
+    asunto VARCHAR(200) NOT NULL,
+    cuerpo_html TEXT NOT NULL,
+    cuerpo_texto TEXT NOT NULL,
+    fecha_creacion DATETIME NOT NULL,
+    fecha_envio DATETIME DEFAULT NULL,
+    estado_id INT NOT NULL,
+    intentos INT NOT NULL DEFAULT 0,
+    ultimo_error TEXT,
+    FOREIGN KEY (estado_id) REFERENCES EstadoCorreo(estado_id),
+    INDEX idx_estado (estado_id),
+    INDEX idx_fecha_creacion (fecha_creacion)
+) ENGINE=InnoDB;
+
+
