@@ -923,5 +923,236 @@ class Estudiante {
 
         return $seccion;
     }
+
+    /**
+     * Obtiene el ID de un estado por su nombre
+     */
+    private function obtenerIdEstado($nombreEstado) {
+        $query = "SELECT estado_id FROM EstadoCorreo WHERE nombre = ? LIMIT 1";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bind_param("s", $nombreEstado);
+        $stmt->execute();
+        
+        $result = $stmt->get_result();
+        $row = $result->fetch_assoc();
+        
+        if (!$row) {
+            throw new Exception("Estado '$nombreEstado' no encontrado en la tabla EstadoCorreo");
+        }
+        
+        return $row['estado_id'];
+    }
+
+    /**
+     * Envía un correo con las credenciales del estudiante de forma clara
+     * 
+     * @param string $correo Correo de destino
+     * @param string $nombre Nombre del estudiante
+     * @param string $apellido Apellido del estudiante
+     * @param string $username Nombre de usuario (sin nombre/apellido)
+     * @param string $password Contraseña generada
+     */
+    public function guardarCredencialesParaEnvio($correo, $nombre, $apellido, $username, $password, $numeroCuenta) {
+        $nombreCompleto = trim("$nombre $apellido");
+        $subject = 'Credenciales de Acceso al Sistema Universitario';
+        
+        // Versión HTML mejorada con CSS más atractivo
+        $message = "
+            <html>
+            <head>
+                <style>
+                    body { 
+                        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+                        line-height: 1.6;
+                        color: #333;
+                        background-color: #f5f5f5;
+                        margin: 0;
+                        padding: 0;
+                    }
+                    .container {
+                        max-width: 600px;
+                        margin: 0 auto;
+                        padding: 20px;
+                        background-color: #ffffff;
+                        border-radius: 8px;
+                        box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+                    }
+                    .header {
+                        text-align: center;
+                        padding: 20px 0;
+                        border-bottom: 2px solid #4a6fdc;
+                    }
+                    .header img {
+                        max-height: 60px;
+                        margin-bottom: 10px;
+                    }
+                    .header h1 {
+                        color: #4a6fdc;
+                        margin: 0;
+                        font-size: 24px;
+                    }
+                    .content {
+                        padding: 20px 0;
+                    }
+                    .card { 
+                        background: #f8faff; 
+                        border-left: 4px solid #4a6fdc;
+                        border-radius: 4px; 
+                        padding: 25px;
+                        margin: 25px 0;
+                        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+                    }
+                    .credential-item { 
+                        margin-bottom: 15px; 
+                        padding-bottom: 15px; 
+                        border-bottom: 1px solid #eaedf7;
+                        display: flex;
+                        align-items: center;
+                    }
+                    .credential-item:last-child {
+                        border-bottom: none;
+                        margin-bottom: 0;
+                        padding-bottom: 0;
+                    }
+                    .label { 
+                        font-weight: bold; 
+                        color: #4a6fdc;
+                        min-width: 150px;
+                        display: inline-block;
+                    }
+                    .value {
+                        font-family: 'Courier New', monospace;
+                        padding: 5px 8px;
+                        background-color: #f0f4ff;
+                        border-radius: 3px;
+                    }
+                    .important { 
+                        background-color: #fff5f5;
+                        border-left: 4px solid #e53e3e;
+                        color: #e53e3e; 
+                        padding: 12px 15px;
+                        margin-top: 20px;
+                        border-radius: 4px;
+                        font-weight: 500;
+                    }
+                    .button {
+                        display: inline-block;
+                        background-color: #4a6fdc;
+                        color: white;
+                        text-decoration: none;
+                        padding: 12px 25px;
+                        border-radius: 4px;
+                        margin: 20px 0;
+                        font-weight: bold;
+                        text-align: center;
+                        transition: background-color 0.3s;
+                    }
+                    .button:hover {
+                        background-color: #3a5cbc;
+                    }
+                    .footer {
+                        text-align: center;
+                        padding-top: 20px;
+                        border-top: 1px solid #eaedf7;
+                        color: #666;
+                        font-size: 14px;
+                    }
+                </style>
+            </head>
+            <body>
+                <div class='container'>
+                    <div class='header'>
+                        <h1>Sistema de Gestión Universitaria</h1>
+                    </div>
+                    
+                    <div class='content'>
+                        <p>Estimado/a <strong>$nombreCompleto</strong>,</p>
+                        
+                        <p>Le damos la bienvenida al Sistema de Gestión Universitaria. A continuación, encontrará sus credenciales de acceso:</p>
+                        
+                        <div class='card'>
+                            <div class='credential-item'>
+                                <span class='label'>Nombre completo:</span>
+                                <span class='value'>$nombreCompleto</span>
+                            </div>
+                            <div class='credential-item'>
+                                <span class='label'>Usuario:</span>
+                                <span class='value'>$username</span>
+                            </div>
+                            <div class='credential-item'>
+                                <span class='label'>Contraseña temporal:</span>
+                                <span class='value'>$password</span>
+                            </div>
+                            <div class='credential-item'>
+                                <span class='label'>Número de cuenta:</span>
+                                <span class='value'>$numeroCuenta</span>
+                            </div>
+                        </div>
+                        
+                        <div class='important'>
+                            <strong>IMPORTANTE:</strong> Por seguridad, debe cambiar esta contraseña después de su primer acceso al sistema.
+                        </div>
+                        
+                        <div style='text-align: center; margin: 30px 0;'>
+                            <a href='https://registroisunah.xyz' class='button'>Acceder al Portal Estudiantil</a>
+                        </div>
+                        
+                        <p>Si tiene alguna duda o inconveniente, no dude en contactar con nuestro equipo de soporte técnico.</p>
+                    </div>
+                    
+                    <div class='footer'>
+                        <p>Atentamente,<br><strong>Departamento de Registro</strong></p>
+                        <p>© 2025 Universidad. Todos los derechos reservados.</p>
+                    </div>
+                </div>
+            </body>
+            </html>
+        ";
+        
+        // Versión texto plano clara
+        $altMessage = "Credenciales de Acceso - $nombreCompleto\n\n"
+                    . "Nombre completo: $nombreCompleto\n"
+                    . "Usuario del sistema: $username\n"
+                    . "Contraseña temporal: $password\n"
+                    . "Numero de Cuenta: $numeroCuenta\n\n"
+                    . "IMPORTANTE: Debe cambiar esta contraseña después de su primer acceso.\n\n"
+                    . "Acceso al sistema: https://registroisunah.xyz\n\n"
+                    . "Atentamente,\nDepartamento de Registro";
+    
+        try {
+            // Obtener ID del estado PENDIENTE por nombre
+            $estadoPendienteId = $this->obtenerIdEstado('PENDIENTE');
+            
+            $query = "INSERT INTO ColaCorreosEstudiantes (
+                        destinatario, 
+                        nombre_destinatario,
+                        asunto, 
+                        cuerpo_html, 
+                        cuerpo_texto, 
+                        fecha_creacion,
+                        estado_id
+                    ) VALUES (?, ?, ?, ?, ?, NOW(), ?)";
+            
+            $stmt = $this->conn->prepare($query);
+            $stmt->bind_param("sssssi", 
+                $correo,
+                $nombreCompleto,
+                $subject,
+                $message,
+                $altMessage,
+                $estadoPendienteId
+            );
+            
+            if ($stmt->execute()) {
+                return true;
+            } else {
+                throw new Exception("Error al insertar en cola de correos: " . $stmt->error);
+            }
+            
+        } catch (Exception $e) {
+            error_log("Error en guardarCredencialesParaEnvio: " . $e->getMessage());
+            return false;
+        }
+    }
 }
 ?>

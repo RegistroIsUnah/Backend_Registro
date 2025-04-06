@@ -691,7 +691,7 @@ class AspiranteController {
                 );
             }
     
-            $this->modelo->enviarCorreoResultados($aspirante, $resultadosExamenes, $aprobado_principal, $aprobado_secundaria);
+            $this->modelo->guardarParaEnvioProgramado($aspirante, $resultadosExamenes, $aprobado_principal, $aprobado_secundaria);
     
             return [
                 'success' => true,
@@ -752,7 +752,7 @@ class AspiranteController {
         }
     }
 
-        /**
+    /**
      * Acción para reenviar el correo usando el email del aspirante.
      * 
      * @return void Envía respuesta JSON.

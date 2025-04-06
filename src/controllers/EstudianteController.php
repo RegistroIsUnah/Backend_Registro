@@ -353,7 +353,7 @@ class EstudianteController {
             }
 
             // Enviar correo con las credenciales
-            $this->modelo->enviarCorreoConCredenciales($correo, $nombre, $apellido, $usuario['username'], $usuario['password'], $estudianteData['numero_cuenta']);
+            $this->modelo->guardarCredencialesParaEnvio($correo, $nombre, $apellido, $usuario['username'], $usuario['password'], $estudianteData['numero_cuenta']);
             
             $successCount++;
         } catch (Exception $e) {
@@ -369,7 +369,7 @@ class EstudianteController {
         'success_count' => $successCount,
         'error_count' => $errorCount
     ]);
-}
+    }
 
     /**
      * Obtiene el historial de un estudiante.

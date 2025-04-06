@@ -14,8 +14,6 @@
  * }
  *
  * Al crearse, el proceso se inserta con estado 'ACTIVO' si la fecha_fin es futura o 'INACTIVO' si ya pasó.
- * Se recomienda configurar un evento en MySQL para actualizar automáticamente el estado a 'INACTIVO'
- * cuando se cumpla la fecha_fin.
  *
  * Respuestas HTTP:
  * - 200 OK: Devuelve el ID del proceso de matrícula creado y un mensaje de éxito.

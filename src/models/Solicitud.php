@@ -136,4 +136,98 @@ class Solicitud {
         return $fileName;
     }
 
+    /**
+     * Obtiene las solicitudes de los estudiantes por carrera.
+     *
+     * @param int $carrera_id ID de la carrera.
+     * @return array Solicitudes agrupadas por estudiante
+     */
+    public function obtenerSolicitudesPorCarrera($carrera_id) {
+        $sql = "
+            SELECT 
+                c.carrera_id,
+                c.nombre AS carrera_nombre,
+                e.estudiante_id,
+                e.numero_cuenta,
+                e.nombre AS estudiante_nombre,
+                e.apellido AS estudiante_apellido,
+                s.solicitud_id,
+                s.tipo_solicitud_id,
+                ts.nombre AS tipo_solicitud,
+                s.fecha_solicitud,
+                es.nombre AS estado_solicitud
+            FROM Carrera c
+            JOIN EstudianteCarrera ec ON c.carrera_id = ec.carrera_id
+            JOIN Estudiante e ON ec.estudiante_id = e.estudiante_id
+            JOIN Solicitud s ON e.estudiante_id = s.estudiante_id
+            JOIN EstadoSolicitud es ON s.estado_solicitud_id = es.estado_solicitud_id
+            JOIN TipoSolicitud ts ON s.tipo_solicitud_id = ts.tipo_solicitud_id
+            WHERE c.carrera_id = ?
+            GROUP BY 
+                c.carrera_id, c.nombre, 
+                e.estudiante_id, e.numero_cuenta, e.nombre, e.apellido, 
+                s.solicitud_id, ts.nombre, s.fecha_solicitud, es.nombre
+            ORDER BY e.estudiante_id, s.fecha_solicitud
+        ";
+
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param("i", $carrera_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        $solicitudes = [];
+        while ($row = $result->fetch_assoc()) {
+            $solicitudes['carrera']['carrera_id'] = $row['carrera_id'];
+            $solicitudes['carrera']['carrera_nombre'] = $row['carrera_nombre'];
+            $solicitudes['estudiantes'][$row['estudiante_id']]['estudiante_id'] = $row['estudiante_id'];
+            $solicitudes['estudiantes'][$row['estudiante_id']]['numero_cuenta'] = $row['numero_cuenta'];
+            $solicitudes['estudiantes'][$row['estudiante_id']]['nombre'] = $row['estudiante_nombre'];
+            $solicitudes['estudiantes'][$row['estudiante_id']]['apellido'] = $row['estudiante_apellido'];
+            $solicitudes['estudiantes'][$row['estudiante_id']]['solicitudes'][] = [
+                'solicitud_id' => $row['solicitud_id'],
+                'tipo_solicitud' => $row['tipo_solicitud'],
+                'fecha_solicitud' => $row['fecha_solicitud'],
+                'estado_solicitud' => $row['estado_solicitud']
+            ];
+        }
+        
+        return array_values($solicitudes);
+    }
+
+    /**
+     * Obtiene todos los datos de una solicitud incluyendo el tipo y estado.
+     *
+     * @param int $solicitud_id ID de la solicitud
+     * @return array Detalles de la solicitud
+     */
+    public function obtenerSolicitudPorId($solicitud_id) {
+        $sql = "
+            SELECT 
+                s.solicitud_id,
+                s.estudiante_id,
+                e.nombre AS estudiante_nombre,
+                e.apellido AS estudiante_apellido,
+                s.fecha_solicitud,
+                ts.nombre AS tipo_solicitud,
+                es.nombre AS estado_solicitud,
+                s.archivo_pdf
+            FROM Solicitud s
+            JOIN Estudiante e ON s.estudiante_id = e.estudiante_id
+            JOIN TipoSolicitud ts ON s.tipo_solicitud_id = ts.tipo_solicitud_id
+            JOIN EstadoSolicitud es ON s.estado_solicitud_id = es.estado_solicitud_id
+            WHERE s.solicitud_id = ?
+        ";
+
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param("i", $solicitud_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        // Verificar si se encontró la solicitud
+        if ($result->num_rows > 0) {
+            return $result->fetch_assoc();
+        } else {
+            throw new Exception('Solicitud no encontrada');
+        }
+    }
 }
