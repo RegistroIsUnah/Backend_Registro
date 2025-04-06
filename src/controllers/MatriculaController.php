@@ -12,7 +12,6 @@
 
 require_once __DIR__ . '/../models/Matricula.php';
 
-
 class MatriculaController {
     private $model;
 
