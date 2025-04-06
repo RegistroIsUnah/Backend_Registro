@@ -10,6 +10,13 @@
  * 
  * Ejemplo de URL:
  *  servidor:puerto/api/post/cancelar_matricula.php
+ * 
+ * Ejemplo envio
+ * 
+ * {
+ *   "estudiante_id": 1,
+ *   "seccion_id": 101
+ * }
  *
  * Métodos soportados:
  *  POST
@@ -17,6 +24,7 @@
  * @package API
  * @author Ruben Diaz
  * @version 1.0
+ * 
  */
 
 header("Access-Control-Allow-Origin: *");

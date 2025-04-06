@@ -542,6 +542,28 @@ CREATE TABLE Solicitud (
     FOREIGN KEY (motivo_id) REFERENCES MotivoRechazoSolicitud(motivo_id)
 ) ENGINE=InnoDB;
 
+CREATE TABLE SolicitudCambioCentro (
+    cambio_id INT AUTO_INCREMENT PRIMARY KEY,
+    solicitud_id INT NOT NULL,
+    centro_actual_id INT NOT NULL,
+    centro_nuevo_id INT NOT NULL,
+    fecha_cambio DATETIME,
+    FOREIGN KEY (solicitud_id) REFERENCES Solicitud(solicitud_id),
+    FOREIGN KEY (centro_actual_id) REFERENCES Centro(centro_id),
+    FOREIGN KEY (centro_nuevo_id) REFERENCES Centro(centro_id)
+) ENGINE=InnoDB;
+
+CREATE TABLE SolicitudCambioCarrera (
+    cambio_id INT AUTO_INCREMENT PRIMARY KEY,
+    solicitud_id INT NOT NULL,
+    carrera_actual_id INT NOT NULL,
+    carrera_nuevo_id INT NOT NULL,
+    fecha_cambio DATETIME,
+    FOREIGN KEY (solicitud_id) REFERENCES Solicitud(solicitud_id),
+    FOREIGN KEY (carrera_actual_id) REFERENCES Carrera(carrera_id),
+    FOREIGN KEY (carrera_nuevo_id) REFERENCES Carrera(carrera_id)
+) ENGINE=InnoDB;
+
 CREATE TABLE Chat (
     chat_id INT AUTO_INCREMENT PRIMARY KEY,
     es_grupal BOOLEAN NOT NULL,
