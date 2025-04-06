@@ -37,7 +37,7 @@ class PeriodoAcademico {
      * @throws Exception Si el estado no es válido o no se encuentra en la base de datos.
      */
     public function obtenerEstadoPeriodoId($estado_nombre) {
-        $stmt = $this->conn->prepare("SELECT estado_periodo_id FROM EstadoPeriodo WHERE nombre = ?");
+        $stmt = $this->conn->prepare("SELECT estado_proceso_id FROM EstadoProceso WHERE nombre = ?");
         if (!$stmt) {
             throw new Exception("Error preparando la consulta de estado: " . $this->conn->error);
         }
@@ -48,7 +48,7 @@ class PeriodoAcademico {
             throw new Exception("Estado del periodo no válido.");
         }
         $row = $result->fetch_assoc();
-        $estado_periodo_id = $row['estado_periodo_id'];
+        $estado_periodo_id = $row['estado_proceso_id']; // Asegúrate de usar la columna correcta aquí
         $stmt->close();
         return $estado_periodo_id;
     }
@@ -65,7 +65,7 @@ class PeriodoAcademico {
      * @throws Exception Si ocurre un error durante la inserción.
      */
     public function crearPeriodoAcademico($anio, $numero_periodo, $fecha_inicio, $fecha_fin, $estado_periodo_id) {
-        $stmt = $this->conn->prepare("INSERT INTO PeriodoAcademico (anio, numero_periodo, fecha_inicio, fecha_fin, estado_periodo_id) VALUES (?, ?, ?, ?, ?)");
+        $stmt = $this->conn->prepare("INSERT INTO PeriodoAcademico (anio, numero_periodo_id, fecha_inicio, fecha_fin, estado_proceso_id) VALUES (?, ?, ?, ?, ?)");
         if (!$stmt) {
             throw new Exception("Error preparando la consulta de inserción: " . $this->conn->error);
         }
@@ -76,7 +76,7 @@ class PeriodoAcademico {
         $id = $stmt->insert_id;
         $stmt->close();
         return $id;
-    }
+    }    
 
     /**
      * Obtiene los periodos académicos activos, comprobando que la fecha actual no haya pasado.

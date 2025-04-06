@@ -35,7 +35,7 @@ class ProcesoMatriculaController {
                 exit;
             }
         }
-        
+
         // Validar formato de fecha.
         if (strtotime($data['fecha_inicio']) === false) {
             http_response_code(400);
@@ -47,12 +47,12 @@ class ProcesoMatriculaController {
             echo json_encode(['error' => 'Formato de fecha_fin inválido']);
             exit;
         }
-        
+
         $periodo_academico_id = intval($data['periodo_academico_id']);
         $tipo_proceso = $data['tipo_proceso'];
         $fecha_inicio = $data['fecha_inicio'];
         $fecha_fin = $data['fecha_fin'];
-        
+
         // Validar que tipo_proceso sea uno de los permitidos.
         $allowedTipos = ['MATRICULA', 'ADICIONES_CANCELACIONES'];
         if (!in_array($tipo_proceso, $allowedTipos)) {
@@ -60,7 +60,7 @@ class ProcesoMatriculaController {
             echo json_encode(['error' => 'tipo_proceso inválido']);
             exit;
         }
-        
+
         try {
             // Instanciamos el modelo y creamos el proceso de matrícula
             $procesoModel = new ProcesoMatricula();
@@ -70,7 +70,7 @@ class ProcesoMatriculaController {
             echo json_encode(['error' => $e->getMessage()]);
             exit;
         }
-        
+
         http_response_code(200);
         echo json_encode(['proceso_id' => $id, 'message' => 'Proceso de matrícula creado exitosamente']);
     }
