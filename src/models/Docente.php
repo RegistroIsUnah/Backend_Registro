@@ -58,5 +58,128 @@ class Docente {
         }
         return ['mensaje' => $mensaje];
     }
+<<<<<<< Updated upstream
+=======
+
+
+    /*
+        * Obtiene las clases activas de un docente.
+        *
+        * @param int $docente_id ID del docente.
+        * @return array Lista de clases activas del docente.
+        * @throws Exception Si ocurre un error o no se encuentra el docente.
+        @Author Jose Vargas
+    */
+    public function obtenerClasesActDocente($docente_id) {
+        $sql = "SELECT 
+                    c.clase_id,
+                    c.codigo AS codigo_clase,
+                    c.nombre AS nombre_clase,
+                    c.creditos,
+                    c.tiene_laboratorio,
+                    s.seccion_id,
+                    s.hora_inicio,
+                    s.hora_fin,
+                    GROUP_CONCAT(DISTINCT sd.dia_id ORDER BY sd.dia_id SEPARATOR ', ') AS lista_dia_ids,
+                    GROUP_CONCAT(DISTINCT ds.nombre ORDER BY sd.dia_id SEPARATOR ', ') AS nombres_dias,
+                    e.nombre AS edificio,
+                    a.nombre AS aula,
+                    pa.anio,
+                    pa.numero_periodo_id
+                FROM Seccion s
+                INNER JOIN Clase c ON s.clase_id = c.clase_id
+                INNER JOIN PeriodoAcademico pa ON s.periodo_academico_id = pa.periodo_academico_id
+                INNER JOIN Aula a ON s.aula_id = a.aula_id
+                INNER JOIN Edificio e ON a.edificio_id = e.edificio_id
+                INNER JOIN EstadoProceso ep ON pa.estado_proceso_id = ep.estado_proceso_id
+                LEFT JOIN SeccionDia sd ON s.seccion_id = sd.seccion_id
+                LEFT JOIN DiaSemana ds ON sd.dia_id = ds.dia_id
+                WHERE 
+                    s.docente_id = ?  -- ID del docente
+                    AND ep.estado_proceso_id = 1  -- Periodo activo
+                GROUP BY 
+                    c.clase_id, c.codigo, c.nombre, c.creditos, c.tiene_laboratorio,
+                    s.seccion_id, s.hora_inicio, s.hora_fin,
+                    e.nombre, a.nombre, pa.anio, pa.numero_periodo_id
+                ORDER BY 
+                    s.seccion_id, s.hora_inicio, s.hora_fin";
+    
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param("i", $docente_id);
+        $stmt->execute();
+        
+        $result = $stmt->get_result();
+        
+        if ($result->num_rows === 0) {
+            throw new Exception("Docente no encontrado");
+        }
+        
+        return $result->fetch_all(MYSQLI_ASSOC);
+    }
+
+     /**
+     * Obtiene todos los docentes por departamento con los roles asignados (ID y nombre) y el nombre del departamento.
+     *
+     * @param int $dept_id ID del departamento
+     * @return array Lista de docentes con roles y nombre del departamento
+     */
+    public function obtenerDocentesConRoles($dept_id)
+    {
+        // Consulta para obtener docentes con sus roles (ID y nombre) y nombre de departamento
+        $query = "
+            SELECT
+                d.docente_id,
+                d.nombre,
+                d.apellido,
+                d.correo,
+                d.numero_empleado,
+                -- Concatenamos los roles de cada docente, mostrando tanto el ID como el nombre del rol
+                GROUP_CONCAT(r.rol_id, ':', r.nombre) AS roles,  
+                dep.nombre AS nombre_departamento
+            FROM Docente d
+            JOIN Usuario u ON u.usuario_id = d.usuario_id
+            JOIN UsuarioRol ur ON ur.usuario_id = u.usuario_id
+            JOIN Rol r ON ur.rol_id = r.rol_id
+            JOIN Departamento dep ON dep.dept_id = d.dept_id
+            WHERE d.dept_id = ?
+            GROUP BY d.docente_id, dep.nombre
+        ";
+
+        // Preparamos la consulta
+        $stmt = $this->conn->prepare($query);
+        $stmt->bind_param("i", $dept_id);  // Vinculamos el parámetro de entrada para el dept_id
+
+        // Ejecutamos la consulta
+        if ($stmt->execute()) {
+            $result = $stmt->get_result();
+            $docentes = [];
+            
+            // Obtenemos los resultados
+            while ($row = $result->fetch_assoc()) {
+                // Guardamos los datos de cada docente en un arreglo
+                $roles = [];
+                // Convertimos la cadena de roles concatenados (ID y nombre) en un arreglo
+                $rolesArray = explode(',', $row['roles']);
+                foreach ($rolesArray as $role) {
+                    list($roleId, $roleName) = explode(':', $role);
+                    $roles[] = ['rol_id' => $roleId, 'nombre' => $roleName];
+                }
+
+                $docentes[] = [
+                    'docente_id' => $row['docente_id'],
+                    'nombre' => $row['nombre'],
+                    'apellido' => $row['apellido'],
+                    'correo' => $row['correo'],
+                    'numero_empleado' => $row['numero_empleado'],
+                    'roles' => $roles,  // Roles con ID y nombre
+                    'nombre_departamento' => $row['nombre_departamento']
+                ];
+            }
+            return $docentes;
+        } else {
+            throw new Exception("Error al obtener los docentes con roles y nombre de departamento.");
+        }
+    }
+>>>>>>> Stashed changes
 }
 ?>
