@@ -58,5 +58,62 @@ class Docente {
         }
         return ['mensaje' => $mensaje];
     }
+
+
+    /*
+        * Obtiene las clases activas de un docente.
+        *
+        * @param int $docente_id ID del docente.
+        * @return array Lista de clases activas del docente.
+        * @throws Exception Si ocurre un error o no se encuentra el docente.
+        @Author Jose Vargas
+    */
+    public function obtenerClasesActDocente($docente_id) {
+        $sql = "SELECT 
+                    c.clase_id,
+                    c.codigo AS codigo_clase,
+                    c.nombre AS nombre_clase,
+                    c.creditos,
+                    c.tiene_laboratorio,
+                    s.seccion_id,
+                    s.hora_inicio,
+                    s.hora_fin,
+                    GROUP_CONCAT(DISTINCT sd.dia_id ORDER BY sd.dia_id SEPARATOR ', ') AS lista_dia_ids,
+                    GROUP_CONCAT(DISTINCT ds.nombre ORDER BY sd.dia_id SEPARATOR ', ') AS nombres_dias,
+                    e.nombre AS edificio,
+                    a.nombre AS aula,
+                    pa.anio,
+                    pa.numero_periodo_id
+                FROM Seccion s
+                INNER JOIN Clase c ON s.clase_id = c.clase_id
+                INNER JOIN PeriodoAcademico pa ON s.periodo_academico_id = pa.periodo_academico_id
+                INNER JOIN Aula a ON s.aula_id = a.aula_id
+                INNER JOIN Edificio e ON a.edificio_id = e.edificio_id
+                INNER JOIN EstadoProceso ep ON pa.estado_proceso_id = ep.estado_proceso_id
+                LEFT JOIN SeccionDia sd ON s.seccion_id = sd.seccion_id
+                LEFT JOIN DiaSemana ds ON sd.dia_id = ds.dia_id
+                WHERE 
+                    s.docente_id = ?  -- ID del docente
+                    AND ep.estado_proceso_id = 1  -- Periodo activo
+                GROUP BY 
+                    c.clase_id, c.codigo, c.nombre, c.creditos, c.tiene_laboratorio,
+                    s.seccion_id, s.hora_inicio, s.hora_fin,
+                    e.nombre, a.nombre, pa.anio, pa.numero_periodo_id
+                ORDER BY 
+                    s.seccion_id, s.hora_inicio, s.hora_fin";
+    
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param("i", $docente_id);
+        $stmt->execute();
+        
+        $result = $stmt->get_result();
+        
+        if ($result->num_rows === 0) {
+            throw new Exception("Docente no encontrado");
+        }
+        
+        return $result->fetch_all(MYSQLI_ASSOC);
+    }
+
 }
 ?>
