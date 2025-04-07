@@ -43,18 +43,19 @@ INSERT INTO CentroCarrera (centro_id, carrera_id) VALUES
 (5, 5);
 
 INSERT INTO Clase (dept_id, codigo, nombre, creditos, tiene_laboratorio) VALUES 
-(1, 'MAT101', 'Cálculo I', 4, FALSE),
-(2, 'ICV201', 'Diseño Estructural', 5, TRUE),
-(3, 'MED301', 'Anatomía Humana', 6, TRUE),
+(1, 'MAT101', 'Programación I', 4, FALSE),
+(2, 'ICV201', 'Bases de Datos', 5, TRUE),
+(3, 'MED301', 'Inteligencia Artificial', 6, TRUE),
 (4, 'DER101', 'Derecho Constitucional', 4, FALSE),
 (5, 'ART101', 'Pintura al Óleo', 3, FALSE);
 
 INSERT INTO ClaseCarrera (clase_id, carrera_id) VALUES 
-(1, 1),
-(2, 2),
-(3, 3),
-(4, 4),
-(5, 5);
+(1, 1),  -- Programación I
+(2, 1),  -- Bases de Datos
+(3, 1),  -- Inteligencia Artificial
+(4, 2),  -- Mecánica de Materiales
+(5, 2);  -- Topografía Avanzada
+
 
 INSERT INTO NumeroPeriodo (nombre) VALUES 
 ('PRIMERO'),
@@ -85,25 +86,40 @@ INSERT INTO Aula (edificio_id, nombre, capacidad) VALUES
 (5, 'Aula 501', 90);
 
 INSERT INTO Rol (nombre) VALUES 
-('Administrador'),
 ('Estudiante'),
 ('Docente'),
+('Jefe de departamento'),
 ('Coordinador'),
-('Revisor');
+('Revisor'),
+('Administrador');
 
-INSERT INTO Usuario (username, password) VALUES 
-('juan.perez', 'password123'),
-('maria.gomez', 'password456'),
-('carlos.lopez', 'password789'),
-('ana.martinez', 'password012'),
-('luis.rodriguez', 'password345');
+INSERT INTO Usuario (username, password) VALUES
+('estudiante1', 'pass123'),
+('estudiante2', 'pass456'),
+('juan.perez', 'pass789'), 
+('maria.gomez', 'pass1'), 
+('carlos.reyes', 'pass2'),
+('ana.lopez', 'pass3'),  
+('admin1', 'adminpass'),
+('luis.perez', 'pass4'),
+('jose.funes', 'pass5'); 
 
-INSERT INTO UsuarioRol (usuario_id, rol_id) VALUES 
-(1, 1),
-(2, 2),
-(3, 3),
-(4, 4),
-(5, 5);
+
+INSERT INTO UsuarioRol (usuario_id, rol_id) VALUES
+(1, 1), -- Estudiante1 como Estudiante
+(2, 1), -- Estudiante2 como Estudiante
+(3, 2), -- Juan Pérez como Docente
+(3, 3), -- Juan Pérez como Jefe
+(4, 2), -- María Gómez como Docente
+(4, 4), -- María Gómez como Coordinador
+(5, 2), -- Carlos Reyes como Docente
+(6, 5), -- Ana López como Revisor
+(7, 6), -- Admin1 como Admin
+(8, 2),
+(8, 3),
+(9, 4),
+(9, 2);
+
 
 INSERT INTO EstadoPasswordResetRequest (nombre) VALUES 
 ('PENDIENTE'),
@@ -121,10 +137,7 @@ INSERT INTO ResetPasswordRequest (usuario_id, token, fecha_solicitud, fecha_expi
 
 INSERT INTO Estudiante (usuario_id, numero_cuenta, identidad, nombre, apellido, correo_personal, telefono, direccion, centro_id, indice_global, indice_periodo) VALUES 
 (1, 201256878433, '123456789', 'Juan', 'Pérez', 'juan.perez@example.com', '555-1234', 'Calle 123, Ciudad', 1, 8.5, 8.7),
-(2, 206728450183, '987654321', 'María', 'Gómez', 'maria.gomez@example.com', '555-5678', 'Avenida 456, Ciudad', 2, 9.0, 9.2),
-(3, 202387443658, '456789123', 'Carlos', 'López', 'carlos.lopez@example.com', '555-9101', 'Calle 789, Ciudad', 3, 7.8, 8.0),
-(4, 201587444598, '321654987', 'Ana', 'Martínez', 'ana.martinez@example.com', '555-1122', 'Avenida 101, Ciudad', 4, 8.9, 9.1),
-(5, 201587453658, '654321987', 'Luis', 'Rodríguez', 'luis.rodriguez@example.com', '555-3344', 'Calle 202, Ciudad', 5, 8.2, 8.4);
+(2, 206728450183, '987654321', 'María', 'Gómez', 'maria.gomez@example.com', '555-5678', 'Avenida 456, Ciudad', 2, 9.0, 9.2);
 
 INSERT INTO FotosEstudiante (ruta_foto, estudiante_id) VALUES 
 ('fotos/juan_perez.jpg', 1),
@@ -141,11 +154,13 @@ INSERT INTO EstudianteCarrera (estudiante_id, carrera_id) VALUES
 (5, 5);
 
 INSERT INTO Docente (usuario_id, nombre, apellido, correo, numero_empleado, centro_id, dept_id, foto) VALUES 
-(1, 'Pedro', 'García', 'pedro.garcia@example.com', 'EMP001', 1, 1, 'foto1.jpg'),
-(2, 'Laura', 'Fernández', 'laura.fernandez@example.com', 'EMP002', 2, 2, 'foto2.jpg'),
-(3, 'Miguel', 'Sánchez', 'miguel.sanchez@example.com', 'EMP003', 3, 3, 'foto3.jpg'),
-(4, 'Sofía', 'Ramírez', 'sofia.ramirez@example.com', 'EMP004', 4, 4, 'foto4.jpg'),
-(5, 'Jorge', 'Díaz', 'jorge.diaz@example.com', 'EMP005', 5, 5, 'foto5.jpg');
+(3, 'Juan', 'Pérez', 'juan@universidad.edu', 'EMP-001', 1, 1, 'foto_juan.jpg'),  -- Jefe de Sistemas
+(4, 'María', 'Gómez', 'maria@universidad.edu', 'EMP-002', 1, 1, 'foto_maria.jpg'), -- Coordinadora
+(5, 'Carlos', 'Reyes', 'carlos@universidad.edu', 'EMP-003', 2, 3, 'foto_carlos.jpg'); -- Docente normal
+
+
+UPDATE Departamento SET jefe_docente_id = 1 WHERE dept_id = 1; -- Juan Pérez es jefe de Sistemas
+UPDATE carrera SET coordinador_docente_id = 2 WHERE dept_id = 1;
 
 INSERT INTO TipoDocumento (nombre) VALUES 
 ('CEDULA'),
@@ -184,10 +199,7 @@ INSERT INTO AspiranteCarrera (aspirante_id, carrera_id, estado_aspirante_carrera
 
 INSERT INTO Revisor (estudiante_id, fecha_aprobacion, usuario_id) VALUES 
 (1, '2023-10-01', 1),
-(2, '2023-10-02', 2),
-(3, '2023-10-03', 3),
-(4, '2023-10-04', 4),
-(5, '2023-10-05', 5);
+(2, '2023-10-02', 2);
 
 INSERT INTO EstadoSolicitudRevisor (nombre) VALUES 
 ('PENDIENTE'),
@@ -198,17 +210,14 @@ INSERT INTO EstadoSolicitudRevisor (nombre) VALUES
 
 INSERT INTO AplicanteRevisor (estudiante_id, carrera_id, fecha_solicitud, estado_solicitud_revisor_id) VALUES 
 (1, 1, '2023-10-01', 1),
-(2, 2, '2023-10-02', 2),
-(3, 3, '2023-10-03', 3),
-(4, 4, '2023-10-04', 4),
-(5, 5, '2023-10-05', 5);
+(2, 2, '2023-10-02', 2);
 
 INSERT INTO RevisionAspirante (aspirante_id, revisor_usuario_id, fecha_revision) VALUES 
 (1, 1, '2023-10-01 12:00:00'),
 (2, 2, '2023-10-02 12:00:00'),
-(3, 3, '2023-10-03 12:00:00'),
-(4, 4, '2023-10-04 12:00:00'),
-(5, 5, '2023-10-05 12:00:00');
+(3, 1, '2023-10-03 12:00:00'),
+(4, 2, '2023-10-04 12:00:00'),
+(5, 1, '2023-10-05 12:00:00');
 
 INSERT INTO TipoRechazoSolicitudAspirante (nombre) VALUES 
 ('Documentación Incompleta'),
@@ -275,10 +284,7 @@ INSERT INTO EstadoSeccion (nombre) VALUES
 
 INSERT INTO Seccion (clase_id, docente_id, periodo_academico_id, hora_inicio, hora_fin, aula_id, estado_seccion_id, video_url, motivo_cancelacion, cupos) VALUES 
 (1, 1, 1, '08:00:00', '10:00:00', 1, 1, NULL, NULL, 30),
-(2, 2, 2, '10:00:00', '12:00:00', 2, 2, NULL, NULL, 25),
-(3, 3, 3, '14:00:00', '16:00:00', 3, 3, NULL, NULL, 20),
-(4, 4, 4, '16:00:00', '18:00:00', 4, 4, NULL, NULL, 15),
-(5, 5, 5, '18:00:00', '20:00:00', 5, 5, NULL, NULL, 10);
+(2, 2, 2, '10:00:00', '12:00:00', 2, 2, NULL, NULL, 25);
 
 INSERT INTO DiaSemana (nombre) VALUES 
 ('Lunes'),
@@ -289,10 +295,7 @@ INSERT INTO DiaSemana (nombre) VALUES
 
 INSERT INTO SeccionDia (seccion_id, dia_id) VALUES 
 (1, 1),
-(2, 2),
-(3, 3),
-(4, 4),
-(5, 5);
+(2, 2);
 
 INSERT INTO Laboratorio (clase_id, codigo_laboratorio, periodo_academico_id, hora_inicio, hora_fin, aula_id, estado_seccion_id, motivo_cancelacion, cupos) VALUES 
 (1, 'LAB101', 1, '08:00:00', '10:00:00', 1, 1, NULL, 30),
@@ -338,24 +341,21 @@ INSERT INTO ProcesosExcepcionales (periodo_academico_id, tipo_proceso_id, fecha_
 
 INSERT INTO EstadoLibro (nombre) VALUES 
 ('ACTIVO'),
-('INACTIVO'),
-('Reservado'),
-('En Reparación'),
-('Perdido');
+('INACTIVO');
 
 INSERT INTO Libro (titulo, editorial, libro_url, fecha_publicacion, descripcion, isbn_libro, estado_libro_id) VALUES 
-('Cálculo I', 'Editorial Matemáticas', 'http://example.com/libro1', '2020-01-01', 'Libro de Cálculo I', 'A42FFGTG23', 1),
-('Diseño Estructural', 'Editorial Ingeniería', 'http://example.com/libro2', '2019-05-15', 'Libro de Diseño Estructural', 'PKYVV538HY', 2),
-('Anatomía Humana', 'Editorial Medicina', 'http://example.com/libro3', '2021-03-10', 'Libro de Anatomía Humana', '08GUU75NBG', 3),
-('Derecho Constitucional', 'Editorial Derecho', 'http://example.com/libro4', '2018-07-20', 'Libro de Derecho Constitucional', 'A42FKI352', 4),
-('Pintura al Óleo', 'Editorial Arte', 'http://example.com/libro5', '2022-09-05', 'Libro de Pintura al Óleo', 'A4IU09G23', 5);
+('Cálculo I', 'Editorial Matemáticas', 'http://example.com/libro1', '2020-01-01', 'Libro de Cálculo I', 'xx1', 1),
+('Programación II', 'Editorial Ingeniería', 'http://example.com/libro2', '2019-05-15', 'Libro de Programación', 'x-1-1-1', 1),
+('Ingles Básico', 'Editorial Ingles', 'http://example.com/libro3', '2021-03-10', 'Libro de Ingles', '1234', 1),
+('Administracion ', 'Editorial Admin', 'http://example.com/libro4', '2018-07-20', 'Libro de Administracion', '1111-11', 1),
+('Estadistica', 'Editorial Estadistica', 'http://example.com/libro5', '2022-09-05', 'Libro de Estadistica', 'X-3', 1);
 
 INSERT INTO Tag (tag_nombre) VALUES 
 ('Matemáticas'),
-('Ingeniería'),
-('Medicina'),
-('Derecho'),
-('Arte');
+('Electronica'),
+('Español'),
+('Filosofía'),
+('Académico');
 
 INSERT INTO TagLibro (libro_id, tag_id) VALUES 
 (1, 1),
@@ -371,26 +371,17 @@ INSERT INTO Autor (nombre, apellido) VALUES
 ('Ana', 'Martínez'),
 ('Luis', 'Rodríguez');
 
-INSERT INTO Autor (nombre, apellido) VALUES 
-('Juan', 'Pérez'),
-('María', 'Gómez'),
-('Carlos', 'López'),
-('Ana', 'Martínez'),
-('Luis', 'Rodríguez');
 
 INSERT INTO LibroAutor (libro_id, autor_id) VALUES 
 (1, 1),
 (2, 2),
 (3, 3),
-(4, 4),
-(5, 5);
+(4, 4);
 
 INSERT INTO ClaseLibro (clase_id, libro_id) VALUES 
-(1, 1),
-(2, 2),
-(3, 3),
-(4, 4),
-(5, 5);
+(1, 1), 
+(2, 2),  
+(3, 4); 
 
 INSERT INTO EstadoCurso (nombre) VALUES 
 ('ABANDONADA'),
@@ -408,17 +399,12 @@ INSERT INTO EstadoMatricula (nombre) VALUES
 
 INSERT INTO Matricula (estudiante_id, seccion_id, fecha, observacion, estado_matricula_id, orden_inscripcion) VALUES 
 (1, 1, '2023-10-01', NULL, 1, 1),
-(2, 2, '2023-10-02', NULL, 2, 2),
-(3, 3, '2023-10-03', NULL, 3, 3),
-(4, 4, '2023-10-04', NULL, 4, 4),
-(5, 5, '2023-10-05', NULL, 5, 5);
+(2, 2, '2023-10-02', NULL, 2, 2);
 
 INSERT INTO HistorialEstudiante (estudiante_id, seccion_id, calificacion, observacion, fecha, estado_curso_id) VALUES 
 (1, 1, 8.5, NULL, '2023-10-01', 1),
 (2, 2, 9.0, NULL, '2023-10-02', 2),
-(3, 3, 7.8, NULL, '2023-10-03', 3),
-(4, 4, 8.9, NULL, '2023-10-04', 4),
-(5, 5, 8.2, NULL, '2023-10-05', 5);
+(1, 2, 8.2, NULL, '2023-10-03', 1);
 
 INSERT INTO MotivoRechazoSolicitud (descripcion) VALUES 
 ('Falta de documentación'),
@@ -483,6 +469,10 @@ INSERT INTO ClaseRequisito (clase_id, prerequisito_clase_id) VALUES
 (4, 5),
 (5, 1);
 
+INSERT INTO EstadoCorreo (nombre, descripcion) VALUES 
+('PENDIENTE', 'Correo pendiente de envío'),
+('ENVIADO', 'Correo enviado exitosamente'),
+('FALLIDO', 'Falló el envío del correo');
 
 
 

@@ -37,7 +37,7 @@ class PeriodoAcademico {
      * @throws Exception Si el estado no es válido o no se encuentra en la base de datos.
      */
     public function obtenerEstadoPeriodoId($estado_nombre) {
-        $stmt = $this->conn->prepare("SELECT estado_periodo_id FROM EstadoPeriodo WHERE nombre = ?");
+        $stmt = $this->conn->prepare("SELECT estado_proceso_id FROM EstadoProceso WHERE nombre = ?");
         if (!$stmt) {
             throw new Exception("Error preparando la consulta de estado: " . $this->conn->error);
         }
@@ -48,7 +48,7 @@ class PeriodoAcademico {
             throw new Exception("Estado del periodo no válido.");
         }
         $row = $result->fetch_assoc();
-        $estado_periodo_id = $row['estado_periodo_id'];
+        $estado_periodo_id = $row['estado_proceso_id']; // Asegúrate de usar la columna correcta aquí
         $stmt->close();
         return $estado_periodo_id;
     }
@@ -65,7 +65,7 @@ class PeriodoAcademico {
      * @throws Exception Si ocurre un error durante la inserción.
      */
     public function crearPeriodoAcademico($anio, $numero_periodo, $fecha_inicio, $fecha_fin, $estado_periodo_id) {
-        $stmt = $this->conn->prepare("INSERT INTO PeriodoAcademico (anio, numero_periodo, fecha_inicio, fecha_fin, estado_periodo_id) VALUES (?, ?, ?, ?, ?)");
+        $stmt = $this->conn->prepare("INSERT INTO PeriodoAcademico (anio, numero_periodo_id, fecha_inicio, fecha_fin, estado_proceso_id) VALUES (?, ?, ?, ?, ?)");
         if (!$stmt) {
             throw new Exception("Error preparando la consulta de inserción: " . $this->conn->error);
         }
@@ -76,6 +76,57 @@ class PeriodoAcademico {
         $id = $stmt->insert_id;
         $stmt->close();
         return $id;
+    }    
+
+    /**
+     * Obtiene los periodos académicos activos, comprobando que la fecha actual no haya pasado.
+     *
+     * @return array Lista de periodos académicos activos
+     * @throws Exception Si ocurre un error en la consulta
+     */
+    public function obtenerPeriodosActivos() {
+        // Obtener la fecha actual
+        $fecha_actual = date('Y-m-d');
+
+        // Consulta SQL para obtener los periodos académicos activos y comparar con la fecha actual
+        $sql = "
+            SELECT 
+                pa.periodo_academico_id,
+                pa.anio,
+                np.nombre AS numero_periodo,
+                pa.fecha_inicio,
+                pa.fecha_fin,
+                ep.nombre AS estado_proceso
+            FROM 
+                PeriodoAcademico pa
+            JOIN 
+                NumeroPeriodo np ON pa.numero_periodo_id = np.numero_periodo_id
+            JOIN 
+                EstadoProceso ep ON pa.estado_proceso_id = ep.estado_proceso_id
+            WHERE 
+                ep.nombre = 'ACTIVO'
+                AND pa.fecha_fin >= ? -- Comparar la fecha de fin con la fecha actual
+        ";
+
+        $stmt = $this->conn->prepare($sql);
+        if (!$stmt) {
+            throw new Exception("Error preparando la consulta: " . $this->conn->error);
+        }
+
+        $stmt->bind_param("s", $fecha_actual); // Pasamos la fecha actual a la consulta
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        // Comprobamos si existen periodos académicos activos
+        $periodos = [];
+        while ($row = $result->fetch_assoc()) {
+            $periodos[] = $row;
+        }
+
+        $stmt->close();
+
+        // Devolver los periodos activos
+        return $periodos;
     }
 }
 ?>

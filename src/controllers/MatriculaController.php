@@ -12,7 +12,6 @@
 
 require_once __DIR__ . '/../models/Matricula.php';
 
-
 class MatriculaController {
     private $model;
 
@@ -294,6 +293,37 @@ class MatriculaController {
             error_log("Error: " . $e->getMessage());
             http_response_code(500);  // Error interno del servidor
             echo json_encode(['error' => 'Error interno del servidor']);
+        }
+    }
+
+     /**
+     * Cancela la matrícula de un estudiante en una sección.
+     *
+     * @param array $data Datos recibidos del endpoint (ID del estudiante y ID de la sección).
+     * @return void
+     */
+    public function cancelarMatricula($data) {
+        if (!isset($data['estudiante_id']) || !isset($data['seccion_id'])) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Faltan los parámetros: estudiante_id y seccion_id']);
+            exit;
+        }
+
+        $estudiante_id = intval($data['estudiante_id']);
+        $seccion_id = intval($data['seccion_id']);
+
+        try {
+            // Cancelar la matrícula del estudiante
+            $this->model->cancelarMatrícula($estudiante_id, $seccion_id);
+
+            // Respuesta exitosa
+            http_response_code(200);
+            echo json_encode(['message' => 'Matrícula cancelada correctamente']);
+
+        } catch (Exception $e) {
+            // Error
+            http_response_code(500);
+            echo json_encode(['error' => $e->getMessage()]);
         }
     }
 }

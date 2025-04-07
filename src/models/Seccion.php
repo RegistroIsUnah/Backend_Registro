@@ -208,12 +208,11 @@ class Seccion {
                             DATE_FORMAT(s.hora_inicio, '%H%i') AS seccion_codigo,
                             s.estado_seccion_id,
                             es.nombre AS estado_seccion,
-                            s.video_url,
-                            s.motivo_cancelacion,
                             s.cupos - IFNULL(
                                 (SELECT COUNT(*) 
                                 FROM Matricula m
-                                WHERE m.seccion_id = s.seccion_id), 0) AS cupos_disponibles,
+                                JOIN EstadoMatricula em ON m.estado_matricula_id = em.estado_matricula_id
+                                WHERE m.seccion_id = s.seccion_id AND em.nombre = 'Matriculado'), 0) AS cupos_disponibles,
                             d.nombre AS docente_nombre,
                             d.apellido AS docente_apellido,
                             a.nombre AS aula_nombre,
@@ -260,6 +259,7 @@ class Seccion {
         $stmt->close();
         return $secciones;
     }
+
 
 
 
@@ -329,6 +329,87 @@ class Seccion {
 
 
 
+
+
+      /**
+     * Obtiene las secciones activas por departamento
+     * 
+     * @param int $deptId ID del departamento
+     * @return array Datos de las secciones
+     * @throws RuntimeException Si ocurre un error en la consulta SQL
+     */
+    public function getSeccionesByDepartamento(int $deptId): array
+    {
+        $sql = "SELECT
+                    s.seccion_id,
+                    LPAD(DATE_FORMAT(s.hora_inicio, '%H%i'), 4, '0') AS numero_seccion,
+                    c.codigo AS codigo_clase,
+                    c.nombre AS nombre_clase,
+                    d.numero_empleado AS numero_empleado_docente,
+                    CONCAT(d.nombre, ' ', d.apellido) AS docente_asignado,
+                    (SELECT COUNT(*) 
+                     FROM Matricula m
+                     JOIN EstadoMatricula em ON m.estado_matricula_id = em.estado_matricula_id
+                     WHERE m.seccion_id = s.seccion_id AND em.nombre = 'Matriculado') AS estudiantes_matriculados,
+                    s.cupos AS cupos_habilitados,
+                    e.nombre AS edificio,
+                    a.nombre AS aula
+                FROM 
+                    Seccion s
+                JOIN 
+                    Clase c ON s.clase_id = c.clase_id
+                JOIN 
+                    Docente d ON s.docente_id = d.docente_id
+                JOIN 
+                    Aula a ON s.aula_id = a.aula_id
+                JOIN 
+                    Edificio e ON a.edificio_id = e.edificio_id
+                WHERE 
+                    s.estado_seccion_id = (SELECT estado_seccion_id FROM EstadoSeccion WHERE nombre = 'ACTIVA')
+                AND 
+                    c.dept_id = ?
+                ORDER BY 
+                    s.hora_inicio";
+        
+        $stmt = $this->conn->prepare($sql);
+        if (!$stmt) {
+            throw new RuntimeException("Error al preparar la consulta: " . $this->conn->error);
+        }
+        
+        $stmt->bind_param("i", $deptId);
+        if (!$stmt->execute()) {
+            throw new RuntimeException("Error al ejecutar la consulta: " . $stmt->error);
+        }
+        
+        $result = $stmt->get_result();
+        return $result->fetch_all(MYSQLI_ASSOC);
+    }
+
+    /**
+     * Obtiene el nombre de un departamento por su ID
+     *
+     * @param int $deptId
+     * @return string
+     */
+    public function getNombreDepartamento(int $deptId): string
+    {
+        $sql = "SELECT nombre FROM Departamento WHERE dept_id = ?";
+        $stmt = $this->conn->prepare($sql);
+
+        if (!$stmt) {
+            throw new RuntimeException("Error al preparar la consulta: " . $this->conn->error);
+        }
+
+        $stmt->bind_param("i", $deptId);
+        if (!$stmt->execute()) {
+            throw new RuntimeException("Error al ejecutar la consulta: " . $stmt->error);
+        }
+
+        $result = $stmt->get_result();
+        $row = $result->fetch_assoc();
+
+        return $row ? $row['nombre'] : 'Departamento desconocido';
+    }
 
 }
 ?>

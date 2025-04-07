@@ -4,7 +4,7 @@
  * y los cupos disponibles.
  *
  * Permite filtrar las secciones mediante el parámetro GET 'clase_id'.
- * servidor:puerto/api/get/secciones.php?clase_id=1
+ * servidor:puerto/api/get/seccion_detalles_matricula.php?clase_id=1
  *
  * Respuestas HTTP:
  * - 200 OK: Retorna la lista de secciones en formato JSON.

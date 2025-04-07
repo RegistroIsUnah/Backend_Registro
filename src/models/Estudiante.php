@@ -124,9 +124,6 @@ class Estudiante {
         WHERE e.estudiante_id = ?
         GROUP BY e.estudiante_id
 
-
-
-
      */
     public function obtenerPerfilEstudiante($estudianteId) {
 
@@ -176,55 +173,53 @@ class Estudiante {
     }
 
     /**
- * Actualiza los datos del perfil del estudiante
- * 
- * @param int $estudianteId
- * @param array $datosActualizados
- * @return bool
- * @throws Exception
- * @author Jose Vargas
- * @version 1.0
- */
-public function actualizarPerfil($estudianteId, $datosActualizados) {
-    // Validar campos permitidos para actualización
-    $camposPermitidos = [
-        'telefono', 
-        'direccion', 
-        'correo_personal'
-    ];
-    
-    $camposActualizar = [];
-    $valores = [];
-    $tipos = '';
-    
-    foreach ($datosActualizados as $campo => $valor) {
-        if (in_array($campo, $camposPermitidos)) {
-            $camposActualizar[] = "$campo = ?";
-            $valores[] = $valor;
-            $tipos .= 's'; // Todos los campos permitidos son strings
+     * Actualiza los datos del perfil del estudiante
+     * 
+     * @param int $estudianteId
+     * @param array $datosActualizados
+     * @return bool
+     * @throws Exception
+     * @author Jose Vargas
+     * @version 1.0
+     */
+    public function actualizarPerfil($estudianteId, $datosActualizados) {
+        // Validar campos permitidos para actualización
+        $camposPermitidos = [
+            'telefono', 
+            'direccion', 
+            'correo_personal'
+        ];
+        
+        $camposActualizar = [];
+        $valores = [];
+        $tipos = '';
+        
+        foreach ($datosActualizados as $campo => $valor) {
+            if (in_array($campo, $camposPermitidos)) {
+                $camposActualizar[] = "$campo = ?";
+                $valores[] = $valor;
+                $tipos .= 's'; // Todos los campos permitidos son strings
+            }
         }
+        
+        if (empty($camposActualizar)) {
+            throw new Exception("No hay campos válidos para actualizar");
+        }
+        
+        // Construir la consulta SQL
+        $sql = "UPDATE Estudiante SET " . implode(', ', $camposActualizar) . " WHERE estudiante_id = ?";
+        $valores[] = $estudianteId;
+        $tipos .= 'i';
+        
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param($tipos, ...$valores);
+        
+        if (!$stmt->execute()) {
+            throw new Exception("Error al actualizar perfil: " . $stmt->error);
+        }
+        
+        return true;
     }
-    
-    if (empty($camposActualizar)) {
-        throw new Exception("No hay campos válidos para actualizar");
-    }
-    
-    // Construir la consulta SQL
-    $sql = "UPDATE Estudiante SET " . implode(', ', $camposActualizar) . " WHERE estudiante_id = ?";
-    $valores[] = $estudianteId;
-    $tipos .= 'i';
-    
-    $stmt = $this->conn->prepare($sql);
-    $stmt->bind_param($tipos, ...$valores);
-    
-    if (!$stmt->execute()) {
-        throw new Exception("Error al actualizar perfil: " . $stmt->error);
-    }
-    
-    return true;
-}
-
-
 
 
     /**
@@ -760,6 +755,405 @@ public function actualizarPerfil($estudianteId, $datosActualizados) {
             return $historial;
         } catch (Exception $e) {
             throw new Exception("Error al obtener el historial del estudiante: " . $e->getMessage());
+        }
+    }
+
+    /**
+     * Obtiene los estudiantes matriculados en una sección específica.
+     *
+     * @param int $seccion_id ID de la sección.
+     * @return array Lista de estudiantes matriculados en la sección.
+     * @throws Exception Si ocurre un error en la consulta.
+     */
+    public function obtenerEstudiantesPorSeccion($seccion_id) {
+        $sql = "
+            SELECT
+                e.estudiante_id,
+                e.nombre,
+                e.apellido,
+                e.numero_cuenta,
+                e.correo_personal,
+                GROUP_CONCAT(c.nombre ORDER BY c.nombre ASC) AS carreras,  -- Obtener las carreras asociadas
+                GROUP_CONCAT(c.carrera_id ORDER BY c.carrera_id ASC) AS carrera_ids  -- Obtener los IDs de las carreras
+            FROM Estudiante e
+            INNER JOIN Matricula m ON e.estudiante_id = m.estudiante_id
+            LEFT JOIN EstudianteCarrera ec ON e.estudiante_id = ec.estudiante_id
+            LEFT JOIN Carrera c ON ec.carrera_id = c.carrera_id
+            WHERE m.seccion_id = ?
+            GROUP BY e.estudiante_id, e.nombre, e.apellido, e.numero_cuenta, e.correo_personal
+        ";
+
+        $stmt = $this->conn->prepare($sql);
+        if (!$stmt) {
+            throw new Exception("Error preparando la consulta: " . $this->conn->error);
+        }
+
+        $stmt->bind_param("i", $seccion_id);
+        if (!$stmt->execute()) {
+            throw new Exception("Error ejecutando la consulta: " . $stmt->error);
+        }
+        $result = $stmt->get_result();
+        $estudiantes = [];
+        while ($row = $result->fetch_assoc()) {
+            $estudiantes[] = $row;
+        }
+        $stmt->close();
+        return $estudiantes;
+    }
+
+   /**
+     * Obtiene los estudiantes matriculados en una sección para generar un CSV.
+     *
+     * @param int $seccion_id ID de la sección
+     * @return array Lista de estudiantes matriculados
+     */
+    public function obtenerEstudiantesPorSeccionCSV($seccion_id) {
+        $sql = "
+            SELECT
+                e.nombre,
+                e.apellido,
+                e.numero_cuenta,
+                e.correo_personal,
+                GROUP_CONCAT(c.nombre ORDER BY c.nombre ASC) AS carreras
+            FROM
+                Matricula m
+            JOIN
+                Estudiante e ON m.estudiante_id = e.estudiante_id
+            JOIN
+                EstudianteCarrera ec ON e.estudiante_id = ec.estudiante_id
+            JOIN
+                Carrera c ON ec.carrera_id = c.carrera_id
+            WHERE
+                m.seccion_id = ?
+            GROUP BY
+                e.estudiante_id
+        ";
+
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param("i", $seccion_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        $estudiantes = [];
+        while ($row = $result->fetch_assoc()) {
+            // No es necesario usar implode() porque GROUP_CONCAT ya devuelve una cadena separada por comas
+            $row['carreras'] = $row['carreras']; // Simplemente deja el valor tal como está
+            $estudiantes[] = $row;
+        }
+        
+        $stmt->close();
+        
+        return $estudiantes;
+    }
+
+    /**
+     * Genera un archivo CSV con los estudiantes matriculados en una sección.
+     *
+     * @param int $seccion_id ID de la sección
+     * @return string Ruta del archivo generado
+     */
+    public function generarCSVEstudiantesPorSeccion($seccion_id) {
+        // Obtener los estudiantes
+        $estudiantes = $this->obtenerEstudiantesPorSeccionCSV($seccion_id);
+
+        if (empty($estudiantes)) {
+            throw new Exception('No hay estudiantes matriculados en esta sección');
+        }
+
+        // Obtener los detalles de la sección
+        $seccion = $this->obtenerDetallesSeccion($seccion_id);
+        $clase_nombre = $seccion['nombre_clase']; // Nombre de la clase
+        $hora_inicio = $seccion['hora_inicio'];
+        $codigo_seccion = date('Hi', strtotime($hora_inicio)); // Convertir hora a formato 0800
+
+        // Crear el nombre del archivo CSV
+        $fileName = __DIR__ . "/../../uploads/listado_estudiantes/{$clase_nombre}_{$codigo_seccion}.csv";
+
+        // Verificar si la carpeta existe, si no, crearla con permisos adecuados
+        $uploadsDir = __DIR__ . '/../../uploads/listado_estudiantes/';
+        if (!is_dir($uploadsDir)) {
+            mkdir($uploadsDir, 0755, true);  // Crear directorio con permisos 0755
+        }
+
+        // Abrir el archivo CSV para escritura
+        $file = fopen($fileName, 'w');
+
+        // Verificar si el archivo se ha abierto correctamente
+        if ($file === false) {
+            throw new Exception('No se pudo crear el archivo CSV');
+        }
+
+        // Escribir los encabezados en el archivo CSV
+        fputcsv($file, ['Nombre', 'Apellido', 'Número de Cuenta', 'Correo', 'Carreras']); 
+
+        // Escribir los datos de los estudiantes
+        foreach ($estudiantes as $estudiante) {
+            // Las carreras ya están separadas por comas, así que no necesitamos usar implode
+            fputcsv($file, [
+                $estudiante['nombre'],
+                $estudiante['apellido'],
+                $estudiante['numero_cuenta'],
+                $estudiante['correo_personal'],
+                $estudiante['carreras'] // Ya es una cadena separada por comas
+            ]);
+        }
+
+        fclose($file);
+
+        return $fileName;
+    }
+
+
+    /**
+     * Obtiene los detalles de la sección, incluyendo nombre de clase y hora de inicio.
+     *
+     * @param int $seccion_id ID de la sección.
+     * @return array Detalles de la sección.
+     */
+    private function obtenerDetallesSeccion($seccion_id) {
+        $sql = "SELECT c.nombre AS nombre_clase, s.hora_inicio
+                FROM Seccion s
+                INNER JOIN Clase c ON s.clase_id = c.clase_id
+                WHERE s.seccion_id = ?";
+
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param("i", $seccion_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $seccion = $result->fetch_assoc();
+        $stmt->close();
+
+        return $seccion;
+    }
+
+    /**
+     * Obtiene el ID de un estado por su nombre
+     */
+    private function obtenerIdEstado($nombreEstado) {
+        $query = "SELECT estado_id FROM EstadoCorreo WHERE nombre = ? LIMIT 1";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bind_param("s", $nombreEstado);
+        $stmt->execute();
+        
+        $result = $stmt->get_result();
+        $row = $result->fetch_assoc();
+        
+        if (!$row) {
+            throw new Exception("Estado '$nombreEstado' no encontrado en la tabla EstadoCorreo");
+        }
+        
+        return $row['estado_id'];
+    }
+
+    /**
+     * Envía un correo con las credenciales del estudiante de forma clara
+     * 
+     * @param string $correo Correo de destino
+     * @param string $nombre Nombre del estudiante
+     * @param string $apellido Apellido del estudiante
+     * @param string $username Nombre de usuario (sin nombre/apellido)
+     * @param string $password Contraseña generada
+     */
+    public function guardarCredencialesParaEnvio($correo, $nombre, $apellido, $username, $password, $numeroCuenta) {
+        $nombreCompleto = trim("$nombre $apellido");
+        $subject = 'Credenciales de Acceso al Sistema Universitario';
+        
+        // Versión HTML mejorada con CSS más atractivo
+        $message = "
+            <html>
+            <head>
+                <style>
+                    body { 
+                        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+                        line-height: 1.6;
+                        color: #333;
+                        background-color: #f5f5f5;
+                        margin: 0;
+                        padding: 0;
+                    }
+                    .container {
+                        max-width: 600px;
+                        margin: 0 auto;
+                        padding: 20px;
+                        background-color: #ffffff;
+                        border-radius: 8px;
+                        box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+                    }
+                    .header {
+                        text-align: center;
+                        padding: 20px 0;
+                        border-bottom: 2px solid #4a6fdc;
+                    }
+                    .header img {
+                        max-height: 60px;
+                        margin-bottom: 10px;
+                    }
+                    .header h1 {
+                        color: #4a6fdc;
+                        margin: 0;
+                        font-size: 24px;
+                    }
+                    .content {
+                        padding: 20px 0;
+                    }
+                    .card { 
+                        background: #f8faff; 
+                        border-left: 4px solid #4a6fdc;
+                        border-radius: 4px; 
+                        padding: 25px;
+                        margin: 25px 0;
+                        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+                    }
+                    .credential-item { 
+                        margin-bottom: 15px; 
+                        padding-bottom: 15px; 
+                        border-bottom: 1px solid #eaedf7;
+                        display: flex;
+                        align-items: center;
+                    }
+                    .credential-item:last-child {
+                        border-bottom: none;
+                        margin-bottom: 0;
+                        padding-bottom: 0;
+                    }
+                    .label { 
+                        font-weight: bold; 
+                        color: #4a6fdc;
+                        min-width: 150px;
+                        display: inline-block;
+                    }
+                    .value {
+                        font-family: 'Courier New', monospace;
+                        padding: 5px 8px;
+                        background-color: #f0f4ff;
+                        border-radius: 3px;
+                    }
+                    .important { 
+                        background-color: #fff5f5;
+                        border-left: 4px solid #e53e3e;
+                        color: #e53e3e; 
+                        padding: 12px 15px;
+                        margin-top: 20px;
+                        border-radius: 4px;
+                        font-weight: 500;
+                    }
+                    .button {
+                        display: inline-block;
+                        background-color: #4a6fdc;
+                        color: white;
+                        text-decoration: none;
+                        padding: 12px 25px;
+                        border-radius: 4px;
+                        margin: 20px 0;
+                        font-weight: bold;
+                        text-align: center;
+                        transition: background-color 0.3s;
+                    }
+                    .button:hover {
+                        background-color: #3a5cbc;
+                    }
+                    .footer {
+                        text-align: center;
+                        padding-top: 20px;
+                        border-top: 1px solid #eaedf7;
+                        color: #666;
+                        font-size: 14px;
+                    }
+                </style>
+            </head>
+            <body>
+                <div class='container'>
+                    <div class='header'>
+                        <h1>Sistema de Gestión Universitaria</h1>
+                    </div>
+                    
+                    <div class='content'>
+                        <p>Estimado/a <strong>$nombreCompleto</strong>,</p>
+                        
+                        <p>Le damos la bienvenida al Sistema de Gestión Universitaria. A continuación, encontrará sus credenciales de acceso:</p>
+                        
+                        <div class='card'>
+                            <div class='credential-item'>
+                                <span class='label'>Nombre completo:</span>
+                                <span class='value'>$nombreCompleto</span>
+                            </div>
+                            <div class='credential-item'>
+                                <span class='label'>Usuario:</span>
+                                <span class='value'>$username</span>
+                            </div>
+                            <div class='credential-item'>
+                                <span class='label'>Contraseña temporal:</span>
+                                <span class='value'>$password</span>
+                            </div>
+                            <div class='credential-item'>
+                                <span class='label'>Número de cuenta:</span>
+                                <span class='value'>$numeroCuenta</span>
+                            </div>
+                        </div>
+                        
+                        <div class='important'>
+                            <strong>IMPORTANTE:</strong> Por seguridad, debe cambiar esta contraseña después de su primer acceso al sistema.
+                        </div>
+                        
+                        <div style='text-align: center; margin: 30px 0;'>
+                            <a href='https://registroisunah.xyz' class='button'>Acceder al Portal Estudiantil</a>
+                        </div>
+                        
+                        <p>Si tiene alguna duda o inconveniente, no dude en contactar con nuestro equipo de soporte técnico.</p>
+                    </div>
+                    
+                    <div class='footer'>
+                        <p>Atentamente,<br><strong>Departamento de Registro</strong></p>
+                        <p>© 2025 Universidad. Todos los derechos reservados.</p>
+                    </div>
+                </div>
+            </body>
+            </html>
+        ";
+        
+        // Versión texto plano clara
+        $altMessage = "Credenciales de Acceso - $nombreCompleto\n\n"
+                    . "Nombre completo: $nombreCompleto\n"
+                    . "Usuario del sistema: $username\n"
+                    . "Contraseña temporal: $password\n"
+                    . "Numero de Cuenta: $numeroCuenta\n\n"
+                    . "IMPORTANTE: Debe cambiar esta contraseña después de su primer acceso.\n\n"
+                    . "Acceso al sistema: https://registroisunah.xyz\n\n"
+                    . "Atentamente,\nDepartamento de Registro";
+    
+        try {
+            // Obtener ID del estado PENDIENTE por nombre
+            $estadoPendienteId = $this->obtenerIdEstado('PENDIENTE');
+            
+            $query = "INSERT INTO ColaCorreosEstudiantes (
+                        destinatario, 
+                        nombre_destinatario,
+                        asunto, 
+                        cuerpo_html, 
+                        cuerpo_texto, 
+                        fecha_creacion,
+                        estado_id
+                    ) VALUES (?, ?, ?, ?, ?, NOW(), ?)";
+            
+            $stmt = $this->conn->prepare($query);
+            $stmt->bind_param("sssssi", 
+                $correo,
+                $nombreCompleto,
+                $subject,
+                $message,
+                $altMessage,
+                $estadoPendienteId
+            );
+            
+            if ($stmt->execute()) {
+                return true;
+            } else {
+                throw new Exception("Error al insertar en cola de correos: " . $stmt->error);
+            }
+            
+        } catch (Exception $e) {
+            error_log("Error en guardarCredencialesParaEnvio: " . $e->getMessage());
+            return false;
         }
     }
 }

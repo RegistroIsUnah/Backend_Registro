@@ -14,8 +14,6 @@
  * }
  *
  * Al crearse, el proceso se inserta con estado 'ACTIVO' si la fecha_fin es futura o 'INACTIVO' si ya pasó.
- * Se recomienda configurar un evento en MySQL para actualizar automáticamente el estado a 'INACTIVO'
- * cuando se cumpla la fecha_fin.
  *
  * Respuestas HTTP:
  * - 200 OK: Devuelve el ID del proceso de matrícula creado y un mensaje de éxito.
@@ -28,24 +26,21 @@
  * 
  */
 
-header("Access-Control-Allow-Origin: *");
-header('Content-Type: application/json');
-
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    http_response_code(405);
-    echo json_encode(['error' => 'Método no permitido']);
-    exit;
-}
-
-$input = json_decode(file_get_contents('php://input'), true);
-if (!$input) {
-    http_response_code(400);
-    echo json_encode(['error' => 'Datos JSON inválidos']);
-    exit;
-}
-
-require_once __DIR__ . '/../../controllers/ProcesoMatriculaController.php';
-
-$procesoController = new ProcesoMatriculaController();
-$procesoController->crearProcesoMatricula($input);
+ header("Access-Control-Allow-Origin: *");
+ header('Content-Type: application/json');
+ 
+ // Obtener los datos de la solicitud
+ $data = json_decode(file_get_contents("php://input"), true);
+ 
+ // Verificar que los datos sean correctos
+ if (empty($data)) {
+     http_response_code(400);
+     echo json_encode(['error' => 'No se enviaron datos.']);
+     exit;
+ }
+ 
+ require_once __DIR__ . '/../../controllers/ProcesoMatriculaController.php';
+ 
+ $procesoMatriculaController = new ProcesoMatriculaController();
+ $procesoMatriculaController->crearProcesoMatricula($data);
 ?>

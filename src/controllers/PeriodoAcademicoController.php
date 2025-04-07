@@ -42,7 +42,7 @@ class PeriodoAcademicoController {
             exit;
         }
 
-        // Determinar el estado del período (ACTIVO o INACTIVO)
+        // Determinar el estado del período (ACTIVO o INACTIVO) basado en la fecha actual
         $estado_nombre = (strtotime($fecha_fin) < time()) ? 'INACTIVO' : 'ACTIVO';
 
         // Llamar al modelo para obtener el estado_periodo_id
@@ -66,6 +66,33 @@ class PeriodoAcademicoController {
 
         http_response_code(200);
         echo json_encode(['periodo_academico_id' => $id, 'message' => 'Periodo académico creado exitosamente']);
+    }
+
+     /**
+     * Obtiene los periodos académicos activos, comparando con la fecha actual.
+     *
+     * @return void
+     */
+    public function obtenerPeriodosActivos() {
+        try {
+            // Llamamos al modelo para obtener los periodos académicos activos
+            $modelo = new PeriodoAcademico();
+            $periodos = $modelo->obtenerPeriodosActivos();
+
+            // Verificamos si se obtuvieron periodos activos
+            if (empty($periodos)) {
+                http_response_code(404);
+                echo json_encode(['error' => 'No se encontraron periodos académicos activos']);
+            } else {
+                http_response_code(200);
+                echo json_encode($periodos);
+            }
+
+        } catch (Exception $e) {
+            // Manejo de errores
+            http_response_code(500);
+            echo json_encode(['error' => $e->getMessage()]);
+        }
     }
 }
 ?>
