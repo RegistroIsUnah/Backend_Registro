@@ -79,7 +79,7 @@ class EstudianteController {
                 'data' => [
                     'informacion_personal' => [
                         'nombre_completo' => $perfil['nombre'] . ' ' . $perfil['apellido'],
-                        'numero_cuenta' => $perfil['numero_cuenta'],  // Nuevo campo añadido a la base
+                        'numero_cuenta' => $perfil['numero_cuenta'],
                         'identidad' => $perfil['identidad'],
                         'correo' => $perfil['correo_personal'],
                         'telefono' => $perfil['telefono'],
@@ -88,8 +88,16 @@ class EstudianteController {
                     'academico' => [
                         'indice_global' => (float)$perfil['indice_global'],
                         'indice_periodo' => (float)$perfil['indice_periodo'],
-                        'centro' => $perfil['centro'],
-                        'carreras' => explode(', ', $perfil['carreras']),
+                        'centro' => [
+                            'centro_id' => $perfil['centro_id'],  // Nuevo campo
+                            'nombre' => $perfil['centro']
+                        ],
+                        'carreras' => array_map(function($id, $nombre) {
+                            return [
+                                'carrera_id' => $id,  // Nuevo campo
+                                'nombre' => $nombre
+                            ];
+                        }, explode(', ', $perfil['carrerasid']), explode(', ', $perfil['carreras'])),
                         'solicitudes_pendientes' => (int)$perfil['solicitudes_pendientes']
                     ],
                     'cuenta' => [
@@ -98,6 +106,7 @@ class EstudianteController {
                     'fotos' => $perfil['fotos'] ? explode(', ', $perfil['fotos']) : []
                 ]
             ];
+            
     
             echo json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
     
