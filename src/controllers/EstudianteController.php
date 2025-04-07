@@ -467,5 +467,77 @@ class EstudianteController {
         }
     }
 
+    /**
+     * Valida si un estudiante puede matricular hoy, dependiendo del tipo de proceso y el índice.
+     *
+     * @param int $estudianteId
+     * @return array
+     * @throws Exception
+     */
+    public function validarDiaMatricula(int $estudianteId): array
+    {
+        $proceso = $this->modelo->obtenerProcesoActivo();
+
+        if (!$proceso) {
+            return [
+                'puede_matricular' => false,
+                'mensaje' => 'No hay un proceso de matrícula activo actualmente.'
+            ];
+        }
+
+        $tipoProceso = strtoupper($proceso['tipo_proceso']);
+        $fechaInicio = new DateTime($proceso['fecha_inicio']);
+        $fechaHoy = new DateTime();
+
+        // Si es adiciones/cancelaciones, no hay restricción por índice
+        if ($tipoProceso === 'ADICIONES_CANCELACIONES') {
+            return [
+                'puede_matricular' => true,
+                'mensaje' => 'Puede matricular. Proceso actual: Adiciones/Cancelaciones.'
+            ];
+        }
+
+        // Obtener índice global del estudiante
+        $indice = $this->modelo->obtenerIndiceGlobal($estudianteId);
+
+        if ($indice === null) {
+            return [
+                'puede_matricular' => false,
+                'mensaje' => 'Estudiante no encontrado o sin índice asignado.'
+            ];
+        }
+
+        // Calcular qué día es hoy dentro del proceso
+        $intervalo = $fechaInicio->diff($fechaHoy);
+        $dia = $intervalo->days + 1;
+
+        // Obtener fechas exactas de los tres días de matrícula
+        $diasProceso = [
+            1 => (clone $fechaInicio)->modify('+0 days')->format('d/m/Y'),
+            2 => (clone $fechaInicio)->modify('+1 days')->format('d/m/Y'),
+            3 => (clone $fechaInicio)->modify('+2 days')->format('d/m/Y')
+        ];
+
+        // Determinar el día asignado por índice
+        if ($indice >= 80) {
+            $diaAsignado = 1;
+        } elseif ($indice >= 60) {
+            $diaAsignado = 2;
+        } else {
+            $diaAsignado = 3;
+        }
+
+        if ($dia === $diaAsignado) {
+            return [
+                'puede_matricular' => true,
+                'mensaje' => "Puede matricular. Día $dia (hoy es su turno de matrícula)."
+            ];
+        } else {
+            return [
+                'puede_matricular' => false,
+                'mensaje' => "No es su día de matrícula. Su índice es $indice. Debe matricular el día {$diasProceso[$diaAsignado]}."
+            ];
+        }
+    }
 }
 ?>
