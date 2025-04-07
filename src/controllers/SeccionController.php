@@ -240,5 +240,42 @@ class SeccionController {
             ]);
         }
     }
+
+
+    /**
+     * Actualiza la URL del video de una sección específica
+     * 
+     * @param int $seccionId ID de la sección
+     * @param string $videoUrl URL del video
+     * @return void
+     * @author Jose Vargas
+     * @version 1.0
+     */
+    public function actualizarUrlVideo($seccionId, $videoUrl) {
+        header('Content-Type: application/json');
+        
+        try {
+            // Actualizar URL del video en el modelo
+            $this->modelo->actualizarUrlVideo($seccionId, $videoUrl);
+            
+            // Formatear respuesta
+            $response = [
+                'success' => true,
+                'message' => 'URL del video actualizada correctamente'
+            ];
+            
+            echo json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+
+        } catch (Exception $e) {
+            http_response_code($e->getCode() ?: 500);
+            echo json_encode([
+                'success' => false,
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+
+
+
 }
 ?>

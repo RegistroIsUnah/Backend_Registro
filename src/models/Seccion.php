@@ -294,5 +294,41 @@ class Seccion {
         
         return $result->fetch_all(MYSQLI_ASSOC);
     }
+
+
+    /*
+    * Actualiza la URL del video de una sección específica.
+    *
+    * @param int $seccion_id
+    * @param string $video_url
+    * @throws Exception
+    * @author Jose Vargas
+    * @version 1.0
+    */
+    public function actualizarUrlVideo($seccion_id, $video_url) {
+        $sql = "UPDATE Seccion SET video_url = ? WHERE seccion_id = ?";
+
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param("si", $video_url, $seccion_id);
+        $stmt->execute();
+        
+        if ($stmt->affected_rows === 0) {
+            throw new Exception("No se pudo actualizar la URL del video o la sección no existe");
+        }
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 }
 ?>
