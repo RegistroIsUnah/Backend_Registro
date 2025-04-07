@@ -58,9 +58,6 @@ class Docente {
         }
         return ['mensaje' => $mensaje];
     }
-<<<<<<< Updated upstream
-=======
-
 
     /*
         * Obtiene las clases activas de un docente.
@@ -180,6 +177,5 @@ class Docente {
             throw new Exception("Error al obtener los docentes con roles y nombre de departamento.");
         }
     }
->>>>>>> Stashed changes
 }
 ?>

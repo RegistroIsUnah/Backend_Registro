@@ -14,6 +14,7 @@ require_once __DIR__ . '/../models/Seccion.php';
 
 class SeccionController {
 
+
      /**
      * Modelo de secciones
      * @var Seccion
@@ -28,6 +29,7 @@ class SeccionController {
         require_once __DIR__ . '/../models/Seccion.php';
         $this->modelo = new Seccion();
     }
+
 
 
    /**
@@ -211,6 +213,84 @@ class SeccionController {
             echo json_encode(['error' => $e->getMessage()]);
         }
     }
+
+
+
+
+    /**
+     * Obtiene la lista de estudiantes de una sección específica
+     * 
+     * @param int $seccionId ID de la sección
+     * @return void
+     * @author Jose Vargas
+     * @version 1.0
+     */
+    public function seccionListaEstudiantes($seccionId) {
+        header('Content-Type: application/json');
+        
+        try {
+            // Obtener datos del modelo
+            $estudiantes = $this->modelo->seccionListaEstudiantes($seccionId);
+            
+            // Formatear respuesta
+            $response = [
+                'success' => true,
+                'data' => array_map(function($estudiante) {
+                    return [
+                        'numero_cuenta' => $estudiante['numero_cuenta'],
+                        'nombre' => $estudiante['nombre'],
+                        'apellido' => $estudiante['apellido'],
+                        'correo_personal' => $estudiante['correo_personal']
+                    ];
+                }, $estudiantes)
+            ];
+            
+            echo json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+
+        } catch (Exception $e) {
+            http_response_code($e->getCode() ?: 500);
+            echo json_encode([
+                'success' => false,
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+
+
+    /**
+     * Actualiza la URL del video de una sección específica
+     * 
+     * @param int $seccionId ID de la sección
+     * @param string $videoUrl URL del video
+     * @return void
+     * @author Jose Vargas
+     * @version 1.0
+     */
+    public function actualizarUrlVideo($seccionId, $videoUrl) {
+        header('Content-Type: application/json');
+        
+        try {
+            // Actualizar URL del video en el modelo
+            $this->modelo->actualizarUrlVideo($seccionId, $videoUrl);
+            
+            // Formatear respuesta
+            $response = [
+                'success' => true,
+                'message' => 'URL del video actualizada correctamente'
+            ];
+            
+            echo json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+
+        } catch (Exception $e) {
+            http_response_code($e->getCode() ?: 500);
+            echo json_encode([
+                'success' => false,
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+
+
 
 
     /**
@@ -535,5 +615,6 @@ class SeccionController {
     {
         return htmlspecialchars($valor ?? '', ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
     }
+
 }
 ?>

@@ -14,6 +14,18 @@ require_once __DIR__ . '/../models/Docente.php';
 
 class DocenteController {
     /**
+     * @var Docente Modelo de Docente
+     */
+    private $modelo;
+  
+    /**
+    * Constructor del controlador.
+    */
+    public function __construct() {
+        $this->modelo = new Docente();
+    }
+
+    /**
      * Asigna un usuario a un docente llamando al procedimiento almacenado.
      *
      * @param int $docente_id ID del docente.
@@ -32,18 +44,7 @@ class DocenteController {
             echo json_encode(['error' => $e->getMessage()]);
         }
     }
-<<<<<<< Updated upstream
-=======
-
-    /*
-
-        @author Jose Vargas
-    */
-    public function __construct() {
-        $this->modelo = new Docente();
-    }
-
-
+  
     /**
      * Obtiene las clases activas de un docente
      * 
@@ -130,6 +131,5 @@ class DocenteController {
             echo json_encode(['error' => 'Error al obtener los docentes: ' . $e->getMessage()]);
         }
     }
->>>>>>> Stashed changes
 }
 ?>
