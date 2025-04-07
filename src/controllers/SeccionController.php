@@ -13,6 +13,11 @@
 require_once __DIR__ . '/../models/Seccion.php';
 
 class SeccionController {
+    private $modelo;
+
+    public function __construct() {
+        $this->modelo = new Seccion();
+    }
    /**
      * Valida y procesa la creación de una sección.
      *
@@ -192,6 +197,47 @@ class SeccionController {
         } catch (Exception $e) {
             http_response_code(500);
             echo json_encode(['error' => $e->getMessage()]);
+        }
+    }
+
+
+
+    /**
+     * Obtiene la lista de estudiantes de una sección específica
+     * 
+     * @param int $seccionId ID de la sección
+     * @return void
+     * @author Jose Vargas
+     * @version 1.0
+     */
+    public function seccionListaEstudiantes($seccionId) {
+        header('Content-Type: application/json');
+        
+        try {
+            // Obtener datos del modelo
+            $estudiantes = $this->modelo->seccionListaEstudiantes($seccionId);
+            
+            // Formatear respuesta
+            $response = [
+                'success' => true,
+                'data' => array_map(function($estudiante) {
+                    return [
+                        'numero_cuenta' => $estudiante['numero_cuenta'],
+                        'nombre' => $estudiante['nombre'],
+                        'apellido' => $estudiante['apellido'],
+                        'correo_personal' => $estudiante['correo_personal']
+                    ];
+                }, $estudiantes)
+            ];
+            
+            echo json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+
+        } catch (Exception $e) {
+            http_response_code($e->getCode() ?: 500);
+            echo json_encode([
+                'success' => false,
+                'error' => $e->getMessage()
+            ]);
         }
     }
 }

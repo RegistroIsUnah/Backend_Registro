@@ -260,5 +260,39 @@ class Seccion {
         $stmt->close();
         return $secciones;
     }
+
+
+
+
+    /*
+    * Obtiene la lista de estudiantes de una sección específica.
+    *
+    * @param int $seccion_id
+    * @throws Exception
+    * @author Jose Vargas
+    * @version 1.0
+    */
+    public function seccionListaEstudiantes($seccion_id) {
+        $sql = "SELECT 
+                    e.numero_cuenta,
+                    e.nombre,
+                    e.apellido,
+                    e.correo_personal
+                FROM Matricula m
+                INNER JOIN Estudiante e ON m.estudiante_id = e.estudiante_id
+                WHERE m.seccion_id = ?";
+
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param("i", $seccion_id);
+        $stmt->execute();
+        
+        $result = $stmt->get_result();
+        
+        if ($result->num_rows === 0) {
+            throw new Exception("No se encontraron estudiantes para la sección especificada");
+        }
+        
+        return $result->fetch_all(MYSQLI_ASSOC);
+    }
 }
 ?>
