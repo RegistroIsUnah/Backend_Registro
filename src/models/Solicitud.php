@@ -230,4 +230,57 @@ class Solicitud {
             throw new Exception('Solicitud no encontrada');
         }
     }
+    /**
+     * Obtiene solicitudes por tipo
+     * 
+     * @param string $tipoSolicitud Nombre del tipo de solicitud
+     * @return array
+     * @throws Exception
+     */
+    public function obtenerSolicitudesPorTipo($tipoSolicitud) {
+        $sql = "
+            SELECT 
+                s.solicitud_id,
+                s.estudiante_id,
+                s.tipo_solicitud_id,
+                ts.nombre AS tipo_solicitud,
+                s.motivo_id,
+                s.fecha_solicitud,
+                s.archivo_pdf,
+                s.estado_solicitud_id
+            FROM Solicitud s
+            INNER JOIN TipoSolicitud ts ON s.tipo_solicitud_id = ts.tipo_solicitud_id
+            WHERE ts.nombre = ?
+        ";
+
+        $stmt = $this->conn->prepare($sql);
+        if (!$stmt) {
+            throw new Exception("Error preparando la consulta: " . $this->conn->error);
+        }
+
+        $stmt->bind_param("s", $tipoSolicitud);
+        
+        if (!$stmt->execute()) {
+            throw new Exception("Error ejecutando la consulta: " . $stmt->error);
+        }
+
+        $result = $stmt->get_result();
+        $solicitudes = [];
+        while ($row = $result->fetch_assoc()) {
+            $solicitudes[] = $row;
+        }
+        
+        $stmt->close();
+        return $solicitudes;
+    }
+
+
+
+
+
+
+
+
+
+
 }

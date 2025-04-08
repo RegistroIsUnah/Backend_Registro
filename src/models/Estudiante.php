@@ -148,7 +148,7 @@ class Estudiante {
                     SELECT COUNT(*) 
                     FROM Solicitud s 
                     WHERE s.estudiante_id = e.estudiante_id 
-                    AND s.estado_solicitud_id = ?
+                    AND s.estado_solicitud_id = 1
                 ) AS solicitudes_pendientes
             FROM Estudiante e
             INNER JOIN Usuario u ON e.usuario_id = u.usuario_id
@@ -156,7 +156,7 @@ class Estudiante {
             LEFT JOIN EstudianteCarrera ec ON e.estudiante_id = ec.estudiante_id
             LEFT JOIN Carrera ca ON ec.carrera_id = ca.carrera_id
             LEFT JOIN FotosEstudiante fe ON e.estudiante_id = fe.estudiante_id
-            WHERE e.estudiante_id = 1
+            WHERE e.estudiante_id = ?
             GROUP BY e.estudiante_id";
     
         $stmt = $this->conn->prepare($sql);

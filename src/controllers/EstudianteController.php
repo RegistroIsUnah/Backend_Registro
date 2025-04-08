@@ -69,23 +69,6 @@ class EstudianteController {
         
         try {
            
-            session_start();
-            
-            // Validar autenticación
-            if (!isset($_SESSION['usuario_id'])) {
-                throw new Exception('Debe iniciar sesión', 401);
-            }
-            
-            // Determinar ID a usar
-            $idFinal = $estudianteId ?? $_SESSION['estudiante_id'];
-            
-            
-            // Validar permisos
-            if ($_SESSION['rol'] !== 'admin' && $_SESSION['estudiante_id'] != $idFinal) {
-                throw new Exception('No tiene permisos para ver este perfil', 403);
-            }
-            
-
             // Obtener datos del modelo
             $perfil = $this->modelo->obtenerPerfilEstudiante($estudianteId);
             

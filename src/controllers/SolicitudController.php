@@ -110,5 +110,59 @@ class SolicitudController {
             echo json_encode(['error' => $e->getMessage()]);
         }
     }
+
+    /**
+     * Obtiene solicitudes por tipo
+     * 
+     * @return void
+     * @version 1.0
+     */
+    public function obtenerSolicitudesPorTipo() {
+        header('Content-Type: application/json');
+        
+        try {
+            // Validar parámetro
+            if (!isset($_GET['tipo_solicitud']) || empty(trim($_GET['tipo_solicitud']))) {
+                throw new Exception('Parámetro tipo_solicitud requerido', 400);
+            }
+
+            $tipoSolicitud = filter_var($_GET['tipo_solicitud'], FILTER_SANITIZE_STRING);
+
+            // Obtener datos
+            $solicitudes = $this->model->obtenerSolicitudesPorTipo($tipoSolicitud);
+
+            // Formatear respuesta
+            $response = [
+                'success' => true,
+                'data' => $solicitudes,
+                'meta' => [
+                    'total' => count($solicitudes),
+                    'tipo_solicitud' => $tipoSolicitud
+                ]
+            ];
+
+            if (empty($solicitudes)) {
+                $response['message'] = 'No se encontraron solicitudes de este tipo';
+            }
+
+            echo json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+
+        } catch (Exception $e) {
+            http_response_code($e->getCode() ?: 500);
+            echo json_encode([
+                'success' => false,
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+
+
+
+
+
+
+
+
+
 }
 ?>
