@@ -474,5 +474,27 @@ INSERT INTO EstadoCorreo (nombre, descripcion) VALUES
 ('ENVIADO', 'Correo enviado exitosamente'),
 ('FALLIDO', 'Falló el envío del correo');
 
+INSERT INTO UsuarioRol (usuario_id, rol_id) VALUES
+(6, 1); -- ana como estudiante
+
+
+INSERT INTO Estudiante (usuario_id, numero_cuenta, identidad, nombre, apellido, correo_personal, telefono, direccion, centro_id, indice_global, indice_periodo) VALUES 
+(6, 201456878222, '123456543', 'Ana', 'Lopez', 'ana.lopez@example.com', '555-1234', 'Calle 123, Ciudad', 1, 8.5, 8.9);
+
+INSERT INTO FotosEstudiante (ruta_foto, estudiante_id) VALUES 
+('fotos/ana_lopez.jpg', 3);
+
+INSERT INTO Revisor (estudiante_id, fecha_aprobacion, usuario_id) VALUES 
+(3, '2023-10-01', 6);
+
+INSERT INTO AplicanteRevisor (estudiante_id, carrera_id, fecha_solicitud, estado_solicitud_revisor_id) VALUES 
+(3, 3, '2023-10-01', 1);
+
+
+UPDATE RevisionAspirante 
+SET revisor_usuario_id = 6 
+WHERE aspirante_id = 5;
+
+
 
 
