@@ -128,7 +128,7 @@ CREATE PROCEDURE SP_crearSeccion(
     IN p_hora_fin TIME,
     IN p_cupos INT,
     IN p_dias VARCHAR(255),  -- Cadena de días separados por comas (ej: "1,2,3")
-    IN p_video_url VARCHAR(255) DEFAULT NULL  -- Parámetro ahora opcional
+    IN p_video_url VARCHAR(255)  -- Eliminado el valor por defecto aquí
 )
 BEGIN
     DECLARE v_creditos INT;
@@ -141,6 +141,11 @@ BEGIN
     DECLARE v_estado_proceso VARCHAR(30);
     DECLARE v_capacidad_aula INT;
     DECLARE v_estado_seccion VARCHAR(20);
+    
+    -- Si p_video_url es NULL, asignamos un valor por defecto
+    IF p_video_url IS NULL THEN
+        SET p_video_url = 'DEFAULT_VIDEO_URL';
+    END IF;
 
     -- Validar parámetros obligatorios
     IF p_clase_id IS NULL THEN
@@ -179,7 +184,7 @@ BEGIN
     END IF;
     
     IF p_cupos > v_capacidad_aula THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = CONCAT('Los cupos (', p_cupos, ') exceden la capacidad del aula (', v_capacidad_aula, ')');
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Los cupos exceden la capacidad del aula';
     END IF;
 
     -- Calcular duración en horas
@@ -267,7 +272,8 @@ BEGIN
     )
     VALUES (
         p_clase_id, p_docente_id, p_periodo_academico_id, p_hora_inicio, 
-        p_hora_fin, p_aula_id, v_estado_seccion, p_cupos, p_video_url
+        p_hora_fin, p_aula_id, v_estado_seccion, p_cupos, 
+        IFNULL(p_video_url, 'DEFAULT_VIDEO_URL')  -- Si no se pasa video_url, se asigna un valor por defecto
     );
     SET v_section_id = LAST_INSERT_ID();
 
@@ -286,16 +292,18 @@ END //
 DELIMITER ;
 
 
+
+
 DELIMITER //
 
 CREATE PROCEDURE SP_modificarSeccion(
     IN p_seccion_id INT,
-    IN p_docente_id INT DEFAULT NULL,          -- Parámetro opcional
-    IN p_aula_id INT DEFAULT NULL,             -- Parámetro opcional
-    IN p_estado VARCHAR(20) DEFAULT NULL,      -- 'ACTIVA' o 'CANCELADA'
-    IN p_motivo_cancelacion TEXT DEFAULT NULL, -- Obligatorio si p_estado es 'CANCELADA'
-    IN p_cupos INT DEFAULT NULL,               -- Para actualizar cupos
-    IN p_video_url VARCHAR(255) DEFAULT NULL   -- Ahora es opcional
+    IN p_docente_id INT,                     -- Parámetro obligatorio, no tiene DEFAULT NULL
+    IN p_aula_id INT,                        -- Parámetro obligatorio, no tiene DEFAULT NULL
+    IN p_estado VARCHAR(20),                 -- 'ACTIVA' o 'CANCELADA' (opcional, validado dentro del procedimiento)
+    IN p_motivo_cancelacion TEXT,            -- Obligatorio si p_estado es 'CANCELADA'
+    IN p_cupos INT,                          -- Para actualizar cupos (opcional)
+    IN p_video_url VARCHAR(255)              -- Ahora es opcional
 )
 BEGIN
     DECLARE v_estado_seccion_id INT;
@@ -306,7 +314,7 @@ BEGIN
     DECLARE v_dias_seccion VARCHAR(255);
     DECLARE v_current_aula_id INT;
     DECLARE v_current_docente_id INT;
-    
+
     -- Validar parámetros obligatorios
     IF p_seccion_id IS NULL THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El ID de la sección no puede estar vacío';
@@ -341,7 +349,7 @@ BEGIN
         
         IF p_cupos IS NOT NULL AND p_cupos > v_capacidad_aula THEN
             SIGNAL SQLSTATE '45000' 
-            SET MESSAGE_TEXT = CONCAT('Los cupos (', p_cupos, ') exceden la capacidad del aula (', v_capacidad_aula, ')');
+            SET MESSAGE_TEXT = 'Los cupos exceden la capacidad del aula ';
         END IF;
     END IF;
 
