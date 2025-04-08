@@ -531,7 +531,9 @@ class EstudianteController {
                 'success' => false,
                 'error' => $e->getMessage()
             ]);
-
+        } 
+    } 
+             
     /**
      * Valida si un estudiante puede matricular hoy, dependiendo del tipo de proceso y el índice.
      *
