@@ -38,41 +38,42 @@ class Matricula {
      * @throws Exception Si ocurre un error en la preparación o ejecución del SP.
      */
     public function matricularEstudiante($estudiante_id, $seccion_id, $tipo_proceso_nombre, $laboratorio_id = null) {
-        // Validar tipo de proceso antes de ejecutar
+        // Validar tipo de proceso
         $tiposPermitidos = ['MATRICULA', 'ADICIONES_CANCELACIONES'];
         if (!in_array(strtoupper($tipo_proceso_nombre), $tiposPermitidos)) {
             throw new Exception('Tipo de proceso no válido. Debe ser: ' . implode(', ', $tiposPermitidos));
         }
-
-        // Convertir null a 0 para el SP (que espera INT)
-        
-
+    
+        // Llamar al procedimiento almacenado SP_matricular_estudiante
         $stmt = $this->conn->prepare("CALL SP_matricular_estudiante(?, ?, ?, ?)");
         if (!$stmt) {
             throw new Exception('Error preparando la consulta: ' . $this->conn->error);
         }
+    
+        // Asumimos que el laboratorio_id puede ser NULL, y el SP lo manejará adecuadamente
+        $stmt->bind_param("iiss", $estudiante_id, $seccion_id, $tipo_proceso_nombre, $laboratorio_id);
 
-        $stmt->bind_param("iisi", $estudiante_id, $seccion_id, $tipo_proceso_nombre, $laboratorio_id);
-
+        // Ejecutar la consulta
         if (!$stmt->execute()) {
             throw new Exception('Error ejecutando matrícula: ' . $stmt->error);
         }
-
+    
         $result = $stmt->get_result();
         if (!$result) {
             $stmt->close();
             throw new Exception('Error al obtener resultados de la matrícula');
         }
-
+    
         $row = $result->fetch_assoc();
         $stmt->close();
         
         if (!$row) {
             throw new Exception('No se recibieron datos de la matrícula');
         }
-
+    
         return $row;
-    }
+    }    
+    
 
     /**
      * Obtiene la lista de espera de una sección basada en el estado de la matrícula.

@@ -751,6 +751,12 @@ CREATE PROCEDURE SP_matricular_estudiante(
     IN p_laboratorio_id INT
 )
 BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        RESIGNAL;
+    END;
+    
     -- Declaración de variables
     DECLARE v_periodo_academico_id INT;
     DECLARE v_estadoMatricula VARCHAR(20);
@@ -762,18 +768,38 @@ BEGIN
     DECLARE v_seccion_clase_id INT;
     DECLARE v_seccion_hora_inicio TIME;
     DECLARE v_seccion_hora_fin TIME;
-    DECLARE v_seccion_dias VARCHAR(100);
     DECLARE v_lab_hora_inicio TIME;
     DECLARE v_lab_hora_fin TIME;
-    DECLARE v_lab_dias VARCHAR(100);
     DECLARE v_creditos_seccion INT;
     DECLARE v_total_creditos INT;
     DECLARE v_cupos INT;
     DECLARE v_totalMatriculados INT;
+    DECLARE v_proceso_activo BOOLEAN DEFAULT FALSE;
+    
+    START TRANSACTION;
+    
+    -- Verificar si el proceso de matrícula está activo
+    SELECT EXISTS (
+        SELECT 1 FROM ProcesoMatricula pm
+        JOIN PeriodoAcademico pa ON pm.periodo_academico_id = pa.periodo_academico_id
+        JOIN Seccion s ON pa.periodo_academico_id = s.periodo_academico_id
+        WHERE s.seccion_id = p_seccion_id
+        AND pm.estado_proceso_id = (SELECT estado_proceso_id FROM EstadoProceso WHERE nombre = 'ACTIVO')
+        AND CURDATE() BETWEEN pm.fecha_inicio AND pm.fecha_fin
+    ) INTO v_proceso_activo;
+    
+    IF NOT v_proceso_activo THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El proceso de matrícula no está activo para esta sección';
+    END IF;
 
     -- Obtener el periodo académico directamente desde la sección
-    SELECT periodo_academico_id INTO v_periodo_academico_id 
-    FROM Seccion WHERE seccion_id = p_seccion_id;
+    SELECT s.periodo_academico_id, s.hora_inicio, s.hora_fin, c.creditos, s.cupos, 
+           c.clase_id, c.tiene_laboratorio
+    INTO v_periodo_academico_id, v_seccion_hora_inicio, v_seccion_hora_fin, 
+         v_creditos_seccion, v_cupos, v_seccion_clase_id, v_tiene_lab
+    FROM Seccion s
+    JOIN Clase c ON s.clase_id = c.clase_id
+    WHERE s.seccion_id = p_seccion_id;
 
     IF v_periodo_academico_id IS NULL THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'No se encontró el periodo académico de la sección';
@@ -793,18 +819,18 @@ BEGIN
         SELECT 1 FROM HistorialEstudiante h
         JOIN Seccion s ON h.seccion_id = s.seccion_id
         WHERE h.estudiante_id = p_estudiante_id
-        AND s.clase_id = (SELECT clase_id FROM Seccion WHERE seccion_id = p_seccion_id)
+        AND s.clase_id = v_seccion_clase_id
         AND h.estado_curso_id = (SELECT estado_curso_id FROM EstadoCurso WHERE nombre = 'APROBADA')
     ) THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El estudiante ya aprobó esta clase previamente';
     END IF;
 
-    -- 1. Verificar requisitos previos
+    -- Verificar requisitos previos
     SET v_requisito = NULL;
     SET v_cumpleRequisito = 0;
 
     SELECT prerequisito_clase_id INTO v_requisito FROM ClaseRequisito 
-    WHERE clase_id = (SELECT clase_id FROM Seccion WHERE seccion_id = p_seccion_id)
+    WHERE clase_id = v_seccion_clase_id
     LIMIT 1;
 
     IF v_requisito IS NOT NULL THEN
@@ -812,6 +838,7 @@ BEGIN
         WHERE estudiante_id = p_estudiante_id 
         AND seccion_id IN (SELECT seccion_id FROM Seccion WHERE clase_id = v_requisito)
         AND estado_curso_id = (SELECT estado_curso_id FROM EstadoCurso WHERE nombre = 'APROBADA');
+        
         IF v_cumpleRequisito = 0 THEN
             SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El estudiante no cumple el requisito previo para la clase';
         END IF;
@@ -830,12 +857,7 @@ BEGIN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El estudiante ya está matriculado en esta sección';
     END IF;
 
-    -- Verificar créditos
-    SELECT c.creditos INTO v_creditos_seccion 
-    FROM Clase c
-    JOIN Seccion s ON c.clase_id = s.clase_id
-    WHERE s.seccion_id = p_seccion_id;
-
+    -- Verificar créditos (límite de 25)
     SELECT IFNULL(SUM(c.creditos), 0) INTO v_total_creditos
     FROM Matricula m
     JOIN Seccion s ON m.seccion_id = s.seccion_id
@@ -851,15 +873,7 @@ BEGIN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'La matrícula excede el límite de 25 créditos';
     END IF;
 
-    -- Verificar traslapes
-    SELECT hora_inicio, hora_fin INTO v_seccion_hora_inicio, v_seccion_hora_fin 
-    FROM Seccion WHERE seccion_id = p_seccion_id;
-
-    SELECT GROUP_CONCAT(d.nombre ORDER BY d.nombre SEPARATOR ',') INTO v_seccion_dias
-    FROM SeccionDia sd
-    JOIN DiaSemana d ON sd.dia_id = d.dia_id
-    WHERE sd.seccion_id = p_seccion_id;
-
+    -- Verificar traslapes con otras secciones del estudiante
     IF EXISTS (
         SELECT 1 FROM Matricula m
         JOIN Seccion s ON m.seccion_id = s.seccion_id
@@ -867,46 +881,52 @@ BEGIN
         JOIN DiaSemana d ON sd.dia_id = d.dia_id
         WHERE m.estudiante_id = p_estudiante_id
         AND s.periodo_academico_id = v_periodo_academico_id
+        AND s.seccion_id != p_seccion_id
         AND m.estado_matricula_id IN (
             SELECT estado_matricula_id FROM EstadoMatricula 
             WHERE nombre IN ('MATRICULADO', 'EN ESPERA')
         )
-        AND d.nombre IN (
-            SELECT nombre FROM DiaSemana ds 
-            JOIN SeccionDia sdd ON ds.dia_id = sdd.dia_id 
-            WHERE sdd.seccion_id = p_seccion_id
+        AND d.dia_id IN (
+            SELECT dia_id FROM SeccionDia WHERE seccion_id = p_seccion_id
         )
         AND (
-            (TIME_TO_SEC(v_seccion_hora_fin) > TIME_TO_SEC(s.hora_inicio) AND
-             TIME_TO_SEC(v_seccion_hora_inicio) < TIME_TO_SEC(s.hora_fin))
-        )
+            (TIME_TO_SEC(s.hora_inicio) < TIME_TO_SEC(v_lab_hora_fin) AND 
+			(TIME_TO_SEC(s.hora_fin) > TIME_TO_SEC(v_lab_hora_inicio))
+        ))
     ) THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'La sección traslapa con otra matrícula existente';
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'La sección se solapa con otra sección ya matriculada por el estudiante';
     END IF;
 
-    -- Cupo siempre se considera como "EN ESPERA"
-    SET v_estadoMatricula = 'EN ESPERA';
+    -- Verificar cupos disponibles
+    SELECT COUNT(*) INTO v_totalMatriculados FROM Matricula 
+    WHERE seccion_id = p_seccion_id 
+    AND estado_matricula_id = (SELECT estado_matricula_id FROM EstadoMatricula WHERE nombre = 'MATRICULADO');
+
+    IF v_totalMatriculados < v_cupos THEN
+        SET v_estadoMatricula = 'MATRICULADO';
+    ELSE
+        SET v_estadoMatricula = 'EN ESPERA';
+    END IF;
+
+    -- Obtener orden de inscripción
     SELECT IFNULL(MAX(orden_inscripcion), 0) + 1 INTO v_orden_inscripcion 
     FROM Matricula WHERE seccion_id = p_seccion_id;
 
-    -- Insertar matrícula
+    -- Insertar matrícula principal
     INSERT INTO Matricula (estudiante_id, seccion_id, estado_matricula_id, orden_inscripcion, fecha)
     VALUES (p_estudiante_id, p_seccion_id, 
-        (SELECT estado_matricula_id FROM EstadoMatricula WHERE nombre = v_estadoMatricula), 
-        v_orden_inscripcion, CURDATE());
+            (SELECT estado_matricula_id FROM EstadoMatricula WHERE nombre = v_estadoMatricula), 
+            v_orden_inscripcion, CURDATE());
 
     SET v_matricula_id = LAST_INSERT_ID();
 
     -- Procesar laboratorio si aplica
-    SELECT tiene_laboratorio, clase_id INTO v_tiene_lab, v_seccion_clase_id 
-    FROM Clase 
-    WHERE clase_id = (SELECT clase_id FROM Seccion WHERE seccion_id = p_seccion_id);
-
     IF v_tiene_lab = 1 THEN
         IF p_laboratorio_id IS NULL OR p_laboratorio_id = 0 THEN
             SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Se requiere seleccionar un laboratorio para esta clase';
         END IF;
 
+        -- Validaciones de laboratorio
         IF NOT EXISTS (
             SELECT 1 FROM Laboratorio 
             WHERE laboratorio_id = p_laboratorio_id 
@@ -915,51 +935,58 @@ BEGIN
             SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El laboratorio no pertenece a esta clase';
         END IF;
 
+        -- Obtener horario del laboratorio
         SELECT hora_inicio, hora_fin INTO v_lab_hora_inicio, v_lab_hora_fin 
         FROM Laboratorio WHERE laboratorio_id = p_laboratorio_id;
 
-        SELECT GROUP_CONCAT(d.nombre ORDER BY d.nombre SEPARATOR ',') INTO v_lab_dias
-        FROM LaboratorioDia ld
-        JOIN DiaSemana d ON ld.dia_id = d.dia_id
-        WHERE ld.laboratorio_id = p_laboratorio_id;
-
+        -- Verificar que no haya conflicto de horarios entre el laboratorio y la sección
         IF EXISTS (
-            SELECT 1 FROM DiaSemana d
-            WHERE d.nombre IN (
-                SELECT nombre FROM DiaSemana ds 
-                JOIN SeccionDia sdd ON ds.dia_id = sdd.dia_id 
-                WHERE sdd.seccion_id = p_seccion_id
-            )
-            AND d.nombre IN (
-                SELECT nombre FROM DiaSemana ds 
-                JOIN LaboratorioDia ldd ON ds.dia_id = ldd.dia_id 
-                WHERE ldd.laboratorio_id = p_laboratorio_id
-            )
+            SELECT 1 FROM LaboratorioDia ld
+            JOIN DiaSemana d ON ld.dia_id = d.dia_id
+            JOIN SeccionDia sd ON sd.seccion_id = p_seccion_id AND sd.dia_id = ld.dia_id
+            WHERE ld.laboratorio_id = p_laboratorio_id
             AND (
                 (TIME_TO_SEC(v_seccion_hora_fin) > TIME_TO_SEC(v_lab_hora_inicio) AND
                 TIME_TO_SEC(v_seccion_hora_inicio) < TIME_TO_SEC(v_lab_hora_fin))
             )
         ) THEN
-            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'La sección y el laboratorio se traslapan';
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'La sección y el laboratorio se solapan en horario';
         END IF;
 
-        SET v_estadoMatricula = 'EN ESPERA';
-        SELECT IFNULL(MAX(orden_inscripcion), 0) + 1 INTO v_orden_inscripcion 
-        FROM Matricula WHERE laboratorio_id = p_laboratorio_id;
+        -- Verificar que el laboratorio no traslape con otras secciones del estudiante
+        IF EXISTS (
+            SELECT 1 FROM Matricula m
+            JOIN Seccion s ON m.seccion_id = s.seccion_id
+            JOIN SeccionDia sd ON s.seccion_id = sd.seccion_id
+            JOIN DiaSemana d ON sd.dia_id = d.dia_id
+            JOIN LaboratorioDia ld ON ld.laboratorio_id = p_laboratorio_id AND ld.dia_id = d.dia_id
+            WHERE m.estudiante_id = p_estudiante_id
+            AND s.periodo_academico_id = v_periodo_academico_id
+            AND m.estado_matricula_id IN (
+                SELECT estado_matricula_id FROM EstadoMatricula 
+                WHERE nombre IN ('MATRICULADO', 'EN ESPERA')
+            )
+            AND (
+                (TIME_TO_SEC(s.hora_inicio) < TIME_TO_SEC(v_lab_hora_fin) AND 
+				(TIME_TO_SEC(s.hora_fin) > TIME_TO_SEC(v_lab_hora_inicio))
+            ))
+        ) THEN
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El laboratorio se solapa con otra sección ya matriculada';
+        END IF;
 
-        INSERT INTO Matricula (estudiante_id, laboratorio_id, estado_matricula_id, orden_inscripcion, fecha)
-        VALUES (p_estudiante_id, p_laboratorio_id, 
-            (SELECT estado_matricula_id FROM EstadoMatricula WHERE nombre = v_estadoMatricula), 
-            v_orden_inscripcion, CURDATE());
+        -- Actualizar matrícula con el laboratorio
+        UPDATE Matricula 
+        SET laboratorio_id = p_laboratorio_id 
+        WHERE matricula_id = v_matricula_id;
     END IF;
 
+    COMMIT;
+    
     -- Retornar resultados
     SELECT v_matricula_id AS matricula_id, v_estadoMatricula AS estado, v_orden_inscripcion AS orden_inscripcion;
 END //
 
 DELIMITER ;
-
-
 
 
 DELIMITER //
