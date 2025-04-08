@@ -242,14 +242,19 @@ class Solicitud {
             SELECT 
                 s.solicitud_id,
                 s.estudiante_id,
+                e.nombre,
+                e.apellido,
                 s.tipo_solicitud_id,
                 ts.nombre AS tipo_solicitud,
                 s.motivo_id,
                 s.fecha_solicitud,
                 s.archivo_pdf,
-                s.estado_solicitud_id
+                s.estado_solicitud_id,
+                es.nombre AS estado
             FROM Solicitud s
             INNER JOIN TipoSolicitud ts ON s.tipo_solicitud_id = ts.tipo_solicitud_id
+            INNER JOIN Estudiante e ON s.estudiante_id = e.estudiante_id
+            INNER JOIN EstadoSolicitud es ON s.estado_solicitud_id= es.estado_solicitud_id
             WHERE ts.nombre = ?
         ";
 
