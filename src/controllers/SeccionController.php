@@ -310,11 +310,26 @@ class SeccionController {
                     $resultado = $this->generarCSV($datos, $nombreDepartamento);
                     echo json_encode($resultado); 
                     break;
+
+                    /*
                 case 'pdf':
                     $resultado = $this->generarPDF($datos, $nombreDepartamento);
                     echo json_encode($resultado); 
-                    break;
-                
+                    break;*/
+                    
+                    case 'pdf':
+                        echo json_encode([
+                            'success' => true,
+                            'departamento' => $nombreDepartamento,
+                            'generado_en' => date('d/m/Y H:i:s'),
+                            'resumen' => [
+                                'total_secciones' => count($datos),
+                                'total_estudiantes' => array_sum(array_column($datos, 'estudiantes_matriculados')),
+                                'total_cupos' => array_sum(array_column($datos, 'cupos_habilitados')),
+                            ],
+                            'datos' => $datos
+                        ]);
+                    break;               
                 default:
                     echo json_encode($datos);
             }

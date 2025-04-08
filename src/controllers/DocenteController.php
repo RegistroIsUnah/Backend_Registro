@@ -17,6 +17,14 @@ class DocenteController {
      * @var Docente Modelo de Docente
      */
     private $modelo;
+  
+    /**
+    * Constructor del controlador.
+    */
+    public function __construct() {
+        $this->modelo = new Docente();
+    }
+
     /**
      * Asigna un usuario a un docente llamando al procedimiento almacenado.
      *
@@ -36,16 +44,7 @@ class DocenteController {
             echo json_encode(['error' => $e->getMessage()]);
         }
     }
-
-    /*
-
-        @author Jose Vargas
-    */
-    public function __construct() {
-        $this->modelo = new Docente();
-    }
-
-
+  
     /**
      * Obtiene las clases activas de un docente
      * 
@@ -105,6 +104,31 @@ class DocenteController {
                 'success' => false,
                 'error' => $e->getMessage()
             ]);
+        }
+    }
+
+     /**
+     * Lista los docentes por departamento con sus roles asignados y el nombre del departamento.
+     *
+     * @param int $dept_id ID del departamento
+     */
+    public function listarDocentesPorDepartamento($dept_id)
+    {
+        try {
+            // Obtenemos los docentes con los roles y nombre del departamento
+            $docentes = $this->modelo->obtenerDocentesConRoles($dept_id);
+            
+            // Si no hay docentes, retornamos un mensaje
+            if (empty($docentes)) {
+                echo json_encode(['error' => 'No se encontraron docentes para el departamento especificado.']);
+                return;
+            }
+            
+            // Devolvemos los datos en formato JSON
+            echo json_encode(['docentes' => $docentes]);
+
+        } catch (Exception $e) {
+            echo json_encode(['error' => 'Error al obtener los docentes: ' . $e->getMessage()]);
         }
     }
 }
