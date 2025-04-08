@@ -42,7 +42,7 @@ class MatriculaController {
      */
     public function matricularEstudiante() {
         header('Content-Type: application/json');
-    
+        
         try {
             // Obtener y validar datos de entrada
             $input = json_decode(file_get_contents('php://input'), true) ?: $_POST;
@@ -80,7 +80,7 @@ class MatriculaController {
     
             // Si hay errores, retornarlos
             if (!empty($errors)) {
-                http_response_code(400);
+                http_response_code(400);  // Error de validación del cliente
                 echo json_encode([
                     'success' => false,
                     'message' => 'Errores de validación',
@@ -106,7 +106,7 @@ class MatriculaController {
             );
     
             // Respuesta exitosa
-            http_response_code(200);
+            http_response_code(200);  // Matrícula exitosa
             echo json_encode([
                 'success' => true,
                 'data' => $resultado,
@@ -115,14 +115,28 @@ class MatriculaController {
     
         } catch (Exception $e) {
             // Manejo de errores del modelo o del sistema
-            http_response_code(500);
-            echo json_encode([
-                'success' => false,
-                'message' => 'Error al procesar la matrícula',
-                'error' => $e->getMessage()
-            ]);
+            $error_message = $e->getMessage();
+    
+            // Si el error proviene de un SIGNAL SQLSTATE '45000' (error del SP), se trata como 410
+            if (strpos($error_message, 'SIGNAL SQLSTATE \'45000\'') !== false) {
+                http_response_code(410);  // Error de proceso o lógica del negocio
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Error en el proceso de matrícula',
+                    'error' => $error_message
+                ]);
+            } else {
+                // Si es otro tipo de error, se trata como un error interno (500)
+                http_response_code(500);
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Error al procesar la matrícula',
+                    'error' => $error_message
+                ]);
+            }
         }
-    }    
+    }
+    
 
     /**
      * Matricula un estudiante en el proceso de ADICIONES_CANCELACIONES.
