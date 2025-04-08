@@ -96,5 +96,45 @@ class UsuarioRolController {
             echo json_encode(['error' => $e->getMessage()]);
         }
     }
+
+    /**
+     * Asigna roles a un docente y actualiza los departamentos o carreras según corresponda.
+     */
+    public function asignarRolesDocente($docente_id, $roles, $departamento_id = null, $carrera_id = null) {
+        try {
+            // Llamar directamente al método del modelo para asignar los roles
+            $this->model->asignarRolesDocente($docente_id, $roles, $departamento_id, $carrera_id);
+            
+            echo json_encode([
+                'success' => true,
+                'message' => 'Roles asignados correctamente'
+            ]);
+        } catch (Exception $e) {
+            echo json_encode([
+                'error' => true,
+                'message' => $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * Quita roles de un docente y actualiza el departamento o la carrera según corresponda.
+     */
+    public function quitarRolesDocente($docente_id, $roles, $departamento_id = null, $carrera_id = null) {
+        try {
+            // Llamar al modelo para quitar los roles
+            $this->model->quitarRolesDocente($docente_id, $roles, $departamento_id, $carrera_id);
+
+            echo json_encode([
+                'success' => true,
+                'message' => 'Roles eliminados correctamente'
+            ]);
+        } catch (Exception $e) {
+            echo json_encode([
+                'error' => true,
+                'message' => $e->getMessage()
+            ]);
+        }
+    }
 }
 ?>

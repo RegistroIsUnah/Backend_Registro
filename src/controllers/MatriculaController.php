@@ -42,32 +42,32 @@ class MatriculaController {
      */
     public function matricularEstudiante() {
         header('Content-Type: application/json');
-        
+    
         try {
             // Obtener y validar datos de entrada
             $input = json_decode(file_get_contents('php://input'), true) ?: $_POST;
-            
+    
             // Validación básica
             $errors = [];
-            
+    
             if (empty($input['estudiante_id'])) {
                 $errors[] = 'El ID del estudiante es requerido';
             } elseif (!is_numeric($input['estudiante_id'])) {
                 $errors[] = 'El ID del estudiante debe ser numérico';
             }
-            
+    
             if (empty($input['seccion_id'])) {
                 $errors[] = 'El ID de la sección es requerido';
             } elseif (!is_numeric($input['seccion_id'])) {
                 $errors[] = 'El ID de la sección debe ser numérico';
             }
-            
+    
             if (empty($input['tipo_proceso'])) {
                 $errors[] = 'El tipo de proceso es requerido';
             } elseif (!in_array(strtoupper($input['tipo_proceso']), ['MATRICULA', 'ADICIONES_CANCELACIONES'])) {
                 $errors[] = 'Tipo de proceso no válido. Debe ser MATRICULA o ADICIONES_CANCELACIONES';
             }
-            
+    
             // Validar laboratorio_id si está presente
             $laboratorio_id = null;
             if (isset($input['laboratorio_id']) && $input['laboratorio_id'] !== '') {
@@ -77,7 +77,7 @@ class MatriculaController {
                     $laboratorio_id = (int)$input['laboratorio_id'];
                 }
             }
-            
+    
             // Si hay errores, retornarlos
             if (!empty($errors)) {
                 http_response_code(400);
@@ -88,7 +88,7 @@ class MatriculaController {
                 ]);
                 return;
             }
-            
+    
             // Preparar datos para el modelo
             $data = [
                 'estudiante_id' => (int)$input['estudiante_id'],
@@ -96,7 +96,7 @@ class MatriculaController {
                 'tipo_proceso' => strtoupper(trim($input['tipo_proceso'])),
                 'laboratorio_id' => $laboratorio_id
             ];
-            
+    
             // Llamar al modelo
             $resultado = $this->model->matricularEstudiante(
                 $data['estudiante_id'],
@@ -104,7 +104,7 @@ class MatriculaController {
                 $data['tipo_proceso'],
                 $data['laboratorio_id']
             );
-            
+    
             // Respuesta exitosa
             http_response_code(200);
             echo json_encode([
@@ -112,7 +112,7 @@ class MatriculaController {
                 'data' => $resultado,
                 'message' => 'Matrícula realizada exitosamente'
             ]);
-            
+    
         } catch (Exception $e) {
             // Manejo de errores del modelo o del sistema
             http_response_code(500);
@@ -122,8 +122,8 @@ class MatriculaController {
                 'error' => $e->getMessage()
             ]);
         }
-    }
-
+    } 
+    
     /**
      * Matricula un estudiante en el proceso de ADICIONES_CANCELACIONES.
      *
@@ -305,26 +305,20 @@ class MatriculaController {
     public function cancelarMatricula($data) {
         if (!isset($data['estudiante_id']) || !isset($data['seccion_id'])) {
             http_response_code(400);
-            echo json_encode(['error' => 'Faltan los parámetros: estudiante_id y seccion_id']);
+            echo json_encode(['error' => 'Faltan datos: estudiante_id y seccion_id son requeridos']);
             exit;
         }
-
-        $estudiante_id = intval($data['estudiante_id']);
-        $seccion_id = intval($data['seccion_id']);
-
+    
         try {
-            // Cancelar la matrícula del estudiante
-            $this->model->cancelarMatrícula($estudiante_id, $seccion_id);
-
-            // Respuesta exitosa
+            // Pasar el array completo al modelo
+            $this->model->cancelarMatricula($data);
+            
             http_response_code(200);
             echo json_encode(['message' => 'Matrícula cancelada correctamente']);
-
         } catch (Exception $e) {
-            // Error
             http_response_code(500);
             echo json_encode(['error' => $e->getMessage()]);
         }
-    }
+    }    
 }
 ?>

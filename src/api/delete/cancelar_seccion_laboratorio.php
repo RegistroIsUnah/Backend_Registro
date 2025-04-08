@@ -9,7 +9,7 @@
  *  - seccion_id: ID de la sección a cancelar.
  * 
  * Ejemplo de URL:
- *  servidor:puerto/api/post/cancelar_matricula.php
+ *  servidor:puerto/api/post/cancelar_seccion_laboratorio.php
  * 
  * Ejemplo envio
  * 

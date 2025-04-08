@@ -38,41 +38,42 @@ class Matricula {
      * @throws Exception Si ocurre un error en la preparación o ejecución del SP.
      */
     public function matricularEstudiante($estudiante_id, $seccion_id, $tipo_proceso_nombre, $laboratorio_id = null) {
-        // Validar tipo de proceso antes de ejecutar
+        // Validar tipo de proceso
         $tiposPermitidos = ['MATRICULA', 'ADICIONES_CANCELACIONES'];
         if (!in_array(strtoupper($tipo_proceso_nombre), $tiposPermitidos)) {
             throw new Exception('Tipo de proceso no válido. Debe ser: ' . implode(', ', $tiposPermitidos));
         }
-
-        // Convertir null a 0 para el SP (que espera INT)
-        
-
+    
+        // Llamar al procedimiento almacenado SP_matricular_estudiante
         $stmt = $this->conn->prepare("CALL SP_matricular_estudiante(?, ?, ?, ?)");
         if (!$stmt) {
             throw new Exception('Error preparando la consulta: ' . $this->conn->error);
         }
+    
+        // Asumimos que el laboratorio_id puede ser NULL, y el SP lo manejará adecuadamente
+        $stmt->bind_param("iiss", $estudiante_id, $seccion_id, $tipo_proceso_nombre, $laboratorio_id);
 
-        $stmt->bind_param("iisi", $estudiante_id, $seccion_id, $tipo_proceso_nombre, $laboratorio_id);
-
+        // Ejecutar la consulta
         if (!$stmt->execute()) {
             throw new Exception('Error ejecutando matrícula: ' . $stmt->error);
         }
-
+    
         $result = $stmt->get_result();
         if (!$result) {
             $stmt->close();
             throw new Exception('Error al obtener resultados de la matrícula');
         }
-
+    
         $row = $result->fetch_assoc();
         $stmt->close();
         
         if (!$row) {
             throw new Exception('No se recibieron datos de la matrícula');
         }
-
+    
         return $row;
-    }
+    }    
+    
 
     /**
      * Obtiene la lista de espera de una sección basada en el estado de la matrícula.
@@ -170,6 +171,7 @@ class Matricula {
     public function obtenerClasesMatriculadas($estudiante_id) {
         $sql = "
             SELECT
+                se.seccion_id,
                 c.codigo AS codigo,
                 c.nombre AS asignatura,
                 DATE_FORMAT(se.hora_inicio, '%H%i') AS seccion,
@@ -227,6 +229,7 @@ class Matricula {
     public function obtenerClasesEnEspera($estudiante_id) {
         $sql = "
             SELECT
+                se.seccion_id,
                 c.codigo AS codigo,
                 c.nombre AS asignatura,
                 DATE_FORMAT(se.hora_inicio, '%H%i') AS seccion,
@@ -283,6 +286,7 @@ class Matricula {
      */
     public function obtenerLaboratoriosMatriculados($estudiante_id) {
         $sql = "SELECT
+                    l.laboratorio_id,
                     c.codigo AS codigo,
                     c.nombre AS asignatura,
                     DATE_FORMAT(l.hora_inicio, '%H%i') AS laboratorio_codigo,
@@ -337,7 +341,7 @@ class Matricula {
      * @return void
      * @throws Exception Si ocurre un error al cancelar la matrícula.
      */
-    public function cancelarMatrícula($data) {
+    public function cancelarMatricula($data) {
         if (!isset($data['estudiante_id']) || !isset($data['seccion_id'])) {
             http_response_code(400);
             echo json_encode(['error' => 'Faltan datos: estudiante_id y seccion_id son requeridos']);
@@ -357,7 +361,7 @@ class Matricula {
     
             // Si no se encuentra la matrícula, retornar error
             if ($result->num_rows == 0) {
-                http_response_code(404);
+                http_response_code(404); // Aquí debe ser 404, ya que es un "no encontrado"
                 echo json_encode(['error' => 'El estudiante no está matriculado en esta sección']);
                 exit;
             }
@@ -366,11 +370,13 @@ class Matricula {
             $sqlEstadoCancelada = "SELECT estado_matricula_id FROM EstadoMatricula WHERE nombre = 'CANCELADA'";
             $stmt = $this->conn->prepare($sqlEstadoCancelada);
             $stmt->execute();
-            $estadoCancelada = $stmt->get_result()->fetch_assoc()['estado_matricula_id'];
-    
-            if (!$estadoCancelada) {
+            $estadoCanceladaResult = $stmt->get_result();
+            
+            if ($estadoCanceladaResult->num_rows == 0) {
                 throw new Exception("Estado 'CANCELADA' no encontrado en la tabla EstadoMatricula");
             }
+    
+            $estadoCancelada = $estadoCanceladaResult->fetch_assoc()['estado_matricula_id'];
     
             // Paso 3: Cancelar la matrícula en la sección
             $sqlCancelarSeccion = "UPDATE Matricula SET estado_matricula_id = ? WHERE estudiante_id = ? AND seccion_id = ?";
@@ -380,10 +386,10 @@ class Matricula {
                 throw new Exception("Error al cancelar la matrícula en la sección");
             }
     
-            http_response_code(200);
-            echo json_encode(['message' => 'Matrícula en la sección cancelada correctamente.']);
+            http_response_code(200); // Respuesta exitosa
         } catch (Exception $e) {
-            http_response_code(500);
+            // Manejo de excepciones
+            http_response_code(500); // Error del servidor
             echo json_encode(['error' => $e->getMessage()]);
         }
     }    

@@ -6,6 +6,9 @@
  * 
  * Ejemplo de URL:
  * servidor:puerto/api/post/crear_seccion.php
+ * 
+ * si se quiere mandar el video debe ser multipart/form-data
+ * "video_url" : "video"
  *
  * Ejemplo de JSON de entrada:
  * {

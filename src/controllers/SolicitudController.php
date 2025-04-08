@@ -155,14 +155,5 @@ class SolicitudController {
             ]);
         }
     }
-
-
-
-
-
-
-
-
-
 }
 ?>
