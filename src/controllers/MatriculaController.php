@@ -305,26 +305,20 @@ class MatriculaController {
     public function cancelarMatricula($data) {
         if (!isset($data['estudiante_id']) || !isset($data['seccion_id'])) {
             http_response_code(400);
-            echo json_encode(['error' => 'Faltan los parámetros: estudiante_id y seccion_id']);
+            echo json_encode(['error' => 'Faltan datos: estudiante_id y seccion_id son requeridos']);
             exit;
         }
-
-        $estudiante_id = intval($data['estudiante_id']);
-        $seccion_id = intval($data['seccion_id']);
-
+    
         try {
-            // Cancelar la matrícula del estudiante
-            $this->model->cancelarMatrícula($estudiante_id, $seccion_id);
-
-            // Respuesta exitosa
+            // Pasar el array completo al modelo
+            $this->model->cancelarMatricula($data);
+            
             http_response_code(200);
             echo json_encode(['message' => 'Matrícula cancelada correctamente']);
-
         } catch (Exception $e) {
-            // Error
             http_response_code(500);
             echo json_encode(['error' => $e->getMessage()]);
         }
-    }
+    }    
 }
 ?>
