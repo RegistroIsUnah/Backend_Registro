@@ -126,7 +126,7 @@ class SolicitudController {
                 throw new Exception('Parámetro tipo_solicitud requerido', 400);
             }
 
-            $tipoSolicitud = filter_var($_GET['tipo_solicitud'], FILTER_SANITIZE_STRING);
+            $tipoSolicitud = filter_var($_GET['tipo_solicitud']);
 
             // Obtener datos
             $solicitudes = $this->model->obtenerSolicitudesPorTipo($tipoSolicitud);
