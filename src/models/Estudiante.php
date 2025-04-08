@@ -148,7 +148,7 @@ class Estudiante {
                     SELECT COUNT(*) 
                     FROM Solicitud s 
                     WHERE s.estudiante_id = e.estudiante_id 
-                    AND s.estado_solicitud_id = ?
+                    AND s.estado_solicitud_id = 1
                 ) AS solicitudes_pendientes
             FROM Estudiante e
             INNER JOIN Usuario u ON e.usuario_id = u.usuario_id
@@ -156,7 +156,7 @@ class Estudiante {
             LEFT JOIN EstudianteCarrera ec ON e.estudiante_id = ec.estudiante_id
             LEFT JOIN Carrera ca ON ec.carrera_id = ca.carrera_id
             LEFT JOIN FotosEstudiante fe ON e.estudiante_id = fe.estudiante_id
-            WHERE e.estudiante_id = 1
+            WHERE e.estudiante_id = ?
             GROUP BY e.estudiante_id";
     
         $stmt = $this->conn->prepare($sql);
@@ -1157,6 +1157,67 @@ class Estudiante {
         }
     }
 
+
+   /**
+     * Busca estudiantes con filtros
+     * 
+     * @param string|null $nombre
+     * @param string|null $no_cuenta
+     * @param string|null $centro
+     * @param string|null $carrera
+     * @return array
+     * @throws Exception
+     */
+    public function buscarEstudiante($nombre = null, $no_cuenta = null, $centro = null, $carrera = null) {
+        $sql = "SELECT 
+                    e.estudiante_id,
+                    e.numero_cuenta,
+                    e.nombre,
+                    e.apellido,
+                    c.nombre AS centro,
+                    GROUP_CONCAT(DISTINCT ca.nombre) AS carreras
+                FROM Estudiante e
+                INNER JOIN Centro c ON e.centro_id = c.centro_id
+                INNER JOIN EstudianteCarrera ec ON e.estudiante_id = ec.estudiante_id
+                INNER JOIN Carrera ca ON ec.carrera_id = ca.carrera_id
+                WHERE 
+                    (e.nombre LIKE CONCAT('%', ?, '%') OR ? IS NULL) AND
+                    (e.numero_cuenta = ? OR ? IS NULL) AND
+                    (c.nombre = ? OR ? IS NULL) AND
+                    (ca.nombre = ? OR ? IS NULL)
+                GROUP BY e.estudiante_id
+                ORDER BY e.nombre";
+
+        $stmt = $this->conn->prepare($sql);
+        if (!$stmt) {
+            throw new Exception("Error preparando la consulta: " . $this->conn->error);
+        }
+
+        $stmt->bind_param(
+            "ssssssss", 
+            $nombre, $nombre,
+            $no_cuenta, $no_cuenta,
+            $centro, $centro,
+            $carrera, $carrera
+        );
+
+        if (!$stmt->execute()) {
+            throw new Exception("Error ejecutando la consulta: " . $stmt->error);
+        }
+
+        $result = $stmt->get_result();
+        $estudiantes = [];
+        while ($row = $result->fetch_assoc()) {
+            $row['carreras'] = explode(',', $row['carreras']); // Convertir a array
+            $estudiantes[] = $row;
+        }
+        
+        $stmt->close();
+        return $estudiantes;
+    }
+
+
+
        /**
      * Obtiene el índice global del estudiante.
      *
@@ -1195,5 +1256,6 @@ class Estudiante {
         $resultado = $this->conn->query($sql);
         return $resultado && $resultado->num_rows > 0 ? $resultado->fetch_assoc() : null;
     }
+
 }
 ?>

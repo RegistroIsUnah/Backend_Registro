@@ -68,7 +68,7 @@ class EstudianteController {
         header('Content-Type: application/json');
         
         try {
-
+           
             // Obtener datos del modelo
             $perfil = $this->modelo->obtenerPerfilEstudiante($estudianteId);
             
@@ -467,12 +467,6 @@ class EstudianteController {
         }
     }
 
-<<<<<<< Updated upstream
-=======
-
-
-
-
     /**
      * Busca estudiantes con filtros
      * 
@@ -536,7 +530,7 @@ class EstudianteController {
         }
     }
 
->>>>>>> Stashed changes
+
     /**
      * Valida si un estudiante puede matricular hoy, dependiendo del tipo de proceso y el índice.
      *
@@ -607,6 +601,7 @@ class EstudianteController {
                 'puede_matricular' => false,
                 'mensaje' => "No es su día de matrícula. Su índice es $indice. Debe matricular el día {$diasProceso[$diaAsignado]}."
             ];
+
         }
     }
 }
