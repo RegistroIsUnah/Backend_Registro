@@ -341,7 +341,7 @@ class Matricula {
      * @return void
      * @throws Exception Si ocurre un error al cancelar la matrícula.
      */
-    public function cancelarMatrícula($data) {
+    public function cancelarMatricula($data) {
         if (!isset($data['estudiante_id']) || !isset($data['seccion_id'])) {
             http_response_code(400);
             echo json_encode(['error' => 'Faltan datos: estudiante_id y seccion_id son requeridos']);
@@ -361,7 +361,7 @@ class Matricula {
     
             // Si no se encuentra la matrícula, retornar error
             if ($result->num_rows == 0) {
-                http_response_code(404);
+                http_response_code(404); // Aquí debe ser 404, ya que es un "no encontrado"
                 echo json_encode(['error' => 'El estudiante no está matriculado en esta sección']);
                 exit;
             }
@@ -370,11 +370,13 @@ class Matricula {
             $sqlEstadoCancelada = "SELECT estado_matricula_id FROM EstadoMatricula WHERE nombre = 'CANCELADA'";
             $stmt = $this->conn->prepare($sqlEstadoCancelada);
             $stmt->execute();
-            $estadoCancelada = $stmt->get_result()->fetch_assoc()['estado_matricula_id'];
-    
-            if (!$estadoCancelada) {
+            $estadoCanceladaResult = $stmt->get_result();
+            
+            if ($estadoCanceladaResult->num_rows == 0) {
                 throw new Exception("Estado 'CANCELADA' no encontrado en la tabla EstadoMatricula");
             }
+    
+            $estadoCancelada = $estadoCanceladaResult->fetch_assoc()['estado_matricula_id'];
     
             // Paso 3: Cancelar la matrícula en la sección
             $sqlCancelarSeccion = "UPDATE Matricula SET estado_matricula_id = ? WHERE estudiante_id = ? AND seccion_id = ?";
@@ -384,10 +386,11 @@ class Matricula {
                 throw new Exception("Error al cancelar la matrícula en la sección");
             }
     
-            http_response_code(200);
+            http_response_code(200); // Respuesta exitosa
             echo json_encode(['message' => 'Matrícula en la sección cancelada correctamente.']);
         } catch (Exception $e) {
-            http_response_code(500);
+            // Manejo de excepciones
+            http_response_code(500); // Error del servidor
             echo json_encode(['error' => $e->getMessage()]);
         }
     }    
