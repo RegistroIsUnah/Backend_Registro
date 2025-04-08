@@ -68,7 +68,7 @@ class EstudianteController {
         header('Content-Type: application/json');
         
         try {
-
+           
             // Obtener datos del modelo
             $perfil = $this->modelo->obtenerPerfilEstudiante($estudianteId);
             
@@ -467,6 +467,71 @@ class EstudianteController {
         }
     }
 
+
+
+
+
+    /**
+     * Busca estudiantes con filtros
+     * 
+     * @return void
+     * @version 1.0
+     */
+    public function buscarEstudiante() {
+        header('Content-Type: application/json');
+        
+        try {
+            // Obtener parámetros
+            $nombre = $_GET['nombre'] ?? null;
+            $no_cuenta = $_GET['no_cuenta'] ?? null;
+            $centro = $_GET['centro'] ?? null;
+            $carrera = $_GET['carrera'] ?? null;
+
+            // Validar parámetros
+            $errores = [];
+            
+            if($no_cuenta && !preg_match('/^\d+$/', $no_cuenta)) {
+                $errores[] = "Formato de número de cuenta inválido";
+            }
+            
+            if(!empty($errores)) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'errors' => $errores]);
+                return;
+            }
+
+            // Buscar estudiantes
+            $resultados = $this->modelo->buscarEstudiante(
+                $nombre,
+                $no_cuenta,
+                $centro,
+                $carrera
+            );
+
+            // Formatear respuesta
+            $response = [
+                'success' => true,
+                'data' => $resultados,
+                'meta' => [
+                    'total' => count($resultados),
+                    'filters' => [
+                        'nombre' => $nombre,
+                        'no_cuenta' => $no_cuenta,
+                        'centro' => $centro,
+                        'carrera' => $carrera
+                    ]
+                ]
+            ];
+
+            echo json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode([
+                'success' => false,
+                'error' => $e->getMessage()
+            ]);
+
     /**
      * Valida si un estudiante puede matricular hoy, dependiendo del tipo de proceso y el índice.
      *
@@ -537,6 +602,7 @@ class EstudianteController {
                 'puede_matricular' => false,
                 'mensaje' => "No es su día de matrícula. Su índice es $indice. Debe matricular el día {$diasProceso[$diaAsignado]}."
             ];
+
         }
     }
 }
