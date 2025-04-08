@@ -171,6 +171,7 @@ class Matricula {
     public function obtenerClasesMatriculadas($estudiante_id) {
         $sql = "
             SELECT
+                se.seccion_id,
                 c.codigo AS codigo,
                 c.nombre AS asignatura,
                 DATE_FORMAT(se.hora_inicio, '%H%i') AS seccion,
@@ -228,6 +229,7 @@ class Matricula {
     public function obtenerClasesEnEspera($estudiante_id) {
         $sql = "
             SELECT
+                se.seccion_id,
                 c.codigo AS codigo,
                 c.nombre AS asignatura,
                 DATE_FORMAT(se.hora_inicio, '%H%i') AS seccion,
@@ -284,6 +286,7 @@ class Matricula {
      */
     public function obtenerLaboratoriosMatriculados($estudiante_id) {
         $sql = "SELECT
+                    l.laboratorio_id,
                     c.codigo AS codigo,
                     c.nombre AS asignatura,
                     DATE_FORMAT(l.hora_inicio, '%H%i') AS laboratorio_codigo,
