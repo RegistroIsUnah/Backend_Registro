@@ -1157,6 +1157,7 @@ class Estudiante {
         }
     }
 
+
    /**
      * Busca estudiantes con filtros
      * 
@@ -1217,11 +1218,44 @@ class Estudiante {
 
 
 
+       /**
+     * Obtiene el índice global del estudiante.
+     *
+     * @param int $estudianteId
+     * @return float|null
+     */
+    public function obtenerIndiceGlobal(int $estudianteId): ?float
+    {
+        $stmt = $this->conn->prepare("SELECT indice_global FROM Estudiante WHERE estudiante_id = ?");
+        $stmt->bind_param("i", $estudianteId);
+        $stmt->execute();
+        $resultado = $stmt->get_result();
+        $fila = $resultado->fetch_assoc();
 
+        return $fila ? (float) $fila['indice_global'] : null;
+    }
 
+    /**
+     * Retorna el proceso de matrícula activo si existe.
+     *
+     * @return array|null
+     */
+    public function obtenerProcesoActivo(): ?array
+    {
+        $sql = "
+            SELECT pm.fecha_inicio, pm.fecha_fin, tp.nombre AS tipo
+            FROM ProcesoMatricula pm
+            JOIN TipoProcesoMatricula tp ON tp.tipo_proceso_id = pm.tipo_proceso_id
+            WHERE NOW() BETWEEN pm.fecha_inicio AND pm.fecha_fin
+              AND pm.estado_proceso_id = (
+                  SELECT estado_proceso_id FROM EstadoProceso WHERE nombre = 'ACTIVO'
+              )
+            LIMIT 1
+        ";
 
-
-
+        $resultado = $this->conn->query($sql);
+        return $resultado && $resultado->num_rows > 0 ? $resultado->fetch_assoc() : null;
+    }
 
 }
 ?>
