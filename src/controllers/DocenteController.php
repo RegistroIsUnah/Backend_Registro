@@ -132,6 +132,76 @@ class DocenteController {
         }
     }
 
+
+
+
+
+    /**
+     * Procesa la calificación de un estudiante
+     * 
+     * @param array $data Datos de la calificación del estudiante
+     * @return void
+     */
+    public function calificarEstudiante($data) {
+        
+        try {
+            /*
+            // 1. Iniciar sesión
+            if (session_status() == PHP_SESSION_NONE) {
+                session_start();
+            }
+
+            // 2. Validar autenticación
+            if (!isset($_SESSION['usuario_id'])) {
+                throw new Exception('Debe iniciar sesión', 401);
+            }
+
+            // 3. Validar rol docente
+            if ($_SESSION['rol'] !== 'docente') {
+                throw new Exception('Acceso restringido a docentes', 403);
+            }
+            */
+
+            // 4. Obtener y validar datos
+            $camposRequeridos = ['estudiante_id', 'seccion_id', 'calificacion'];
+            foreach ($camposRequeridos as $campo) {
+                if (empty($data[$campo])) {
+                    throw new Exception("Campo requerido: $campo", 400);
+                }
+            }
+
+            // 5. Estructurar datos
+            $dataFormateada = [
+                'estudiante_id' => $data['estudiante_id'],
+                'seccion_id' => $data['seccion_id'],
+                'calificacion' => $data['calificacion'],
+                'observacion' => $data['observacion'] ?? null,
+                'estado_curso_id' => $data['estado_curso_id'] ?? null
+            ];
+
+            // 6. Registrar calificación
+            $resultado = $this->modelo->calificarEstudiante( $dataFormateada);
+
+            echo json_encode([
+                'success' => true,
+                'data' => $resultado
+            ]);
+
+        } catch (Exception $e) {
+            $code = $e->getCode() ?: 500;
+            http_response_code($code);
+            echo json_encode([
+                'success' => false,
+                'error' => $e->getMessage(),
+                'code' => $code
+            ]);
+        }
+    }
+
+
+
+
+
        /**
      * Obtiene los datos del docente a partir del ID de la sección
      */
@@ -154,5 +224,6 @@ class DocenteController {
             ]);
         }
     }
+
 }
 ?>
