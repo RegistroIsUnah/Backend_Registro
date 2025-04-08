@@ -421,7 +421,7 @@ DELIMITER ;
 
 
 DELIMITER //
-
+ -- YA NO FUNCIONAL NO USAR
 CREATE PROCEDURE SP_matricular_estudiante_viejo(
     IN p_estudiante_id INT,
     IN p_seccion_id INT,
@@ -742,6 +742,7 @@ END //
 DELIMITER ;
 
 
+
 DELIMITER //
 
 CREATE PROCEDURE SP_matricular_estudiante(
@@ -751,12 +752,6 @@ CREATE PROCEDURE SP_matricular_estudiante(
     IN p_laboratorio_id INT
 )
 BEGIN
-    DECLARE EXIT HANDLER FOR SQLEXCEPTION
-    BEGIN
-        ROLLBACK;
-        RESIGNAL;
-    END;
-    
     -- Declaración de variables
     DECLARE v_periodo_academico_id INT;
     DECLARE v_estadoMatricula VARCHAR(20);
@@ -775,6 +770,13 @@ BEGIN
     DECLARE v_cupos INT;
     DECLARE v_totalMatriculados INT;
     DECLARE v_proceso_activo BOOLEAN DEFAULT FALSE;
+    
+     -- Declarar el handler
+	DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        RESIGNAL;
+    END;
     
     START TRANSACTION;
     
@@ -987,7 +989,6 @@ BEGIN
 END //
 
 DELIMITER ;
-
 
 DELIMITER //
 
