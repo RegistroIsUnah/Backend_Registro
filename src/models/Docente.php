@@ -317,6 +317,64 @@ class Docente {
         if ($result->num_rows === 0) {
             throw new Exception("No se encontró el docente con ID: " . $docente_id);
         }
+<<<<<<< Updated upstream
+=======
+    }
+
+
+    /**
+    * Actualiza una calificación con observación validando permisos del docente
+    * 
+    * @param array $data
+    * @return array
+    * @throws Exception
+    */
+    public function actualizarCalificacionEstudiante($data) {
+        // 1. Buscar estudiante_id a partir del numero_cuenta
+        $sql_est = "SELECT estudiante_id FROM Estudiante WHERE numero_cuenta = ?";
+        $stmt_est = $this->conn->prepare($sql_est);
+        $stmt_est->bind_param("s", $data['numero_cuenta']);
+        $stmt_est->execute();
+        $res = $stmt_est->get_result();
+
+        if ($res->num_rows === 0) {
+            throw new Exception("Estudiante no encontrado con el número de cuenta proporcionado.", 404);
+        }
+
+        $row = $res->fetch_assoc();
+        $estudiante_id = $row['estudiante_id'];
+
+        // 2. Actualizar la calificación
+        $sql = "UPDATE HistorialEstudiante 
+                SET calificacion = ?, observacion = ?, fecha = NOW(), estado_curso_id = ?
+                WHERE estudiante_id = ? AND seccion_id = ?";
+
+        $estado_curso_id = $data['estado_curso_id'] ?? 1;
+
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param("dsiii", 
+            $data['calificacion'],
+            $data['observacion'],
+            $estado_curso_id,
+            $estudiante_id,
+            $data['seccion_id']
+        );
+
+        if (!$stmt->execute()) {
+            throw new Exception("Error al actualizar calificación: " . $stmt->error);
+        }
+
+        if ($stmt->affected_rows === 0) {
+            throw new Exception("No se encontró un registro para actualizar con el número de cuenta y sección especificados.", 404);
+        }
+
+        return [
+            'mensaje' => 'Calificación actualizada correctamente',
+            'fecha' => date('Y-m-d H:i:s')
+        ];
+    
+
+>>>>>>> Stashed changes
 
 
 
