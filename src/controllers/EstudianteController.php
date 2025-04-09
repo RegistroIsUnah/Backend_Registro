@@ -604,5 +604,92 @@ class EstudianteController {
 
         }
     }
+
+
+    /**
+     * Obtiene las clases activas de un estudiante
+     *
+     * @param int $estudianteId ID del estudiante
+     * @return void
+     * @author Jose Vargas
+     */
+    public function obtenerClasesActEstudiante($estudianteId) {
+        header('Content-Type: application/json');
+
+        try {
+            $clases = $this->modelo->obtenerClasesActEstudiante($estudianteId);
+
+            if (!$clases) {
+                throw new Exception("No se encontraron clases para el estudiante especificado", 404);
+            }
+
+            $response = [
+                'success' => true,
+                'data' => array_map(function($clase) {
+                    return [
+                        'clase_id' => $clase['clase_id'],
+                        'codigo_clase' => $clase['codigo_clase'],
+                        'nombre_clase' => $clase['nombre_clase'],
+                        'creditos' => (int)$clase['creditos'],
+                        'tiene_laboratorio' => (bool)$clase['tiene_laboratorio'],
+                        'seccion' => [
+                            'seccion_id' => $clase['seccion_id'],
+                            'hora_inicio' => $clase['hora_inicio'],
+                            'hora_fin' => $clase['hora_fin'],
+                            'dias' => [
+                                'lista_dia_ids' => explode(', ', $clase['lista_dia_ids']),
+                                'nombres_dias' => explode(', ', $clase['nombres_dias'])
+                            ],
+                            'ubicacion' => [
+                                'edificio' => $clase['edificio'],
+                                'aula' => $clase['aula']
+                            ]
+                        ],
+                        'laboratorio' => $clase['laboratorio_id'] ? [
+                            'laboratorio_id' => $clase['laboratorio_id'],
+                            'codigo_laboratorio' => $clase['codigo_laboratorio'],
+                            'hora_inicio' => $clase['hora_inicio_lab'],
+                            'hora_fin' => $clase['hora_fin_lab'],
+                            'dias' => [
+                                'lista_dia_ids' => explode(', ', $clase['lista_dia_ids_lab']),
+                                'nombres_dias' => explode(', ', $clase['nombres_dias_lab'])
+                            ],
+                            'ubicacion' => [
+                                'edificio' => $clase['edificio_lab'],
+                                'aula' => $clase['aula_lab']
+                            ]
+                        ] : null,
+                        'docente' => [
+                            'numero_empleado' => $clase['numero_empleado'],
+                            'nombre' => $clase['nombre_docente'],
+                            'apellido' => $clase['apellido_docente'],
+                            'correo' => $clase['correo_docente']
+                        ],
+                        'periodo_academico' => [
+                            'anio' => (int)$clase['anio'],
+                            'numero_periodo_id' => (int)$clase['numero_periodo_id']
+                        ]
+                    ];
+                }, $clases)
+            ];
+
+            echo json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+
+        } catch (Exception $e) {
+            http_response_code($e->getCode() ?: 500);
+            echo json_encode([
+                'success' => false,
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+
+
+
+
+
+
+
+
 }
 ?>
