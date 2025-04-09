@@ -3,7 +3,7 @@
  * API para procesar CSV de resultados de exámenes
  * 
  * Ejemplo de URL 
- * servidor:puerto/api/procesar_aspirantes
+ * servidor:puerto/api/post/procesar_aspirantes
  * 
  * Métodos
  *  POST
