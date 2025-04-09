@@ -284,12 +284,12 @@ class Docente {
 
 
 
-    /**
-    * Actualiza una calificación con observación validando permisos del docente
-    * 
-    * @param array $data
-    * @return array
-    * @throws Exception
+    /*
+    Actualiza una calificación con observación validando permisos del docente
+     
+     @param array $data
+     @return array
+     @throws Exception
     */
     public function actualizarCalificacionEstudiante($data) {
         // 1. Buscar estudiante_id a partir del numero_cuenta
