@@ -467,6 +467,10 @@ class EstudianteController {
         }
     }
 
+
+
+
+
     /**
      * Busca estudiantes con filtros
      * 
@@ -530,7 +534,6 @@ class EstudianteController {
         } 
     } 
              
-
     /**
      * Valida si un estudiante puede matricular hoy, dependiendo del tipo de proceso y el índice.
      *
@@ -604,6 +607,13 @@ class EstudianteController {
 
         }
     }
+    
+
+
+
+
+
+
 
 
     /**
@@ -619,9 +629,8 @@ class EstudianteController {
         try {
             $clases = $this->modelo->obtenerClasesActEstudiante($estudianteId);
 
-            if (!$clases) {
-                throw new Exception("No se encontraron clases para el estudiante especificado", 404);
-            }
+            // Asegurar que $clases siempre sea un array (incluso vacío)
+            $clases = is_array($clases) ? $clases : [];
 
             $response = [
                 'success' => true,
@@ -673,7 +682,7 @@ class EstudianteController {
                 }, $clases)
             ];
 
-            echo json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+            echo json_encode($response);
 
         } catch (Exception $e) {
             http_response_code($e->getCode() ?: 500);
@@ -683,12 +692,6 @@ class EstudianteController {
             ]);
         }
     }
-
-
-
-
-
-
 
 
 }

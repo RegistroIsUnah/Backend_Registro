@@ -1159,33 +1159,29 @@ class Estudiante {
 
 
    /**
-     * Busca estudiantes con filtros
+     * Busca estudiantes con filtros generales por nombre completo, cuenta, carrera o departamento
      * 
-     * @param string|null $nombre
-     * @param string|null $no_cuenta
-     * @param string|null $centro
-     * @param string|null $carrera
+     * @param string $filtro Texto de búsqueda general
      * @return array
      * @throws Exception
      */
-    public function buscarEstudiante($nombre = null, $no_cuenta = null, $centro = null, $carrera = null) {
+    public function buscarEstudiante($filtro) {
         $sql = "SELECT 
                     e.estudiante_id,
                     e.numero_cuenta,
-                    e.nombre,
-                    e.apellido,
-                    c.nombre AS centro,
-                    GROUP_CONCAT(DISTINCT ca.nombre) AS carreras
+                    CONCAT(e.nombre, ' ', e.apellido) AS nombre_completo,
+                    e.correo_personal,
+                    d.nombre AS departamento,
+                    ca.nombre AS carrera
                 FROM Estudiante e
-                INNER JOIN Centro c ON e.centro_id = c.centro_id
                 INNER JOIN EstudianteCarrera ec ON e.estudiante_id = ec.estudiante_id
                 INNER JOIN Carrera ca ON ec.carrera_id = ca.carrera_id
+                INNER JOIN Departamento d ON ca.dept_id = d.dept_id
                 WHERE 
-                    (e.nombre LIKE CONCAT('%', ?, '%') OR ? IS NULL) AND
-                    (e.numero_cuenta = ? OR ? IS NULL) AND
-                    (c.nombre = ? OR ? IS NULL) AND
-                    (ca.nombre = ? OR ? IS NULL)
-                GROUP BY e.estudiante_id
+                    CONCAT(e.nombre, ' ', e.apellido) LIKE CONCAT('%', ?, '%')
+                    OR e.numero_cuenta LIKE CONCAT('%', ?, '%')
+                    OR ca.nombre LIKE CONCAT('%', ?, '%')
+                    OR d.nombre LIKE CONCAT('%', ?, '%')
                 ORDER BY e.nombre";
 
         $stmt = $this->conn->prepare($sql);
@@ -1193,13 +1189,8 @@ class Estudiante {
             throw new Exception("Error preparando la consulta: " . $this->conn->error);
         }
 
-        $stmt->bind_param(
-            "ssssssss", 
-            $nombre, $nombre,
-            $no_cuenta, $no_cuenta,
-            $centro, $centro,
-            $carrera, $carrera
-        );
+        // Usamos el mismo valor para todos los filtros LIKE
+        $stmt->bind_param("ssss", $filtro, $filtro, $filtro, $filtro);
 
         if (!$stmt->execute()) {
             throw new Exception("Error ejecutando la consulta: " . $stmt->error);
@@ -1207,14 +1198,15 @@ class Estudiante {
 
         $result = $stmt->get_result();
         $estudiantes = [];
+
         while ($row = $result->fetch_assoc()) {
-            $row['carreras'] = explode(',', $row['carreras']); // Convertir a array
             $estudiantes[] = $row;
         }
-        
+
         $stmt->close();
         return $estudiantes;
     }
+
 
 
 
