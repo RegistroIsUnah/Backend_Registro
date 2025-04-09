@@ -204,5 +204,48 @@ class DocenteController {
         }
     }
 
+
+    
+    /**
+     * Procesa la actualización de la calificación de un estudiante
+     * 
+     * @param array $data Datos de la calificación del estudiante
+     * @return void
+     */
+    public function actualizarCalificacionEstudiante($data) {
+        try {
+            $camposRequeridos = ['numero_cuenta', 'seccion_id', 'calificacion'];
+            foreach ($camposRequeridos as $campo) {
+                if (empty($data[$campo])) {
+                    throw new Exception("Campo requerido: $campo", 400);
+                }
+            }
+
+            $dataFormateada = [
+                'numero_cuenta' => $data['numero_cuenta'],
+                'seccion_id' => $data['seccion_id'],
+                'calificacion' => $data['calificacion'],
+                'observacion' => $data['observacion'] ?? null,
+                'estado_curso_id' => $data['estado_curso_id'] ?? null
+            ];
+
+            $resultado = $this->modelo->actualizarCalificacionEstudiante($dataFormateada);
+
+            echo json_encode([
+                'success' => true,
+                'data' => $resultado
+            ]);
+
+        } catch (Exception $e) {
+            $code = $e->getCode() ?: 500;
+            http_response_code($code);
+            echo json_encode([
+                'success' => false,
+                'error' => $e->getMessage(),
+                'code' => $code
+            ]);
+        }
+    }
+
 }
 ?>
