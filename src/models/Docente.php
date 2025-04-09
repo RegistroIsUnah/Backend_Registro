@@ -317,8 +317,15 @@ class Docente {
         if ($result->num_rows === 0) {
             throw new Exception("No se encontró el docente con ID: " . $docente_id);
         }
+        
+        // Obtener los datos como array asociativo
+        $docente = $result->fetch_assoc();
+        
+        // Cerrar el statement
+        $stmt->close();
+        
+        return $docente;
     }
-
 
     /**
     * Actualiza una calificación con observación validando permisos del docente
