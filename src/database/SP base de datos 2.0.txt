@@ -1059,7 +1059,7 @@ DELIMITER ;
 
 
 DELIMITER //
-
+ -- YA NO USAR..
 CREATE PROCEDURE SP_actualizarListaEspera(
     IN p_seccion_id INT
 )
