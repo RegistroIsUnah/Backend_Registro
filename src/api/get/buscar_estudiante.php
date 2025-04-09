@@ -18,6 +18,7 @@
  * 
  * @package API
  * @version 1.0
+ * @author Jose Vargas  
  */
 
  header("Access-Control-Allow-Origin: *");
