@@ -280,7 +280,7 @@ class Seccion {
                     he.observacion
                 FROM Matricula m
                 INNER JOIN Estudiante e ON m.estudiante_id = e.estudiante_id
-				INNER JOIN HistorialEstudiante he ON m.estudiante_id = he.estudiante_id
+		INNER JOIN HistorialEstudiante he ON m.estudiante_id = he.estudiante_id
                 INNER JOIN EstadoCurso est ON  he.estado_curso_id = est.estado_curso_id
                 WHERE m.seccion_id = ?";
 
