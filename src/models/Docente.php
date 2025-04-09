@@ -317,16 +317,17 @@ class Docente {
         if ($result->num_rows === 0) {
             throw new Exception("No se encontró el docente con ID: " . $docente_id);
         }
+    }
 
 
 
-    /*
-    Actualiza una calificación con observación validando permisos del docente
-     
-     @param array $data
-     @return array
-     @throws Exception
-    */
+    /**
+    * Actualiza una calificación con observación validando permisos del docente
+    * 
+    * @param array $data
+    * @return array
+    * @throws Exception
+    **/
     public function actualizarCalificacionEstudiante($data) {
         // 1. Buscar estudiante_id a partir del numero_cuenta
         $sql_est = "SELECT estudiante_id FROM Estudiante WHERE numero_cuenta = ?";
@@ -373,11 +374,6 @@ class Docente {
     }
 
 
-        $data = $result->fetch_assoc();
-        $stmt->close();
-        
-        return $data;
-    }
 
 }
 ?>
