@@ -1,6 +1,12 @@
 <?php
 /**
- * Cron Job para enviar correos programados de aspirantes
+ * Cron Job para enviar correos a aspirantes
+ *
+ * Este script envia los correos con las notas de los examenes a los aspirantes
+ *
+ * @package CronJobs
+ * @author Ruben Diaz
+ * @version 1.0
  */
 
 require_once __DIR__ . '/../modules/config/DataBase.php';

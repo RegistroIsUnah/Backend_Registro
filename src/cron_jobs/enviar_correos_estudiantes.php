@@ -1,6 +1,12 @@
 <?php
 /**
- * Cron Job para enviar correos programados de estudiantes (versión simplificada)
+ * Cron Job para enviar correos a los estudiantes
+ *
+ * Este script envia los correos con las credenciales para el sistema
+ *
+ * @package CronJobs
+ * @author Ruben Diaz
+ * @version 1.0
  */
 
 require_once __DIR__ . '/../modules/config/DataBase.php';
