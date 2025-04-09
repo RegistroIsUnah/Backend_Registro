@@ -467,10 +467,6 @@ class EstudianteController {
         }
     }
 
-
-
-
-
     /**
      * Busca estudiantes con filtros
      * 
@@ -534,6 +530,7 @@ class EstudianteController {
         } 
     } 
              
+
     /**
      * Valida si un estudiante puede matricular hoy, dependiendo del tipo de proceso y el índice.
      *

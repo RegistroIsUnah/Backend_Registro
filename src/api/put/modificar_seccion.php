@@ -7,7 +7,7 @@
  * Ejemplo de URL 
  * servidor:puerto/api/post/modificar_seccion.php
  * 
- * Metodos soportados:
+ * Métodos soportados:
  *  POST
  *
  * Ejemplo de JSON de entrada:
@@ -29,9 +29,9 @@
  * @version 1.0
  * 
  */
- 
- header("Access-Control-Allow-Origin: *");
- header('Content-Type: application/json');
+
+header("Access-Control-Allow-Origin: *");
+header('Content-Type: application/json');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
@@ -50,4 +50,4 @@ require_once __DIR__ . '/../../controllers/SeccionController.php';
 
 $seccionController = new SeccionController();
 $seccionController->modificarSeccion($input);
- ?>
+?>

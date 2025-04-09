@@ -135,6 +135,7 @@ class DocenteController {
 
 
 
+
     /**
      * Procesa la calificación de un estudiante
      * 
@@ -199,6 +200,30 @@ class DocenteController {
 
 
 
+
+
+       /**
+     * Obtiene los datos del docente a partir del ID de la sección
+     */
+    public function obtenerDocentePorSeccion($seccion_id) {
+        try {
+            // Instanciar el modelo y obtener el docente
+            $data = $this->modelo->obtenerDocentePorSeccion($seccion_id);
+
+            // Respuesta exitosa
+            echo json_encode([
+                'success' => true,
+                'data' => $data
+            ]);
+        } catch (Exception $e) {
+            // Manejo de errores
+            http_response_code(500);
+            echo json_encode([
+                'error' => true,
+                'message' => $e->getMessage()
+            ]);
+        }
+    }
 
 }
 ?>

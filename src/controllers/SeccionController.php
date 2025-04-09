@@ -58,7 +58,7 @@ class SeccionController {
                 exit;
             }
         }
-
+    
         // Convertir numéricos
         $clase_id             = intval($data['clase_id']);
         $docente_id           = intval($data['docente_id']);
@@ -68,7 +68,7 @@ class SeccionController {
         $hora_inicio          = $data['hora_inicio'];
         $hora_fin             = $data['hora_fin'];
         $dias                 = $data['dias'];
-
+    
         // Manejo de archivo de video (opcional).
         $video_url = null;
         if (isset($files['video']) && $files['video']['error'] === UPLOAD_ERR_OK) {
@@ -87,7 +87,7 @@ class SeccionController {
             $extVideo = pathinfo($files['video']['name'], PATHINFO_EXTENSION);
             $videoName = uniqid('video_', true) . '.' . $extVideo;
             $fullPathVideo = $uploadsDirVideo . $videoName;
-
+    
             if (!move_uploaded_file($files['video']['tmp_name'], $fullPathVideo)) {
                 http_response_code(500);
                 echo json_encode(['error' => 'No se pudo guardar el video']);
@@ -96,7 +96,7 @@ class SeccionController {
             // Guardar la ruta relativa
             $video_url = 'uploads/videos/' . $videoName;
         }
-
+    
         try {
             // Instanciar el modelo y crear la sección
             $seccionModel = new Seccion();
@@ -116,13 +116,13 @@ class SeccionController {
             echo json_encode(['error' => $e->getMessage()]);
             exit;
         }
-
+    
         http_response_code(200);
         echo json_encode([
             'seccion_id' => $seccion_id,
             'message' => 'Sección creada exitosamente'
         ]);
-    }
+    }    
 
     /**
      * Valida y procesa la modificación de una sección.
@@ -155,7 +155,7 @@ class SeccionController {
         $motivo_cancelacion = isset($data['motivo_cancelacion']) && $data['motivo_cancelacion'] !== "" ? $data['motivo_cancelacion'] : null;
         $cupos = isset($data['cupos']) && $data['cupos'] !== "" ? intval($data['cupos']) : null;
         $video_url = isset($data['video_url']) && $data['video_url'] !== "" ? $data['video_url'] : null;
-
+    
         try {
             // Instanciar el modelo Seccion y llamar a la función para modificar la sección
             $seccionModel = new Seccion();
@@ -173,10 +173,11 @@ class SeccionController {
             echo json_encode(['error' => $e->getMessage()]);
             exit;
         }
-
+    
         http_response_code(200);
         echo json_encode(['message' => $mensaje]);
     }
+    
 
      /**
      * Obtiene las secciones de una clase y envía la respuesta en JSON.
@@ -213,9 +214,6 @@ class SeccionController {
             echo json_encode(['error' => $e->getMessage()]);
         }
     }
-
-
-
 
     /**
      * Obtiene la lista de estudiantes de una sección específica
@@ -289,9 +287,6 @@ class SeccionController {
             ]);
         }
     }
-
-
-
 
     /**
      * Genera un reporte de secciones

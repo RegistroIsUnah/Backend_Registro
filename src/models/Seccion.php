@@ -50,9 +50,9 @@ class Seccion {
         if (!$stmt) {
             throw new Exception("Error preparando la consulta: " . $this->conn->error);
         }
-
+    
         // Vincular parámetros (9 marcadores)
-        $stmt->bind_param("iiiississ", 
+        $stmt->bind_param("iiississs", 
             $clase_id, 
             $docente_id, 
             $periodo_academico_id, 
@@ -63,12 +63,12 @@ class Seccion {
             $dias, 
             $video_url
         );
-
+    
         // Ejecutar la consulta
         if (!$stmt->execute()) {
             throw new Exception("Error ejecutando la consulta: " . $stmt->error);
         }
-
+    
         // Obtener el resultado (ID de la sección)
         $result = $stmt->get_result();
         $seccion_id = null;
@@ -77,17 +77,17 @@ class Seccion {
             $seccion_id = $row['seccion_id'] ?? null;
             $result->free();
         }
-
+    
         $stmt->close();
-
+    
         // Si no se pudo obtener el ID de la sección, lanzar un error
         if (!$seccion_id) {
             throw new Exception("No se pudo crear la sección");
         }
-
+    
         return $seccion_id;
     }
-
+    
     /**
      * Modifica una sección utilizando el procedimiento almacenado SP_modificarSeccion.
      *
@@ -107,19 +107,19 @@ class Seccion {
         if (!$stmt) {
             throw new Exception("Error preparando la consulta: " . $this->conn->error);
         }
-
+    
         // "iiissi s": 3 enteros, 2 strings, 1 entero, 1 string
         if (!$stmt->bind_param("iiississ", $seccion_id, $docente_id, $aula_id, $estado, $motivo_cancelacion, $cupos, $video_url)) {
             throw new Exception("Error vinculando parámetros: " . $stmt->error);
         }
-
+    
         if (!$stmt->execute()) {
             throw new Exception("Error ejecutando la consulta: " . $stmt->error);
         }
-
+    
         $stmt->close();
         return "Sección modificada exitosamente";
-    }
+    }    
 
    /**
      * Obtiene las secciones de una clase con los detalles del docente, aula y edificio.
@@ -260,10 +260,6 @@ class Seccion {
         return $secciones;
     }
 
-
-
-
-
     /*
     * Obtiene la lista de estudiantes de una sección específica.
     *
@@ -295,7 +291,6 @@ class Seccion {
         return $result->fetch_all(MYSQLI_ASSOC);
     }
 
-
     /*
     * Actualiza la URL del video de una sección específica.
     *
@@ -316,20 +311,6 @@ class Seccion {
             throw new Exception("No se pudo actualizar la URL del video o la sección no existe");
         }
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
       /**
      * Obtiene las secciones activas por departamento

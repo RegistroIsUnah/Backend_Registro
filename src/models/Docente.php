@@ -220,5 +220,56 @@ class Docente {
 
 
 
+
+     /**
+     * Obtiene los datos del docente a partir del ID de la sección.
+     *
+     * @param int $seccion_id ID de la sección
+     * @return array Datos del docente (id, nombre, apellido, correo, foto, dept_id, nombre del departamento)
+     * @throws Exception Si ocurre un error en la consulta
+     */
+    public function obtenerDocentePorSeccion($seccion_id) {
+        $query = "
+            SELECT 
+                d.docente_id,
+                d.nombre AS docente_nombre,
+                d.apellido AS docente_apellido,
+                d.correo AS docente_correo,
+                d.foto AS docente_foto,
+                d.dept_id,
+                dep.nombre AS departamento_nombre
+            FROM Seccion s
+            JOIN Docente d ON s.docente_id = d.docente_id
+            JOIN Departamento dep ON d.dept_id = dep.dept_id
+            WHERE s.seccion_id = ?
+        ";
+
+        $stmt = $this->conn->prepare($query);
+        if (!$stmt) {
+            throw new Exception("Error preparando la consulta: " . $this->conn->error);
+        }
+
+        // Vincular el parámetro de la consulta (ID de la sección)
+        $stmt->bind_param("i", $seccion_id);
+
+        // Ejecutar la consulta
+        if (!$stmt->execute()) {
+            throw new Exception("Error ejecutando la consulta: " . $stmt->error);
+        }
+
+        // Obtener el resultado
+        $result = $stmt->get_result();
+        $data = $result->fetch_assoc();
+
+        $stmt->close();
+
+        // Verificar si se encontró un docente para la sección
+        if (!$data) {
+            throw new Exception("No se encontró el docente para la sección con ID: $seccion_id");
+        }
+
+        return $data;
+    }
+
 }
 ?>
