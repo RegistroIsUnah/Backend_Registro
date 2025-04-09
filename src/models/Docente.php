@@ -190,38 +190,47 @@ class Docente {
      * @throws Exception
      */
     public function calificarEstudiante($data) {
-        
+        // 1. Buscar estudiante_id a partir del numero_cuenta
+        $sql_est = "SELECT estudiante_id FROM Estudiante WHERE numero_cuenta = ?";
+        $stmt_est = $this->conn->prepare($sql_est);
+        $stmt_est->bind_param("s", $data['numero_cuenta']);
+        $stmt_est->execute();
+        $res = $stmt_est->get_result();
+    
+        if ($res->num_rows === 0) {
+            throw new Exception("Estudiante no encontrado con el número de cuenta proporcionado.", 404);
+        }
+    
+        $row = $res->fetch_assoc();
+        $estudiante_id = $row['estudiante_id'];
+    
+        // 2. Insertar la calificación
         $sql = "INSERT INTO HistorialEstudiante 
-               (estudiante_id, seccion_id, calificacion, observacion, fecha, estado_curso_id)
-               VALUES (?, ?, ?, ?, NOW(), ?)";
-        
-        $estado_curso_id = $data['estado_curso_id'] ?? 1; // Valor por defecto
-        
+                (estudiante_id, seccion_id, calificacion, observacion, fecha, estado_curso_id)
+                VALUES (?, ?, ?, ?, NOW(), ?)";
+    
+        $estado_curso_id = $data['estado_curso_id'] ?? 1;
+    
         $stmt = $this->conn->prepare($sql);
         $stmt->bind_param("iidsi", 
-            $data['estudiante_id'],
+            $estudiante_id,
             $data['seccion_id'],
             $data['calificacion'],
             $data['observacion'],
             $estado_curso_id
         );
-
+    
         if (!$stmt->execute()) {
             throw new Exception("Error al registrar calificación: " . $stmt->error);
         }
-
+    
         return [
             'historial_id' => $stmt->insert_id,
             'fecha' => date('Y-m-d H:i:s')
         ];
     }
 
-
-
-
-
-
-     /**
+    /**
      * Obtiene los datos del docente a partir del ID de la sección.
      *
      * @param int $seccion_id ID de la sección
@@ -270,6 +279,8 @@ class Docente {
 
         return $data;
     }
+
+
 
 }
 ?>
