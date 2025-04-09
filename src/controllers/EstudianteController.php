@@ -550,8 +550,13 @@ class EstudianteController {
         }
 
         $tipoProceso = strtoupper($proceso['tipo_proceso']);
-        $fechaInicio = new DateTime($proceso['fecha_inicio']);
-        $fechaHoy = new DateTime();
+        
+        $zona = new DateTimeZone('America/Tegucigalpa');
+        $fechaInicio = new DateTime($proceso['fecha_inicio'], $zona);
+        $fechaHoy = new DateTime('now', $zona);
+
+        //$fechaInicio = new DateTime($proceso['fecha_inicio']);
+        //$fechaHoy = new DateTime();
 
         // Si es adiciones/cancelaciones, no hay restricción por índice
         if ($tipoProceso === 'ADICIONES_CANCELACIONES') {
