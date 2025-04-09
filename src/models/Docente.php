@@ -178,6 +178,49 @@ class Docente {
         }
     }
 
+
+
+
+   /**
+     * Registra una calificación con observación validando permisos del docente
+     * 
+     * @param int $docente_id
+     * @param array $data
+     * @return array
+     * @throws Exception
+     */
+    public function calificarEstudiante($data) {
+        
+        $sql = "INSERT INTO HistorialEstudiante 
+               (estudiante_id, seccion_id, calificacion, observacion, fecha, estado_curso_id)
+               VALUES (?, ?, ?, ?, NOW(), ?)";
+        
+        $estado_curso_id = $data['estado_curso_id'] ?? 1; // Valor por defecto
+        
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param("iidsi", 
+            $data['estudiante_id'],
+            $data['seccion_id'],
+            $data['calificacion'],
+            $data['observacion'],
+            $estado_curso_id
+        );
+
+        if (!$stmt->execute()) {
+            throw new Exception("Error al registrar calificación: " . $stmt->error);
+        }
+
+        return [
+            'historial_id' => $stmt->insert_id,
+            'fecha' => date('Y-m-d H:i:s')
+        ];
+    }
+
+
+
+
+
+
      /**
      * Obtiene los datos del docente a partir del ID de la sección.
      *
@@ -227,5 +270,6 @@ class Docente {
 
         return $data;
     }
+
 }
 ?>

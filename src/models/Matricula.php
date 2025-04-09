@@ -395,7 +395,6 @@ class Matricula {
             }
     
             http_response_code(200); // Respuesta exitosa
-            echo json_encode(['message' => 'Matrícula en la sección cancelada correctamente.']);
         } catch (Exception $e) {
             // Manejo de excepciones
             http_response_code(500); // Error del servidor

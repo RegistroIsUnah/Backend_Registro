@@ -1257,5 +1257,89 @@ class Estudiante {
         return $resultado && $resultado->num_rows > 0 ? $resultado->fetch_assoc() : null;
     }
 
+
+
+    /**
+     * Obtiene las clases activas de un estudiante (incluyendo laboratorio y datos del docente)
+     *
+     * @param int $estudiante_id ID del estudiante
+     * @return array Lista de clases activas del estudiante
+     * @throws Exception Si no se encuentran resultados
+     * @author Jose Vargas
+     */
+    public function obtenerClasesActEstudiante($estudiante_id) {
+        $sql = "SELECT 
+                    c.clase_id,
+                    c.codigo AS codigo_clase,
+                    c.nombre AS nombre_clase,
+                    c.creditos,
+                    c.tiene_laboratorio,
+                    s.seccion_id,
+                    s.hora_inicio,
+                    s.hora_fin,
+                    GROUP_CONCAT(DISTINCT sd.dia_id ORDER BY sd.dia_id SEPARATOR ', ') AS lista_dia_ids,
+                    GROUP_CONCAT(DISTINCT ds.nombre ORDER BY sd.dia_id SEPARATOR ', ') AS nombres_dias,
+                    e.nombre AS edificio,
+                    a.nombre AS aula,
+                    pa.anio,
+                    pa.numero_periodo_id,
+
+                    d.numero_empleado,
+                    d.nombre AS nombre_docente,
+                    d.apellido AS apellido_docente,
+                    d.correo AS correo_docente,
+
+                    l.laboratorio_id,
+                    l.codigo_laboratorio,
+                    l.hora_inicio AS hora_inicio_lab,
+                    l.hora_fin AS hora_fin_lab,
+                    GROUP_CONCAT(DISTINCT ld.dia_id ORDER BY ld.dia_id SEPARATOR ', ') AS lista_dia_ids_lab,
+                    GROUP_CONCAT(DISTINCT dsl.nombre ORDER BY ld.dia_id SEPARATOR ', ') AS nombres_dias_lab,
+                    al.nombre AS aula_lab,
+                    el.nombre AS edificio_lab
+
+                FROM Matricula m
+                INNER JOIN Seccion s ON m.seccion_id = s.seccion_id
+                INNER JOIN Clase c ON s.clase_id = c.clase_id
+                INNER JOIN PeriodoAcademico pa ON s.periodo_academico_id = pa.periodo_academico_id
+                INNER JOIN Aula a ON s.aula_id = a.aula_id
+                INNER JOIN Edificio e ON a.edificio_id = e.edificio_id
+                INNER JOIN Docente d ON s.docente_id = d.docente_id
+                INNER JOIN EstadoProceso ep ON pa.estado_proceso_id = ep.estado_proceso_id
+                LEFT JOIN SeccionDia sd ON s.seccion_id = sd.seccion_id
+                LEFT JOIN DiaSemana ds ON sd.dia_id = ds.dia_id
+
+                LEFT JOIN Laboratorio l ON m.laboratorio_id = l.laboratorio_id
+                LEFT JOIN LaboratorioDia ld ON l.laboratorio_id = ld.laboratorio_id
+                LEFT JOIN DiaSemana dsl ON ld.dia_id = dsl.dia_id
+                LEFT JOIN Aula al ON l.aula_id = al.aula_id
+                LEFT JOIN Edificio el ON al.edificio_id = el.edificio_id
+
+                WHERE 
+                    m.estudiante_id = ?
+                    AND ep.estado_proceso_id = 1
+
+                GROUP BY 
+                    c.clase_id, c.codigo, c.nombre, c.creditos, c.tiene_laboratorio,
+                    s.seccion_id, s.hora_inicio, s.hora_fin,
+                    e.nombre, a.nombre, pa.anio, pa.numero_periodo_id,
+                    d.numero_empleado, d.nombre, d.apellido, d.correo,
+                    l.laboratorio_id, l.codigo_laboratorio, l.hora_inicio, l.hora_fin,
+                    al.nombre, el.nombre
+
+                ORDER BY s.seccion_id, s.hora_inicio, s.hora_fin";
+
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param("i", $estudiante_id);
+        $stmt->execute();
+
+        $result = $stmt->get_result();
+
+        if ($result->num_rows === 0) {
+            throw new Exception("No se encontraron clases activas para el estudiante");
+        }
+
+        return $result->fetch_all(MYSQLI_ASSOC);
+    }
 }
 ?>

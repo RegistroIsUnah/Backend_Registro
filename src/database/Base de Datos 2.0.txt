@@ -494,6 +494,8 @@ CREATE TABLE Matricula (
     estado_matricula_id INT NOT NULL,
     orden_inscripcion INT,
     orden_inscripcion_lab INT,
+    estado_laboratorio_id INT DEFAULT NULL,
+    FOREIGN KEY (estado_laboratorio_id) REFERENCES EstadoMatricula(estado_matricula_id),
     FOREIGN KEY (estudiante_id) REFERENCES Estudiante(estudiante_id),
     FOREIGN KEY (estado_matricula_id) REFERENCES EstadoMatricula(estado_matricula_id),
     FOREIGN KEY (seccion_id) REFERENCES Seccion(seccion_id),
