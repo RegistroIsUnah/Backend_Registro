@@ -80,15 +80,54 @@ require_once __DIR__ . '/../models/Usuario.php';
     
         // Obtener datos de Docente (si aplica)
         if (in_array('Docente', $roles)) {
-            $stmtDocente = $conn->prepare('SELECT d.docente_id, d.nombre, d.apellido, d.correo, d.foto, dept.nombre AS departamento, d.dept_id FROM 
-            Docente d INNER JOIN Departamento dept ON d.dept_id = dept.dept_id WHERE usuario_id = ?');
+            $stmtDocente = $conn->prepare('SELECT d.docente_id, d.nombre, d.apellido, d.correo, d.foto, dept.dept_id, dept.nombre AS departamento 
+                                           FROM Docente d 
+                                           INNER JOIN Departamento dept ON d.dept_id = dept.dept_id 
+                                           WHERE d.usuario_id = ?');
             $stmtDocente->bind_param('i', $user['usuario_id']);
             $stmtDocente->execute();
             $resultDocente = $stmtDocente->get_result();
+            
             if ($resultDocente->num_rows > 0) {
                 $docenteData = $resultDocente->fetch_assoc();
                 $userDetails['docente_id'] = $docenteData['docente_id']; // Agregamos el ID del docente
-                $userDetails['docente'] = $docenteData;  // Agregamos todos los detalles del docente
+                $userDetails['docente'] = $docenteData; // Agregamos todos los detalles del docente
+    
+                // Verificar si es Jefe de Departamento
+                if (in_array('Jefe de Departamento', $roles)) {
+                    $stmtJefe = $conn->prepare('SELECT dept.dept_id, dept.nombre AS departamento 
+                                              FROM Departamento dept 
+                                              WHERE dept.jefe_docente_id = ?');
+                    $stmtJefe->bind_param('i', $docenteData['docente_id']);
+                    $stmtJefe->execute();
+                    $resultJefe = $stmtJefe->get_result();
+    
+                    if ($resultJefe->num_rows > 0) {
+                        $jefeData = $resultJefe->fetch_assoc();
+                        $userDetails['jefe_departamento'] = [
+                            'dept_id' => $jefeData['dept_id'],
+                            'nombre_departamento' => $jefeData['departamento']
+                        ];
+                    }
+                }
+    
+                // Verificar si es Coordinador
+                if (in_array('Coordinador', $roles)) {
+                    $stmtCoordinador = $conn->prepare('SELECT c.carrera_id, c.nombre AS carrera 
+                                                      FROM Carrera c 
+                                                      WHERE c.coordinador_docente_id = ?');
+                    $stmtCoordinador->bind_param('i', $docenteData['docente_id']);
+                    $stmtCoordinador->execute();
+                    $resultCoordinador = $stmtCoordinador->get_result();
+    
+                    if ($resultCoordinador->num_rows > 0) {
+                        $coordinadorData = $resultCoordinador->fetch_assoc();
+                        $userDetails['coordinador_carrera'] = [
+                            'carrera_id' => $coordinadorData['carrera_id'],
+                            'nombre_carrera' => $coordinadorData['carrera']
+                        ];
+                    }
+                }
             }
         }
     
@@ -141,7 +180,6 @@ require_once __DIR__ . '/../models/Usuario.php';
     
         echo json_encode($response);
     }
-    
     
     /**
      * Cierra la sesión del usuario actual.
