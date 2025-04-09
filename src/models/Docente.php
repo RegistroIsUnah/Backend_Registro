@@ -280,7 +280,46 @@ class Docente {
         return $data;
     }
 
+    /**
+     * Obtiene los datos completos de un docente por su ID.
+     *
+     * @param int $docente_id ID del docente a consultar
+     * @return array Datos del docente con departamento y centro
+     * @throws Exception Si no se encuentra el docente
+     */
+    public function obtenerDocenteCompleto($docente_id) {
+        $query = "SELECT 
+                    d.*,
+                    dept.nombre AS nombre_departamento,
+                    dept.facultad_id,
+                    c.nombre AS nombre_centro
+                  FROM Docente d
+                  JOIN Departamento dept ON d.dept_id = dept.dept_id
+                  JOIN Centro c ON d.centro_id = c.centro_id
+                  WHERE d.docente_id = ?";
+        
+        $stmt = $this->conn->prepare($query);
+        
+        if ($stmt === false) {
+            throw new Exception("Error al preparar la consulta: " . $this->conn->error);
+        }
+        
+        $stmt->bind_param("i", $docente_id);
+        
+        if (!$stmt->execute()) {
+            throw new Exception("Error al ejecutar la consulta: " . $stmt->error);
+        }
+        
+        $result = $stmt->get_result();
+        
+        if ($result->num_rows === 0) {
+            throw new Exception("No se encontró el docente con ID: " . $docente_id);
+        }
 
-
+        $data = $result->fetch_assoc();
+        $stmt->close();
+        
+        return $data;
+    }
 }
 ?>

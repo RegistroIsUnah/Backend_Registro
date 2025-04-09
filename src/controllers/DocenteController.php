@@ -204,5 +204,31 @@ class DocenteController {
         }
     }
 
+       /**
+     * Maneja la solicitud GET para obtener datos de un docente.
+     *
+     * @param int $docente_id ID del docente a consultar
+     * @return void Imprime respuesta JSON
+     */
+    public function getDocente($docente_id) {
+        header('Content-Type: application/json');
+        
+        try {
+            $docente = $this->modelo->obtenerDocenteCompleto($docente_id);
+            
+            echo json_encode([
+                'success' => true,
+                'data' => $docente,
+                'message' => 'Datos del docente obtenidos correctamente'
+            ]);
+            
+        } catch (Exception $e) {
+            http_response_code(404);
+            echo json_encode([
+                'success' => false,
+                'message' => $e->getMessage()
+            ]);
+        }
+    }
 }
 ?>
