@@ -1652,6 +1652,9 @@ class Aspirante {
             // Obtener ID del estado PENDIENTE
             $estadoPendienteId = $this->obtenerIdEstado('PENDIENTE');
             
+            // Crear variable para nombre completo
+            $nombreCompleto = $aspirante['nombre'] . ' ' . $aspirante['apellido'];
+            
             // Insertar en la tabla de cola de correos
             $query = "INSERT INTO ColaCorreosAspirantes (
                         destinatario, 
@@ -1664,16 +1667,24 @@ class Aspirante {
                     ) VALUES (?, ?, ?, ?, ?, NOW(), ?)";
             
             $stmt = $this->conn->prepare($query);
+            
+            if ($stmt === false) {
+                throw new Exception("Error al preparar la consulta: " . $this->conn->error);
+            }
+            
             $stmt->bind_param("sssssi", 
                 $aspirante['correo'],
-                $aspirante['nombre'] . ' ' . $aspirante['apellido'],
+                $nombreCompleto,  // Usamos la variable previamente creada
                 $subject,
                 $message,
                 $altmess,
                 $estadoPendienteId
             );
             
-            return $stmt->execute();
+            $result = $stmt->execute();
+            $stmt->close();
+            
+            return $result;
             
         } catch (Exception $e) {
             error_log("Error al guardar correo en cola: " . $e->getMessage());

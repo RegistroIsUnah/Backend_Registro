@@ -434,13 +434,13 @@ class Estudiante {
      * @param string $correo Correo del estudiante.
      * @param string $telefono Teléfono del estudiante.
      * @param int $centro_id ID del centro.
-     * @return int ID del estudiante creado.
+     * @return array Datos del estudiante creado.
      */
     public function registrarEstudiante($usuario_id, $identidad, $nombre, $apellido, $correo, $telefono, $centro_id) {
         // Generar el número de cuenta único
         $numeroCuenta = $this->generarNumeroCuenta();
 
-        // Inserción en la tabla Estudiante
+        // Verificar que el centro existe
         $sqlCheck = "SELECT centro_id FROM Centro WHERE centro_id = ?";
         $stmtCheck = $this->conn->prepare($sqlCheck);
         $stmtCheck->bind_param("i", $centro_id);
@@ -450,18 +450,41 @@ class Estudiante {
             throw new Exception("El centro con ID $centro_id no existe");
         }
 
-        $sql = "INSERT INTO Estudiante (usuario_id, identidad, nombre, apellido, correo_personal, telefono, direccion, centro_id, indice_global, indice_periodo, numero_cuenta) 
-                VALUES (?, ?, ?, ?, ?, ?, 'No disponible', ?, 100, 0, ?)";
+        // Consulta SQL corregida con todos los parámetros
+        $sql = "INSERT INTO Estudiante 
+                (usuario_id, identidad, nombre, apellido, correo_personal, telefono, direccion, centro_id, indice_global, indice_periodo, numero_cuenta) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        
         $stmt = $this->conn->prepare($sql);
-        $stmt->bind_param("issssii", $usuario_id, $identidad, $nombre, $apellido, $correo, $telefono, $centro_id, $numeroCuenta);
-        $stmt->execute();
-
-        // Obtener el ID del estudiante
-        $estudiante_id = $stmt->insert_id;
+        
+        // Valores por defecto
+        $direccion = 'No disponible';
+        $indice_global = 100;
+        $indice_periodo = 0;
+        
+        // Vincular todos los parámetros en el orden correcto
+        $stmt->bind_param(
+            "issssssiids", // Tipos de datos: i=entero, s=string, d=double
+            $usuario_id,
+            $identidad,
+            $nombre,
+            $apellido,
+            $correo,
+            $telefono,
+            $direccion,
+            $centro_id,
+            $indice_global,
+            $indice_periodo,
+            $numeroCuenta
+        );
+        
+        if (!$stmt->execute()) {
+            throw new Exception("Error al registrar estudiante: " . $stmt->error);
+        }
 
         return [
-            'estudiante_id' => $estudiante_id,
-            'numero_cuenta' => $numeroCuenta // Regresar el número de cuenta
+            'estudiante_id' => $stmt->insert_id,
+            'numero_cuenta' => $numeroCuenta
         ];
     }
 

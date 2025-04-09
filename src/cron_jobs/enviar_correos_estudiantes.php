@@ -1,12 +1,10 @@
 <?php
 /**
- * Cron Job para enviar correos a los estudiantes
- *
- * Este script envia los correos con las credenciales para el sistema
- *
+ * Cron Job para enviar correos a los estudiantes 
+ * 
  * @package CronJobs
  * @author Ruben Diaz
- * @version 1.0
+ * @version 2.1
  */
 
 require_once __DIR__ . '/../modules/config/DataBase.php';
@@ -17,15 +15,13 @@ function obtenerIdEstado($conn, $nombreEstado) {
     $stmt = $conn->prepare($query);
     $stmt->bind_param("s", $nombreEstado);
     $stmt->execute();
-    
     $result = $stmt->get_result();
-    $row = $result->fetch_assoc();
     
-    if (!$row) {
-        throw new Exception("Estado '$nombreEstado' no encontrado");
+    if ($result->num_rows === 0) {
+        throw new Exception("Estado no encontrado");
     }
     
-    return $row['estado_id'];
+    return $result->fetch_assoc()['estado_id'];
 }
 
 function enviarCorreosEstudiantesPendientes() {
@@ -38,14 +34,17 @@ function enviarCorreosEstudiantesPendientes() {
         $enviadoId = obtenerIdEstado($conn, 'ENVIADO');
         $fallidoId = obtenerIdEstado($conn, 'FALLIDO');
         
-        // 1. Obtener correos pendientes 
+        // Consulta para obtener correos pendientes y fallidos
         $query = "SELECT * FROM ColaCorreosEstudiantes 
-                 WHERE estado_id = ? AND intentos < 3
-                 ORDER BY fecha_creacion ASC
+                 WHERE (estado_id = ? OR estado_id = ?)
+                 AND intentos < 3
+                 ORDER BY 
+                   CASE WHEN estado_id = ? THEN 0 ELSE 1 END,
+                   fecha_creacion ASC
                  LIMIT 100";
         
         $stmt = $conn->prepare($query);
-        $stmt->bind_param("i", $pendienteId);
+        $stmt->bind_param("iii", $pendienteId, $fallidoId, $pendienteId);
         $stmt->execute();
         $result = $stmt->get_result();
         
@@ -53,10 +52,9 @@ function enviarCorreosEstudiantesPendientes() {
         $enviados = 0;
         $fallidos = 0;
         
-        // 2. Procesar cada correo
         while ($correo = $result->fetch_assoc()) {
             try {
-                // 3. Intentar enviar
+                // Intentar enviar el correo
                 $enviado = $mailSender->sendMail(
                     $correo['destinatario'],
                     $correo['nombre_destinatario'],
@@ -65,43 +63,53 @@ function enviarCorreosEstudiantesPendientes() {
                     $correo['cuerpo_texto']
                 );
                 
-                // 4. Actualizar estado
+                // Actualizar estado
                 $nuevoEstado = $enviado ? $enviadoId : $fallidoId;
+                $errorInfo = $enviado ? NULL : substr($mailSender->getLastError(), 0, 255);
+                
                 $update = "UPDATE ColaCorreosEstudiantes 
                           SET estado_id = ?, 
                               fecha_envio = IF(?, NOW(), NULL),
                               intentos = intentos + 1,
-                              ultimo_error = IF(?, NULL, 'Error en el envío')
+                              ultimo_error = ?
                           WHERE correo_id = ?";
                 
                 $stmtUpdate = $conn->prepare($update);
-                $stmtUpdate->bind_param("iiii", 
-                    $nuevoEstado,
-                    $enviado,
-                    $enviado,
-                    $correo['correo_id']
-                );
+                $stmtUpdate->bind_param("iisi", $nuevoEstado, $enviado, $errorInfo, $correo['correo_id']);
                 $stmtUpdate->execute();
                 $stmtUpdate->close();
                 
                 $enviado ? $enviados++ : $fallidos++;
                 
+                sleep(1); // Pausa entre correos
+                
             } catch (Exception $e) {
-                // Contar como fallido
                 $fallidos++;
+                
+                // Registrar error mínimo en base de datos
+                $updateError = "UPDATE ColaCorreosEstudiantes 
+                              SET intentos = intentos + 1,
+                                  ultimo_error = ?
+                              WHERE correo_id = ?";
+                
+                $stmtError = $conn->prepare($updateError);
+                $errorMsg = substr($e->getMessage(), 0, 255);
+                $stmtError->bind_param("si", $errorMsg, $correo['correo_id']);
+                $stmtError->execute();
+                $stmtError->close();
             }
         }
         
-        // 5. Salida 
-        echo "Enviados: $enviados, Fallidos: $fallidos";
+        // Solo muestra resumen básico
+        echo "Proceso completado. Enviados: $enviados, Fallidos: $fallidos";
         
     } catch (Exception $e) {
-        echo "Error crítico: " . $e->getMessage();
+        echo "Error en el proceso: " . $e->getMessage();
     } finally {
+        if (isset($stmt)) $stmt->close();
         $conn->close();
     }
 }
 
-// Ejecutar
+// Ejecutar el proceso
 enviarCorreosEstudiantesPendientes();
-?>
