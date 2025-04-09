@@ -1158,31 +1158,65 @@ class Estudiante {
     }
 
 
-   /**
-     * Busca estudiantes con filtros generales por nombre completo, cuenta, carrera o departamento
+    /**
+     * Busca estudiantes con filtros específicos
      * 
-     * @param string $filtro Texto de búsqueda general
+     * @param string|null $nombre
+     * @param string|null $no_cuenta
+     * @param string|null $centro
+     * @param string|null $carrera
      * @return array
      * @throws Exception
      */
-    public function buscarEstudiante($filtro) {
+    public function buscarEstudiante($nombre = null, $no_cuenta = null, $centro = null, $carrera = null) {
+        // Base de la consulta
         $sql = "SELECT 
-                    e.estudiante_id,
-                    e.numero_cuenta,
-                    CONCAT(e.nombre, ' ', e.apellido) AS nombre_completo,
-                    e.correo_personal,
-                    d.nombre AS departamento,
-                    ca.nombre AS carrera
-                FROM Estudiante e
-                INNER JOIN EstudianteCarrera ec ON e.estudiante_id = ec.estudiante_id
-                INNER JOIN Carrera ca ON ec.carrera_id = ca.carrera_id
-                INNER JOIN Departamento d ON ca.dept_id = d.dept_id
-                WHERE 
-                    CONCAT(e.nombre, ' ', e.apellido) LIKE CONCAT('%', ?, '%')
-                    OR e.numero_cuenta LIKE CONCAT('%', ?, '%')
-                    OR ca.nombre LIKE CONCAT('%', ?, '%')
-                    OR d.nombre LIKE CONCAT('%', ?, '%')
-                ORDER BY e.nombre";
+            e.estudiante_id,
+            e.numero_cuenta,
+            CONCAT(e.nombre, ' ', e.apellido) AS nombre_completo,
+            e.correo_personal,
+            d.nombre AS departamento,
+            ca.nombre AS carrera
+        FROM Estudiante e
+        INNER JOIN EstudianteCarrera ec ON e.estudiante_id = ec.estudiante_id
+        INNER JOIN Carrera ca ON ec.carrera_id = ca.carrera_id
+        INNER JOIN Departamento d ON ca.dept_id = d.dept_id
+        WHERE 
+            (CONCAT(e.nombre, ' ', e.apellido) LIKE CONCAT('%', ?, '%') OR ? IS NULL)
+            AND (e.numero_cuenta LIKE CONCAT('%', ?, '%') OR ? IS NULL)
+            AND (ca.nombre LIKE CONCAT('%', ?, '%') OR ? IS NULL)
+            AND (d.nombre LIKE CONCAT('%', ?, '%') OR ? IS NULL)
+        ORDER BY e.nombre";
+
+        $params = [];
+        $types = '';
+
+        // Construir condiciones dinámicas
+        if ($nombre) {
+            $sql .= " AND CONCAT(e.nombre, ' ', e.apellido) LIKE ?";
+            $params[] = "%$nombre%";
+            $types .= 's';
+        }
+
+        if ($no_cuenta) {
+            $sql .= " AND e.numero_cuenta LIKE ?";
+            $params[] = "%$no_cuenta%";
+            $types .= 's';
+        }
+
+        if ($carrera) {
+            $sql .= " AND ca.nombre LIKE ?";
+            $params[] = "%$carrera%";
+            $types .= 's';
+        }
+
+        if ($centro) {
+            $sql .= " AND d.nombre LIKE ?";
+            $params[] = "%$centro%";
+            $types .= 's';
+        }
+
+        $sql .= " ORDER BY e.nombre";
 
         $stmt = $this->conn->prepare($sql);
         if (!$stmt) {

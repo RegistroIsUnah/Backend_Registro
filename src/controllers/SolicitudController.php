@@ -116,22 +116,20 @@ class SolicitudController {
      * 
      * @return void
      * @version 1.0
+     * @author Jose Vargas
      */
-    public function obtenerSolicitudesPorTipo() {
+    public function obtenerSolicitudesPorTipo($tipoSolicitud) {
         header('Content-Type: application/json');
-        
+    
         try {
-            // Validar parámetro
-            if (!isset($_GET['tipo_solicitud']) || empty(trim($_GET['tipo_solicitud']))) {
+            if (empty($tipoSolicitud)) {
                 throw new Exception('Parámetro tipo_solicitud requerido', 400);
             }
-
-            $tipoSolicitud = filter_var($_GET['tipo_solicitud']);
-
-            // Obtener datos
+    
+            $tipoSolicitud = filter_var($tipoSolicitud);
+    
             $solicitudes = $this->model->obtenerSolicitudesPorTipo($tipoSolicitud);
-
-            // Formatear respuesta
+    
             $response = [
                 'success' => true,
                 'data' => $solicitudes,
@@ -140,13 +138,13 @@ class SolicitudController {
                     'tipo_solicitud' => $tipoSolicitud
                 ]
             ];
-
+    
             if (empty($solicitudes)) {
                 $response['message'] = 'No se encontraron solicitudes de este tipo';
             }
-
+    
             echo json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
-
+    
         } catch (Exception $e) {
             http_response_code($e->getCode() ?: 500);
             echo json_encode([
