@@ -743,6 +743,9 @@ DELIMITER ;
 
 
 
+
+
+
 DELIMITER //
 
 CREATE PROCEDURE SP_matricular_estudiante(
@@ -770,6 +773,9 @@ BEGIN
     DECLARE v_cupos INT;
     DECLARE v_totalMatriculados INT;
     DECLARE v_proceso_activo BOOLEAN DEFAULT FALSE;
+    DECLARE v_orden_inscripcion_lab INT;
+    DECLARE v_lab_cupos INT;
+    DECLARE v_totalMatriculadosLab INT;
     
      -- Declarar el handler
 	DECLARE EXIT HANDLER FOR SQLEXCEPTION
@@ -853,7 +859,7 @@ BEGIN
         AND seccion_id = p_seccion_id
         AND estado_matricula_id IN (
             SELECT estado_matricula_id FROM EstadoMatricula 
-            WHERE nombre IN ('MATRICULADO', 'EN ESPERA')
+            WHERE nombre IN ('MATRICULADO', 'EN_ESPERA')
         )
     ) THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El estudiante ya está matriculado en esta sección';
@@ -868,7 +874,7 @@ BEGIN
     AND s.periodo_academico_id = v_periodo_academico_id
     AND m.estado_matricula_id IN (
         SELECT estado_matricula_id FROM EstadoMatricula 
-        WHERE nombre IN ('MATRICULADO', 'EN ESPERA')
+        WHERE nombre IN ('MATRICULADO', 'EN_ESPERA')
     );
 
     IF (v_total_creditos + v_creditos_seccion) > 25 THEN
@@ -886,7 +892,7 @@ BEGIN
         AND s.seccion_id != p_seccion_id
         AND m.estado_matricula_id IN (
             SELECT estado_matricula_id FROM EstadoMatricula 
-            WHERE nombre IN ('MATRICULADO', 'EN ESPERA')
+            WHERE nombre IN ('MATRICULADO', 'EN_ESPERA')
         )
         AND d.dia_id IN (
             SELECT dia_id FROM SeccionDia WHERE seccion_id = p_seccion_id
@@ -907,7 +913,7 @@ BEGIN
     IF v_totalMatriculados < v_cupos THEN
         SET v_estadoMatricula = 'MATRICULADO';
     ELSE
-        SET v_estadoMatricula = 'EN ESPERA';
+        SET v_estadoMatricula = 'EN_ESPERA';
     END IF;
 
     -- Obtener orden de inscripción
@@ -930,12 +936,48 @@ BEGIN
 
         -- Validaciones de laboratorio
         IF NOT EXISTS (
-            SELECT 1 FROM Laboratorio 
-            WHERE laboratorio_id = p_laboratorio_id 
-            AND clase_id = v_seccion_clase_id
-        ) THEN
-            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El laboratorio no pertenece a esta clase';
-        END IF;
+	    SELECT 1 FROM Laboratorio 
+	    WHERE laboratorio_id = p_laboratorio_id 
+	    AND clase_id = v_seccion_clase_id
+	) THEN
+	    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El laboratorio no pertenece a esta clase';
+	END IF;
+        
+         -- Obtener información del laboratorio (agregar cupos)
+	    SELECT hora_inicio, hora_fin, cupos INTO v_lab_hora_inicio, v_lab_hora_fin, v_lab_cupos 
+	    FROM Laboratorio WHERE laboratorio_id = p_laboratorio_id;
+	    
+	    -- Inicializar variables
+	    SET v_orden_inscripcion_lab = NULL;
+	    SET v_totalMatriculadosLab = 0;
+
+	    -- Verificar cupos del laboratorio (nueva lógica)
+	    SELECT COUNT(*) INTO v_totalMatriculadosLab 
+	    FROM Matricula 
+	    WHERE laboratorio_id = p_laboratorio_id 
+	    AND estado_matricula_id = (SELECT estado_matricula_id FROM EstadoMatricula WHERE nombre = 'MATRICULADO');
+
+	    -- Si el laboratorio está lleno, forzar estado EN_ESPERA
+	    IF v_totalMatriculadosLab >= v_lab_cupos THEN
+
+	    -- Solo permitir si la sección principal está matriculada
+	    IF v_estadoMatricula = 'MATRICULADO' THEN
+	    SET v_estadoMatricula = 'EN_ESPERA';
+
+	    -- Actualizar orden de inscripción para el laboratorio
+	    SELECT IFNULL(MAX(orden_inscripcion_lab), 0) + 1 INTO v_orden_inscripcion_lab 
+	    FROM Matricula WHERE laboratorio_id = p_laboratorio_id;
+	    ELSE
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'No hay cupos disponibles en el laboratorio';
+		END IF;
+	    END IF;
+	    
+	    -- Después de determinar el orden de espera del laboratorio, actualizar:
+	    IF v_tiene_lab = 1 AND v_orden_inscripcion_lab IS NOT NULL THEN
+		  UPDATE Matricula 
+		  SET orden_inscripcion_lab = v_orden_inscripcion_lab 
+		  WHERE matricula_id = v_matricula_id;
+	    END IF;
 
         -- Obtener horario del laboratorio
         SELECT hora_inicio, hora_fin INTO v_lab_hora_inicio, v_lab_hora_fin 
@@ -966,7 +1008,7 @@ BEGIN
             AND s.periodo_academico_id = v_periodo_academico_id
             AND m.estado_matricula_id IN (
                 SELECT estado_matricula_id FROM EstadoMatricula 
-                WHERE nombre IN ('MATRICULADO', 'EN ESPERA')
+                WHERE nombre IN ('MATRICULADO', 'EN_ESPERA')
             )
             AND (
                 (TIME_TO_SEC(s.hora_inicio) < TIME_TO_SEC(v_lab_hora_fin) AND 
@@ -984,11 +1026,54 @@ BEGIN
 
     COMMIT;
     
-    -- Retornar resultados
-    SELECT v_matricula_id AS matricula_id, v_estadoMatricula AS estado, v_orden_inscripcion AS orden_inscripcion;
+    -- Retornar resultados detallados
+    SELECT 
+    
+    -- Identificación
+    v_matricula_id AS matricula_id,
+    
+    -- Estado general
+    CASE 
+        WHEN v_estadoMatricula = 'MATRICULADO' THEN 'MATRICULACIÓN EXITOSA'
+        ELSE 'LISTA DE ESPERA'
+    END AS estado_general,
+    
+    -- Información de la sección principal
+    v_estadoMatricula AS estado_seccion,
+    (SELECT orden_inscripcion FROM Matricula WHERE matricula_id = v_matricula_id) AS orden_inscripcion_seccion,
+    (SELECT COUNT(*) FROM Matricula 
+     WHERE seccion_id = p_seccion_id 
+     AND estado_matricula_id = (SELECT estado_matricula_id FROM EstadoMatricula WHERE nombre = 'EN_ESPERA')) AS total_en_espera_seccion,
+    
+    -- Información del laboratorio (si aplica)
+    IF(v_tiene_lab = 1, 
+       (SELECT nombre FROM EstadoMatricula em 
+        JOIN Matricula m ON em.estado_matricula_id = m.estado_matricula_id 
+        WHERE m.matricula_id = v_matricula_id AND m.laboratorio_id IS NOT NULL), 
+       NULL) AS estado_laboratorio,
+    
+    IF(v_tiene_lab = 1, 
+       (SELECT orden_inscripcion_lab FROM Matricula WHERE matricula_id = v_matricula_id), 
+       NULL) AS orden_inscripcion_lab,
+    
+    IF(v_tiene_lab = 1, 
+       (SELECT COUNT(*) FROM Matricula 
+        WHERE laboratorio_id = p_laboratorio_id 
+        AND estado_matricula_id = (SELECT estado_matricula_id FROM EstadoMatricula WHERE nombre = 'EN_ESPERA')), 
+       NULL) AS total_en_espera_lab,
+    
+    -- Datos de referencia
+    p_seccion_id AS seccion_id,
+    IF(v_tiene_lab = 1, p_laboratorio_id, NULL) AS laboratorio_id;
+    
 END //
 
 DELIMITER ;
+
+
+
+
+
 
 DELIMITER //
 
@@ -1046,6 +1131,9 @@ BEGIN
 END //
 
 DELIMITER ;
+
+
+
 
 
 DELIMITER //

@@ -38,43 +38,51 @@ class Matricula {
      * @throws Exception Si ocurre un error en la preparación o ejecución del SP.
      */
     public function matricularEstudiante($estudiante_id, $seccion_id, $tipo_proceso_nombre, $laboratorio_id = null) {
-        // Validar tipo de proceso
-        $tiposPermitidos = ['MATRICULA', 'ADICIONES_CANCELACIONES'];
-        if (!in_array(strtoupper($tipo_proceso_nombre), $tiposPermitidos)) {
-            throw new Exception('Tipo de proceso no válido. Debe ser: ' . implode(', ', $tiposPermitidos));
+        // Validaciones reforzadas
+        if (!is_int($estudiante_id) || !is_int($seccion_id)) {
+            throw new Exception('IDs deben ser enteros');
         }
     
-        // Llamar al procedimiento almacenado SP_matricular_estudiante
+        $tiposValidos = ['MATRICULA', 'ADICIONES_CANCELACIONES'];
+        $tipoProceso = strtoupper(trim($tipo_proceso_nombre));
+        if (!in_array($tipoProceso, $tiposValidos)) {
+            throw new Exception('Tipo de proceso no válido. Valores permitidos: ' . implode(', ', $tiposValidos));
+        }
+    
         $stmt = $this->conn->prepare("CALL SP_matricular_estudiante(?, ?, ?, ?)");
         if (!$stmt) {
-            throw new Exception('Error preparando la consulta: ' . $this->conn->error);
+            throw new Exception('Error preparando SP: ' . $this->conn->error);
         }
     
-        // Asumimos que el laboratorio_id puede ser NULL, y el SP lo manejará adecuadamente
-        $stmt->bind_param("iiss", $estudiante_id, $seccion_id, $tipo_proceso_nombre, $laboratorio_id);
-
-        // Ejecutar la consulta
+        // Bind param dinámico para NULL
+        if ($laboratorio_id === null) {
+            $stmt->bind_param("iiss", $estudiante_id, $seccion_id, $tipoProceso, $laboratorio_id);
+        } else {
+            $stmt->bind_param("iisi", $estudiante_id, $seccion_id, $tipoProceso, $laboratorio_id);
+        }
+    
         if (!$stmt->execute()) {
-            throw new Exception('Error ejecutando matrícula: ' . $stmt->error);
+            $error = $stmt->error;
+            $stmt->close();
+            throw new Exception("Error SP: " . $error);
         }
     
         $result = $stmt->get_result();
         if (!$result) {
             $stmt->close();
-            throw new Exception('Error al obtener resultados de la matrícula');
+            throw new Exception('El SP no devolvió resultados');
         }
     
         $row = $result->fetch_assoc();
         $stmt->close();
-        
+    
         if (!$row) {
-            throw new Exception('No se recibieron datos de la matrícula');
+            throw new Exception('Respuesta inesperada del SP');
         }
     
         return $row;
-    }    
+    }  
     
-
     /**
      * Obtiene la lista de espera de una sección basada en el estado de la matrícula.
      *
