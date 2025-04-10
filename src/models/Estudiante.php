@@ -1307,6 +1307,7 @@ class Estudiante {
                     pa.anio,
                     pa.numero_periodo_id,
 
+                    d.docente_id,
                     d.numero_empleado,
                     d.nombre AS nombre_docente,
                     d.apellido AS apellido_docente,
