@@ -656,6 +656,7 @@ class EstudianteController {
                             ]
                         ] : null,
                         'docente' => [
+                            'docente_id' => $clase['docente_id'],
                             'numero_empleado' => $clase['numero_empleado'],
                             'nombre' => $clase['nombre_docente'],
                             'apellido' => $clase['apellido_docente'],
