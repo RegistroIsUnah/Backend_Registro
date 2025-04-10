@@ -1180,7 +1180,6 @@ class Estudiante {
         }
     }
 
-
     /**
      * Busca estudiantes con filtros específicos
      * 
@@ -1191,8 +1190,7 @@ class Estudiante {
      * @return array
      * @throws Exception
      */
-    public function buscarEstudiante($nombre = null, $no_cuenta = null, $centro = null, $carrera = null) {
-        // Base de la consulta
+    public function buscarEstudiante($filtros) {
         $sql = "SELECT 
             e.estudiante_id,
             e.numero_cuenta,
@@ -1204,65 +1202,41 @@ class Estudiante {
         INNER JOIN EstudianteCarrera ec ON e.estudiante_id = ec.estudiante_id
         INNER JOIN Carrera ca ON ec.carrera_id = ca.carrera_id
         INNER JOIN Departamento d ON ca.dept_id = d.dept_id
-        WHERE 
-            (CONCAT(e.nombre, ' ', e.apellido) LIKE CONCAT('%', ?, '%') OR ? IS NULL)
-            AND (e.numero_cuenta LIKE CONCAT('%', ?, '%') OR ? IS NULL)
-            AND (ca.nombre LIKE CONCAT('%', ?, '%') OR ? IS NULL)
-            AND (d.nombre LIKE CONCAT('%', ?, '%') OR ? IS NULL)
-        ORDER BY e.nombre";
-
+        WHERE 1=1";
+    
         $params = [];
         $types = '';
-
-        // Construir condiciones dinámicas
-        if ($nombre) {
-            $sql .= " AND CONCAT(e.nombre, ' ', e.apellido) LIKE ?";
-            $params[] = "%$nombre%";
-            $types .= 's';
+        
+        // Mapeamos filtros a condiciones SQL
+        $condiciones = [
+            'nombre' => " AND CONCAT(e.nombre, ' ', e.apellido) LIKE ? ",
+            'no_cuenta' => " AND e.numero_cuenta LIKE ? ",
+            'carrera' => " AND ca.nombre LIKE ? ",
+            'departamento' => " AND d.nombre LIKE ? "
+        ];
+    
+        foreach ($condiciones as $key => $condition) {
+            if (!empty($filtros[$key])) {
+                $sql .= $condition;
+                $params[] = "%{$filtros[$key]}%";
+                $types .= 's';
+            }
         }
-
-        if ($no_cuenta) {
-            $sql .= " AND e.numero_cuenta LIKE ?";
-            $params[] = "%$no_cuenta%";
-            $types .= 's';
-        }
-
-        if ($carrera) {
-            $sql .= " AND ca.nombre LIKE ?";
-            $params[] = "%$carrera%";
-            $types .= 's';
-        }
-
-        if ($centro) {
-            $sql .= " AND d.nombre LIKE ?";
-            $params[] = "%$centro%";
-            $types .= 's';
-        }
-
+    
         $sql .= " ORDER BY e.nombre";
-
+    
         $stmt = $this->conn->prepare($sql);
-        if (!$stmt) {
-            throw new Exception("Error preparando la consulta: " . $this->conn->error);
+        
+        if (!empty($params)) {
+            $stmt->bind_param($types, ...$params);
         }
-
-        // Usamos el mismo valor para todos los filtros LIKE
-        $stmt->bind_param("ssss", $filtro, $filtro, $filtro, $filtro);
-
-        if (!$stmt->execute()) {
-            throw new Exception("Error ejecutando la consulta: " . $stmt->error);
-        }
-
+    
+        $stmt->execute();
         $result = $stmt->get_result();
-        $estudiantes = [];
-
-        while ($row = $result->fetch_assoc()) {
-            $estudiantes[] = $row;
-        }
-
-        $stmt->close();
-        return $estudiantes;
+        
+        return $result->fetch_all(MYSQLI_ASSOC);
     }
+    
 
 
 

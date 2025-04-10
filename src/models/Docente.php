@@ -317,7 +317,7 @@ class Docente {
         if ($result->num_rows === 0) {
             throw new Exception("No se encontró el docente con ID: " . $docente_id);
         }
-        
+    
         // Obtener los datos como array asociativo
         $docente = $result->fetch_assoc();
         
@@ -333,7 +333,7 @@ class Docente {
     * @param array $data
     * @return array
     * @throws Exception
-    */
+    **/
     public function actualizarCalificacionEstudiante($data) {
         // 1. Buscar estudiante_id a partir del numero_cuenta
         $sql_est = "SELECT estudiante_id FROM Estudiante WHERE numero_cuenta = ?";
@@ -378,6 +378,7 @@ class Docente {
             'fecha' => date('Y-m-d H:i:s')
         ];
     }
+
 
 }
 ?>
