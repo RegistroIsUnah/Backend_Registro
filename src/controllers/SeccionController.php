@@ -238,7 +238,11 @@ class SeccionController {
                         'numero_cuenta' => $estudiante['numero_cuenta'],
                         'nombre' => $estudiante['nombre'],
                         'apellido' => $estudiante['apellido'],
-                        'correo_personal' => $estudiante['correo_personal']
+                        'correo_personal' => $estudiante['correo_personal'],
+                        'estado_curso_id' => $estudiante['estado_curso_id'],
+                        'estado' => $estudiante['estado'],
+                        'calificacion' => $estudiante['calificacion'],
+                        'observacion' => $estudiante['observacion']
                     ];
                 }, $estudiantes)
             ];
@@ -368,6 +372,7 @@ class SeccionController {
      * @param string $nombreDepartamento nombre del departamento
      * @return array Resultado con la ruta del archivo
      */
+    /*
     public function generarPDF(array $datos, string $nombreDepartamento): array
     {
         // Cargar Dompdf manualmente
@@ -405,7 +410,7 @@ class SeccionController {
             'file' => '/uploads/reporte_secciones/' . $nombreArchivo
         ];
     }
-    
+    */
     /**
      * Genera el HTML para el reporte
      * 

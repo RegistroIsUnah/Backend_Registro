@@ -540,6 +540,8 @@ class AspiranteController {
         return $resultados;
     }
 
+    //Correo Empiezo
+
     /**
      * Valida el archivo CSV
      */
@@ -708,6 +710,8 @@ class AspiranteController {
             ];
         }
     }
+
+    //Correo FIN
 
     /**
      * Obtiene una solicitud pendiente o corregida para revisión y asigna al revisor.
