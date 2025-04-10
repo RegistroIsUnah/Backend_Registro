@@ -71,7 +71,7 @@ function generarCSV() {
     // Responder con la ruta del archivo generado y el número de registros
     echo json_encode([
         'message' => 'CSV generado exitosamente', 
-        'file' => '/uploads/estudiantesaprobados/' . basename($filePath),
+        'file' => '/uploads/notas_aspirantes/' . basename($filePath),
         'records' => $result->num_rows
     ]);
 }
