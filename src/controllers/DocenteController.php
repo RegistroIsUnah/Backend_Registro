@@ -114,24 +114,34 @@ class DocenteController {
      */
     public function listarDocentesPorDepartamento($dept_id)
     {
+        header('Content-Type: application/json');
+        
         try {
-            // Obtenemos los docentes con los roles y nombre del departamento
             $docentes = $this->modelo->obtenerDocentesConRoles($dept_id);
             
-            // Si no hay docentes, retornamos un mensaje
             if (empty($docentes)) {
-                echo json_encode(['error' => 'No se encontraron docentes para el departamento especificado.']);
+                http_response_code(404);
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'No se encontraron docentes para el departamento especificado.'
+                ]);
                 return;
             }
             
-            // Devolvemos los datos en formato JSON
-            echo json_encode(['docentes' => $docentes]);
+            // Respuesta única y consistente
+            echo json_encode([
+                'success' => true,
+                'docentes' => $docentes
+            ]);
 
         } catch (Exception $e) {
-            echo json_encode(['error' => 'Error al obtener los docentes: ' . $e->getMessage()]);
+            http_response_code(500);
+            echo json_encode([
+                'success' => false,
+                'message' => 'Error al obtener los docentes: ' . $e->getMessage()
+            ]);
         }
     }
-
 
 
 

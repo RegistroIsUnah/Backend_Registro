@@ -122,7 +122,6 @@ class Docente {
      */
     public function obtenerDocentesConRoles($dept_id)
     {
-        // Consulta para obtener docentes con sus roles (ID y nombre) y nombre de departamento
         $query = "
             SELECT
                 d.docente_id,
@@ -130,8 +129,7 @@ class Docente {
                 d.apellido,
                 d.correo,
                 d.numero_empleado,
-                -- Concatenamos los roles de cada docente, mostrando tanto el ID como el nombre del rol
-                GROUP_CONCAT(r.rol_id, ':', r.nombre) AS roles,  
+                GROUP_CONCAT(CONCAT(r.rol_id, ':', r.nombre) SEPARATOR ',') AS roles,
                 dep.nombre AS nombre_departamento
             FROM Docente d
             JOIN Usuario u ON u.usuario_id = d.usuario_id
@@ -142,40 +140,45 @@ class Docente {
             GROUP BY d.docente_id, dep.nombre
         ";
 
-        // Preparamos la consulta
         $stmt = $this->conn->prepare($query);
-        $stmt->bind_param("i", $dept_id);  // Vinculamos el parámetro de entrada para el dept_id
-
-        // Ejecutamos la consulta
-        if ($stmt->execute()) {
-            $result = $stmt->get_result();
-            $docentes = [];
-            
-            // Obtenemos los resultados
-            while ($row = $result->fetch_assoc()) {
-                // Guardamos los datos de cada docente en un arreglo
-                $roles = [];
-                // Convertimos la cadena de roles concatenados (ID y nombre) en un arreglo
-                $rolesArray = explode(',', $row['roles']);
-                foreach ($rolesArray as $role) {
-                    list($roleId, $roleName) = explode(':', $role);
-                    $roles[] = ['rol_id' => $roleId, 'nombre' => $roleName];
-                }
-
-                $docentes[] = [
-                    'docente_id' => $row['docente_id'],
-                    'nombre' => $row['nombre'],
-                    'apellido' => $row['apellido'],
-                    'correo' => $row['correo'],
-                    'numero_empleado' => $row['numero_empleado'],
-                    'roles' => $roles,  // Roles con ID y nombre
-                    'nombre_departamento' => $row['nombre_departamento']
-                ];
-            }
-            return $docentes;
-        } else {
-            throw new Exception("Error al obtener los docentes con roles y nombre de departamento.");
+        if ($stmt === false) {
+            throw new Exception("Error al preparar la consulta: " . $this->conn->error);
         }
+
+        $stmt->bind_param("i", $dept_id);
+        
+        if (!$stmt->execute()) {
+            throw new Exception("Error al ejecutar la consulta: " . $stmt->error);
+        }
+
+        $result = $stmt->get_result();
+        $docentes = [];
+        
+        while ($row = $result->fetch_assoc()) {
+            $roles = [];
+            if (!empty($row['roles'])) {
+                foreach (explode(',', $row['roles']) as $role) {
+                    list($roleId, $roleName) = explode(':', $role);
+                    $roles[] = [
+                        'rol_id' => (int)$roleId,  // Convertir a entero
+                        'nombre' => $roleName
+                    ];
+                }
+            }
+
+            $docentes[] = [
+                'docente_id' => (int)$row['docente_id'],
+                'nombre' => $row['nombre'],
+                'apellido' => $row['apellido'],
+                'correo' => $row['correo'],
+                'numero_empleado' => $row['numero_empleado'],
+                'roles' => $roles,
+                'nombre_departamento' => $row['nombre_departamento']
+            ];
+        }
+        
+        $stmt->close();
+        return $docentes;
     }
 
 

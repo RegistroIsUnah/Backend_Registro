@@ -37,8 +37,7 @@ try {
     $deptId = (int)$_GET['dept_id'];
     $controller = new DocenteController();
     $resultado = $controller->listarDocentesPorDepartamento($deptId);
-
-    echo json_encode(['success' => true, 'docentes' => $resultado]);
+    
 
 } catch (Exception $e) {
     http_response_code(500);
