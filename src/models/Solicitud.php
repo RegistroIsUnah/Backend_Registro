@@ -199,6 +199,7 @@ class Solicitud {
      *
      * @param int $solicitud_id ID de la solicitud
      * @return array Detalles de la solicitud
+     * @author Jose Vargas
      */
     public function obtenerSolicitudPorId($solicitud_id) {
         $sql = "
@@ -230,12 +231,15 @@ class Solicitud {
             throw new Exception('Solicitud no encontrada');
         }
     }
+
+    
     /**
      * Obtiene solicitudes por tipo
      * 
      * @param string $tipoSolicitud Nombre del tipo de solicitud
      * @return array
      * @throws Exception
+     * @author Jose Vargas
      */
     public function obtenerSolicitudesPorTipo($tipoSolicitud) {
         $sql = "

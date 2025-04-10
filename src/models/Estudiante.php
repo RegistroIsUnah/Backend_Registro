@@ -1180,9 +1180,8 @@ class Estudiante {
         }
     }
 
-
-   /**
-     * Busca estudiantes con filtros
+    /**
+     * Busca estudiantes con filtros específicos
      * 
      * @param string|null $nombre
      * @param string|null $no_cuenta
@@ -1191,53 +1190,54 @@ class Estudiante {
      * @return array
      * @throws Exception
      */
-    public function buscarEstudiante($nombre = null, $no_cuenta = null, $centro = null, $carrera = null) {
+    public function buscarEstudiante($filtros) {
         $sql = "SELECT 
-                    e.estudiante_id,
-                    e.numero_cuenta,
-                    e.nombre,
-                    e.apellido,
-                    c.nombre AS centro,
-                    GROUP_CONCAT(DISTINCT ca.nombre) AS carreras
-                FROM Estudiante e
-                INNER JOIN Centro c ON e.centro_id = c.centro_id
-                INNER JOIN EstudianteCarrera ec ON e.estudiante_id = ec.estudiante_id
-                INNER JOIN Carrera ca ON ec.carrera_id = ca.carrera_id
-                WHERE 
-                    (e.nombre LIKE CONCAT('%', ?, '%') OR ? IS NULL) AND
-                    (e.numero_cuenta = ? OR ? IS NULL) AND
-                    (c.nombre = ? OR ? IS NULL) AND
-                    (ca.nombre = ? OR ? IS NULL)
-                GROUP BY e.estudiante_id
-                ORDER BY e.nombre";
-
-        $stmt = $this->conn->prepare($sql);
-        if (!$stmt) {
-            throw new Exception("Error preparando la consulta: " . $this->conn->error);
-        }
-
-        $stmt->bind_param(
-            "ssssssss", 
-            $nombre, $nombre,
-            $no_cuenta, $no_cuenta,
-            $centro, $centro,
-            $carrera, $carrera
-        );
-
-        if (!$stmt->execute()) {
-            throw new Exception("Error ejecutando la consulta: " . $stmt->error);
-        }
-
-        $result = $stmt->get_result();
-        $estudiantes = [];
-        while ($row = $result->fetch_assoc()) {
-            $row['carreras'] = explode(',', $row['carreras']); // Convertir a array
-            $estudiantes[] = $row;
-        }
+            e.estudiante_id,
+            e.numero_cuenta,
+            CONCAT(e.nombre, ' ', e.apellido) AS nombre_completo,
+            e.correo_personal,
+            d.nombre AS departamento,
+            ca.nombre AS carrera
+        FROM Estudiante e
+        INNER JOIN EstudianteCarrera ec ON e.estudiante_id = ec.estudiante_id
+        INNER JOIN Carrera ca ON ec.carrera_id = ca.carrera_id
+        INNER JOIN Departamento d ON ca.dept_id = d.dept_id
+        WHERE 1=1";
+    
+        $params = [];
+        $types = '';
         
-        $stmt->close();
-        return $estudiantes;
+        // Mapeamos filtros a condiciones SQL
+        $condiciones = [
+            'nombre' => " AND CONCAT(e.nombre, ' ', e.apellido) LIKE ? ",
+            'no_cuenta' => " AND e.numero_cuenta LIKE ? ",
+            'carrera' => " AND ca.nombre LIKE ? ",
+            'departamento' => " AND d.nombre LIKE ? "
+        ];
+    
+        foreach ($condiciones as $key => $condition) {
+            if (!empty($filtros[$key])) {
+                $sql .= $condition;
+                $params[] = "%{$filtros[$key]}%";
+                $types .= 's';
+            }
+        }
+    
+        $sql .= " ORDER BY e.nombre";
+    
+        $stmt = $this->conn->prepare($sql);
+        
+        if (!empty($params)) {
+            $stmt->bind_param($types, ...$params);
+        }
+    
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        return $result->fetch_all(MYSQLI_ASSOC);
     }
+    
+
 
 
 
@@ -1307,6 +1307,7 @@ class Estudiante {
                     pa.anio,
                     pa.numero_periodo_id,
 
+                    d.docente_id,
                     d.numero_empleado,
                     d.nombre AS nombre_docente,
                     d.apellido AS apellido_docente,

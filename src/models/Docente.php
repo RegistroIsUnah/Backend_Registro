@@ -233,6 +233,8 @@ class Docente {
         ];
     }
 
+
+    
     /**
      * Obtiene los datos del docente a partir del ID de la sección.
      *
@@ -318,10 +320,15 @@ class Docente {
         if ($result->num_rows === 0) {
             throw new Exception("No se encontró el docente con ID: " . $docente_id);
         }
-<<<<<<< Updated upstream
-=======
+    
+        // Obtener los datos como array asociativo
+        $docente = $result->fetch_assoc();
+        
+        // Cerrar el statement
+        $stmt->close();
+        
+        return $docente;
     }
-
 
     /**
     * Actualiza una calificación con observación validando permisos del docente
@@ -329,7 +336,7 @@ class Docente {
     * @param array $data
     * @return array
     * @throws Exception
-    */
+    **/
     public function actualizarCalificacionEstudiante($data) {
         // 1. Buscar estudiante_id a partir del numero_cuenta
         $sql_est = "SELECT estudiante_id FROM Estudiante WHERE numero_cuenta = ?";
@@ -373,14 +380,8 @@ class Docente {
             'mensaje' => 'Calificación actualizada correctamente',
             'fecha' => date('Y-m-d H:i:s')
         ];
-    
-
->>>>>>> Stashed changes
-
-        $data = $result->fetch_assoc();
-        $stmt->close();
-        
-        return $data;
     }
+
+
 }
 ?>

@@ -477,62 +477,44 @@ class EstudianteController {
      * @return void
      * @version 1.0
      */
-    public function buscarEstudiante() {
+    public function buscarEstudiante($filtros) {
         header('Content-Type: application/json');
         
         try {
-            // Obtener parámetros
-            $nombre = $_GET['nombre'] ?? null;
-            $no_cuenta = $_GET['no_cuenta'] ?? null;
-            $centro = $_GET['centro'] ?? null;
-            $carrera = $_GET['carrera'] ?? null;
-
-            // Validar parámetros
+            // Validación
             $errores = [];
             
-            if($no_cuenta && !preg_match('/^\d+$/', $no_cuenta)) {
-                $errores[] = "Formato de número de cuenta inválido";
-            }
+           
             
-            if(!empty($errores)) {
+            if (!empty($errores)) {
                 http_response_code(400);
                 echo json_encode(['success' => false, 'errors' => $errores]);
                 return;
             }
-
-            // Buscar estudiantes
-            $resultados = $this->modelo->buscarEstudiante(
-                $nombre,
-                $no_cuenta,
-                $centro,
-                $carrera
-            );
-
-            // Formatear respuesta
-            $response = [
+    
+            // Buscar en el modelo
+            $resultados = $this->modelo->buscarEstudiante([
+                'nombre' => $filtros['nombre'] ?? null,
+                'no_cuenta' => $filtros['no_cuenta'] ?? null,
+                'carrera' => $filtros['carrera'] ?? null,
+                'departamento' => $filtros['departamento'] ?? null
+            ]);
+    
+            // Respuesta
+            echo json_encode([
                 'success' => true,
                 'data' => $resultados,
-                'meta' => [
-                    'total' => count($resultados),
-                    'filters' => [
-                        'nombre' => $nombre,
-                        'no_cuenta' => $no_cuenta,
-                        'centro' => $centro,
-                        'carrera' => $carrera
-                    ]
-                ]
-            ];
-
-            echo json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
-
+                'total' => count($resultados)
+            ]);
+            
         } catch (Exception $e) {
             http_response_code(500);
             echo json_encode([
                 'success' => false,
                 'error' => $e->getMessage()
             ]);
-        } 
-    } 
+        }
+    }
              
     /**
      * Valida si un estudiante puede matricular hoy, dependiendo del tipo de proceso y el índice.
@@ -674,6 +656,7 @@ class EstudianteController {
                             ]
                         ] : null,
                         'docente' => [
+                            'docente_id' => $clase['docente_id'],
                             'numero_empleado' => $clase['numero_empleado'],
                             'nombre' => $clase['nombre_docente'],
                             'apellido' => $clase['apellido_docente'],

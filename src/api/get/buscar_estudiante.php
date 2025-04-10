@@ -18,6 +18,7 @@
  * 
  * @package API
  * @version 1.0
+ * @author Jose Vargas  
  */
 
  header("Access-Control-Allow-Origin: *");
@@ -25,6 +26,14 @@
  
  require_once __DIR__ . '/../../controllers/EstudianteController.php';
  
- $controller = new EstudianteController();
- $controller->buscarEstudiante();
+ $filtros = [
+     'nombre' => $_GET['nombre'] ?? '',
+     'no_cuenta' => $_GET['no_cuenta'] ?? '',
+     'carrera' => $_GET['carrera'] ?? '',
+     'departamento' => $_GET['departamento'] ?? ''
+ ];
+ 
+
+$controller = new EstudianteController();
+$controller->buscarEstudiante($filtros);
 ?>
