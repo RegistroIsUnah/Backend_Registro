@@ -221,16 +221,14 @@ class SeccionController {
      * @param int $seccionId ID de la sección
      * @return void
      * @author Jose Vargas
-     * @version 1.0
+     * @version 1.2
      */
     public function seccionListaEstudiantes($seccionId) {
         header('Content-Type: application/json');
         
         try {
-            // Obtener datos del modelo
             $estudiantes = $this->modelo->seccionListaEstudiantes($seccionId);
             
-            // Formatear respuesta
             $response = [
                 'success' => true,
                 'data' => array_map(function($estudiante) {
@@ -238,17 +236,13 @@ class SeccionController {
                         'numero_cuenta' => $estudiante['numero_cuenta'],
                         'nombre' => $estudiante['nombre'],
                         'apellido' => $estudiante['apellido'],
-                        'correo_personal' => $estudiante['correo_personal'],
-                        'estado_curso_id' => $estudiante['estado_curso_id'],
-                        'estado' => $estudiante['estado'],
-                        'calificacion' => $estudiante['calificacion'],
-                        'observacion' => $estudiante['observacion']
+                        'correo_personal' => $estudiante['correo_personal']
                     ];
                 }, $estudiantes)
             ];
             
             echo json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
-
+    
         } catch (Exception $e) {
             http_response_code($e->getCode() ?: 500);
             echo json_encode([
