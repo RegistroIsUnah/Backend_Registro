@@ -103,13 +103,20 @@ class Seccion {
      */
     public function modificarSeccion($seccion_id, $docente_id, $aula_id, $estado, $motivo_cancelacion, $cupos, $video_url) {
         // Llamar al procedimiento almacenado SP_modificarSeccion
-        $stmt = $this->conn->prepare("CALL SP_modificarSeccion(?, ?, ?, ?, ?, ?, ?, ?)");
+        $stmt = $this->conn->prepare("CALL SP_modificarSeccion(?, ?, ?, ?, ?, ?, ?)");
         if (!$stmt) {
             throw new Exception("Error preparando la consulta: " . $this->conn->error);
         }
     
-        // "iiissi s": 3 enteros, 2 strings, 1 entero, 1 string
-        if (!$stmt->bind_param("iiississ", $seccion_id, $docente_id, $aula_id, $estado, $motivo_cancelacion, $cupos, $video_url)) {
+        // "iiissis": 
+        // i = seccion_id (entero)
+        // i = docente_id (entero)
+        // i = aula_id (entero)
+        // s = estado (string)
+        // s = motivo_cancelacion (string)
+        // i = cupos (entero)
+        // s = video_url (string)
+        if (!$stmt->bind_param("iiissis", $seccion_id, $docente_id, $aula_id, $estado, $motivo_cancelacion, $cupos, $video_url)) {
             throw new Exception("Error vinculando parámetros: " . $stmt->error);
         }
     
@@ -119,7 +126,7 @@ class Seccion {
     
         $stmt->close();
         return "Sección modificada exitosamente";
-    }    
+    }
 
    /**
      * Obtiene las secciones de una clase con los detalles del docente, aula y edificio.

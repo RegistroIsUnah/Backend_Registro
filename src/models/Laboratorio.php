@@ -76,171 +76,86 @@ class Laboratorio {
         return $laboratorios;
     }
 
-    /**
-     * Registra un laboratorio en la base de datos.
+     /**
+     * Modifica un laboratorio existente
      *
-     * @param int $clase_id ID de la clase asociada al laboratorio
-     * @param string $codigo_laboratorio Código del laboratorio basado en la hora de inicio
-     * @param int $periodo_academico_id ID del periodo académico
-     * @param string $hora_inicio Hora de inicio del laboratorio
-     * @param string $hora_fin Hora de fin del laboratorio
-     * @param int $aula_id ID del aula donde se llevará a cabo el laboratorio
-     * @param int $cupos Número de cupos disponibles para el laboratorio
+     * @param int    $laboratorio_id      ID del laboratorio a modificar
+     * @param int    $aula_id             ID del aula (opcional)
+     * @param string $estado              Estado (ACTIVA/CANCELADA, opcional)
+     * @param string $motivo_cancelacion  Motivo de cancelación (requerido si estado=CANCELADA)
+     * @param int    $cupos               Número de cupos (opcional)
+     * @param string $hora_inicio         Hora de inicio (HH:MM:SS, opcional)
+     * @param string $hora_fin            Hora de fin (HH:MM:SS, opcional)
+     * @param array  $dias                Array de IDs de días (opcional)
+     *
+     * @return bool True si la modificación fue exitosa
+     * @throws Exception Si ocurre un error en la base de datos
+     */
+    public function modificarLaboratorio($laboratorio_id, $aula_id = null, $estado = null, 
+                                      $motivo_cancelacion = null, $cupos = null, 
+                                      $hora_inicio = null, $hora_fin = null, $dias = null) {
+        // Convertir array de días a JSON
+        $dias_json = $dias ? json_encode($dias) : null;
+        
+        $stmt = $this->conn->prepare("CALL SP_modificarLaboratorio(?, ?, ?, ?, ?, ?, ?, ?)");
+        if (!$stmt) {
+            throw new Exception("Error preparando la consulta: " . $this->conn->error);
+        }
+
+        // Tipos: i=entero, s=string
+        if (!$stmt->bind_param("iisssiss", 
+            $laboratorio_id, $aula_id, $estado, $motivo_cancelacion,
+            $cupos, $hora_inicio, $hora_fin, $dias_json)) {
+            throw new Exception("Error vinculando parámetros: " . $stmt->error);
+        }
+
+        if (!$stmt->execute()) {
+            throw new Exception("Error ejecutando la consulta: " . $stmt->error);
+        }
+
+        $stmt->close();
+        return true;
+    }
+
+      /**
+     * Crea un nuevo laboratorio en el sistema
+     *
+     * @param int    $clase_id             ID de la clase asociada
+     * @param string $codigo_laboratorio   Código único del laboratorio
+     * @param int    $periodo_academico_id ID del período académico
+     * @param string $hora_inicio          Hora de inicio (formato HH:MM:SS)
+     * @param string $hora_fin             Hora de fin (formato HH:MM:SS)
+     * @param int    $aula_id              ID del aula asignada
+     * @param int    $cupos                Número de cupos disponibles
+     * @param array  $dias                 Array de IDs de días (ej: [1,3] para Lunes y Miércoles)
+     * 
      * @return int ID del laboratorio creado
-     * @throws Exception Si ya existe un laboratorio en el mismo horario o aula
+     * @throws Exception Si ocurre un error en la base de datos
      */
-    public function crearLaboratorio($clase_id, $codigo_laboratorio, $periodo_academico_id, $hora_inicio, $hora_fin, $aula_id, $cupos) {
-        // Verificar si ya existe un laboratorio en el mismo horario y aula
-        $sqlCheck = "SELECT COUNT(*) FROM Laboratorio 
-                    WHERE aula_id = ? 
-                    AND periodo_academico_id = ? 
-                    AND ((hora_inicio BETWEEN ? AND ?) OR (hora_fin BETWEEN ? AND ?))";
-        $stmtCheck = $this->conn->prepare($sqlCheck);
-        $stmtCheck->bind_param("iissss", $aula_id, $periodo_academico_id, $hora_inicio, $hora_fin, $hora_inicio, $hora_fin);
-        $stmtCheck->execute();
-        $result = $stmtCheck->get_result();
-        $row = $result->fetch_row();
+    public function crearLaboratorio($clase_id, $codigo_laboratorio, $periodo_academico_id, 
+                                  $hora_inicio, $hora_fin, $aula_id, $cupos, $dias) {
+        // Convertir array de días a JSON
+        $dias_json = json_encode($dias);
         
-        if ($row[0] > 0) {
-            throw new Exception("Ya existe un laboratorio en el mismo horario en esta aula.");
+        $stmt = $this->conn->prepare("CALL SP_crearLaboratorio(?, ?, ?, ?, ?, ?, ?, ?)");
+        if (!$stmt) {
+            throw new Exception("Error preparando la consulta: " . $this->conn->error);
         }
 
-        // Verificar si existe un laboratorio para la misma clase en el mismo horario
-        $sqlCheckClase = "SELECT COUNT(*) FROM Laboratorio
-                        WHERE clase_id = ? AND periodo_academico_id = ?
-                        AND ((hora_inicio BETWEEN ? AND ?) OR (hora_fin BETWEEN ? AND ?))";
-        $stmtCheckClase = $this->conn->prepare($sqlCheckClase);
-        $stmtCheckClase->bind_param("iissss", $clase_id, $periodo_academico_id, $hora_inicio, $hora_fin, $hora_inicio, $hora_fin);
-        $stmtCheckClase->execute();
-        $resultClase = $stmtCheckClase->get_result();
-        $rowClase = $resultClase->fetch_row();
-
-        if ($rowClase[0] > 0) {
-            throw new Exception("Ya existe un laboratorio para esta clase en el mismo horario.");
+        if (!$stmt->bind_param("isisiiis", $clase_id, $codigo_laboratorio, $periodo_academico_id, 
+                            $hora_inicio, $hora_fin, $aula_id, $cupos, $dias_json)) {
+            throw new Exception("Error vinculando parámetros: " . $stmt->error);
         }
 
-        // Insertar el laboratorio en la base de datos
-        $estado_seccion_id = 1; // Estado "ACTIVO"
-        $sql = "INSERT INTO Laboratorio (clase_id, codigo_laboratorio, periodo_academico_id, hora_inicio, hora_fin, aula_id, estado_seccion_id, cupos) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-        $stmt = $this->conn->prepare($sql);
-        $stmt->bind_param("issssiii", $clase_id, $codigo_laboratorio, $periodo_academico_id, $hora_inicio, $hora_fin, $aula_id, $estado_seccion_id, $cupos);
-        $stmt->execute();
-        
-        return $stmt->insert_id;
+        if (!$stmt->execute()) {
+            throw new Exception("Error ejecutando la consulta: " . $stmt->error);
+        }
+
+        $result = $stmt->get_result();
+        $row = $result->fetch_assoc();
+        $stmt->close();
+
+        return $row['laboratorio_id'];
     }
-
-    /**
-     * Modifica los detalles de un laboratorio, incluyendo la actualización de la hora de inicio y el código del laboratorio.
-     *
-     * @param int $laboratorio_id ID del laboratorio
-     * @param int|null $clase_id ID de la clase asociada al laboratorio (opcional)
-     * @param string|null $codigo_laboratorio Código del laboratorio basado en la hora de inicio (opcional)
-     * @param int|null $periodo_academico_id ID del periodo académico (opcional)
-     * @param string|null $hora_inicio Hora de inicio del laboratorio (opcional)
-     * @param string|null $hora_fin Hora de fin del laboratorio (opcional)
-     * @param int|null $aula_id ID del aula donde se llevará a cabo el laboratorio (opcional)
-     * @param int|null $cupos Número de cupos disponibles para el laboratorio (opcional)
-     * @return void
-     * @throws Exception Si ya existe un laboratorio en el mismo horario o aula
-     */
-    public function modificarLaboratorio($laboratorio_id, $clase_id = null, $codigo_laboratorio = null, $periodo_academico_id = null, $hora_inicio = null, $hora_fin = null, $aula_id = null, $cupos = null) {
-        // Si se modifica la hora de inicio, se debe actualizar el código del laboratorio
-        if ($hora_inicio !== null) {
-            $codigo_laboratorio = date('Hi', strtotime($hora_inicio)); // Generar código laboratorio basado en la hora
-        }
-
-        // Verificar si ya existe un laboratorio en el mismo horario y aula
-        if ($hora_inicio !== null && $aula_id !== null) {
-            $sqlCheck = "SELECT COUNT(*) FROM Laboratorio 
-                        WHERE aula_id = ? 
-                        AND laboratorio_id != ? 
-                        AND ((hora_inicio BETWEEN ? AND ?) OR (hora_fin BETWEEN ? AND ?))";
-            $stmtCheck = $this->conn->prepare($sqlCheck);
-            $stmtCheck->bind_param("iissss", $aula_id, $laboratorio_id, $hora_inicio, $hora_fin, $hora_inicio, $hora_fin);
-            $stmtCheck->execute();
-            $result = $stmtCheck->get_result();
-            $row = $result->fetch_row();
-            
-            if ($row[0] > 0) {
-                throw new Exception("Ya existe un laboratorio en el mismo horario en esta aula.");
-            }
-        }
-
-        // Verificar si existe un laboratorio para la misma clase en el mismo horario
-        if ($hora_inicio !== null && $clase_id !== null) {
-            $sqlCheckClase = "SELECT COUNT(*) FROM Laboratorio
-                            WHERE clase_id = ? 
-                            AND laboratorio_id != ?
-                            AND ((hora_inicio BETWEEN ? AND ?) OR (hora_fin BETWEEN ? AND ?))";
-            $stmtCheckClase = $this->conn->prepare($sqlCheckClase);
-            $stmtCheckClase->bind_param("iissss", $clase_id, $laboratorio_id, $hora_inicio, $hora_fin, $hora_inicio, $hora_fin);
-            $stmtCheckClase->execute();
-            $resultClase = $stmtCheckClase->get_result();
-            $rowClase = $resultClase->fetch_row();
-
-            if ($rowClase[0] > 0) {
-                throw new Exception("Ya existe un laboratorio para esta clase en el mismo horario.");
-            }
-        }
-
-        // Construir la consulta de actualización
-        $sql = "UPDATE Laboratorio SET ";
-        $params = [];
-        $paramTypes = "";
-
-        // Solo actualizamos los campos proporcionados
-        if ($clase_id !== null) {
-            $sql .= "clase_id = ?, ";
-            $params[] = $clase_id;
-            $paramTypes .= "i";
-        }
-        if ($codigo_laboratorio !== null) {
-            $sql .= "codigo_laboratorio = ?, ";
-            $params[] = $codigo_laboratorio;
-            $paramTypes .= "s";
-        }
-        if ($periodo_academico_id !== null) {
-            $sql .= "periodo_academico_id = ?, ";
-            $params[] = $periodo_academico_id;
-            $paramTypes .= "i";
-        }
-        if ($hora_inicio !== null) {
-            $sql .= "hora_inicio = ?, ";
-            $params[] = $hora_inicio;
-            $paramTypes .= "s";
-        }
-        if ($hora_fin !== null) {
-            $sql .= "hora_fin = ?, ";
-            $params[] = $hora_fin;
-            $paramTypes .= "s";
-        }
-        if ($aula_id !== null) {
-            $sql .= "aula_id = ?, ";
-            $params[] = $aula_id;
-            $paramTypes .= "i";
-        }
-        if ($cupos !== null) {
-            $sql .= "cupos = ?, ";
-            $params[] = $cupos;
-            $paramTypes .= "i";
-        }
-
-        // Eliminar la coma final
-        $sql = rtrim($sql, ", ");
-
-        // Condición para el laboratorio específico
-        $sql .= " WHERE laboratorio_id = ?";
-
-        // Añadir el laboratorio_id a los parámetros
-        $params[] = $laboratorio_id;
-        $paramTypes .= "i";
-
-        // Preparar y ejecutar la consulta
-        $stmt = $this->conn->prepare($sql);
-        $stmt->bind_param($paramTypes, ...$params);
-        $stmt->execute();
-    }
-
 }
 ?>

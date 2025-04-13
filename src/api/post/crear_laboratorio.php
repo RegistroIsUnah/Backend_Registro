@@ -19,11 +19,13 @@
  * 
  * {
  *   "clase_id": 1,
+ *   "codigo_laboratorio": "LAB-2023-01",
  *   "periodo_academico_id": 1,
  *   "hora_inicio": "08:00:00",
  *   "hora_fin": "10:00:00",
  *   "aula_id": 2,
- *   "cupos": 30
+ *   "cupos": 30,
+ *   "dias": [1, 3] // Lunes y Miércoles
  * }
  * 
  * Métodos soportados:
@@ -50,5 +52,5 @@ if (empty($input)) {
 require_once __DIR__ . '/../../controllers/LaboratorioController.php';
 
 $laboratorioController = new LaboratorioController();
-$laboratorioController->crearLaboratorio();
+$laboratorioController->crearLaboratorio($input);
 ?>
