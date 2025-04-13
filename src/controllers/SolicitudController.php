@@ -179,9 +179,10 @@ class SolicitudController {
                 'APROBADA'
             );
 
+            /*
             // 2. Ejecutar acciones adicionales según tipo de solicitud
             $this->model->procesarSolicitudAprobada($solicitud_id);
-
+            */
             echo json_encode([
                 'success' => true,
                 'message' => 'Solicitud aprobada exitosamente'
@@ -254,6 +255,39 @@ class SolicitudController {
                 'success' => false,
                 'error' => $e->getMessage()
             ]);
+        }
+    }
+
+
+    /**
+     * Búsqueda avanzada de solicitudes con múltiples filtros
+     * 
+     * @param string|null $estado
+     * @param int|null $solicitud_id
+     * @param string|null $numero_cuenta
+     * @return array
+     */
+    public function buscarSolicitudesAvanzado(
+        ?string $estado = null,
+        ?int $solicitud_id = null,
+        ?string $numero_cuenta = null
+    ): array {
+        try {
+            // Sanitizar inputs
+            $filters = [
+                'estado' => $estado ? htmlspecialchars($estado) : null,
+                'solicitud_id' => $solicitud_id,
+                'numero_cuenta' => $numero_cuenta ? htmlspecialchars($numero_cuenta) : null
+            ];
+
+            return $this->model->busquedaAvanzada(
+                $filters['estado'],
+                $filters['solicitud_id'],
+                $filters['numero_cuenta']
+            );
+
+        } catch (Exception $e) {
+            throw new Exception("Error en la búsqueda: " . $e->getMessage());
         }
     }
 

@@ -469,4 +469,60 @@ class Solicitud {
         $stmt->execute();
     }
 
+
+    public function busquedaAvanzada($estado = null, $solicitud_id = null, $numero_cuenta = null) {
+        $sql = "SELECT 
+                    s.solicitud_id,
+                    s.fecha_solicitud,
+                    ts.nombre AS tipo_solicitud,
+                    es.nombre AS estado,
+                    s.archivo_pdf,
+                    s.motivo_id,
+                    mrs.descripcion AS motivo,
+                    s.estudiante_id,
+                    e.numero_cuenta,
+                    e.nombre AS estudiante_nombre,
+                    e.apellido AS estudiante_apellido
+                FROM Solicitud s
+                JOIN EstadoSolicitud es ON s.estado_solicitud_id = es.estado_solicitud_id
+                JOIN TipoSolicitud ts ON s.tipo_solicitud_id = ts.tipo_solicitud_id
+                LEFT JOIN MotivoRechazoSolicitud mrs ON s.motivo_id = mrs.motivo_id
+                JOIN Estudiante e ON s.estudiante_id = e.estudiante_id
+                WHERE 1=1";
+        
+        $params = [];
+        $types = '';
+        
+        if ($estado) {
+            $sql .= " AND es.nombre = ?";
+            $params[] = $estado;
+            $types .= 's';
+        }
+        
+        if ($solicitud_id) {
+            $sql .= " AND s.solicitud_id = ?";
+            $params[] = $solicitud_id;
+            $types .= 'i';
+        }
+        
+        if ($numero_cuenta) {
+            $sql .= " AND e.numero_cuenta LIKE CONCAT('%', ?, '%')";
+            $params[] = $numero_cuenta;
+            $types .= 's';
+        }
+        
+        $sql .= " ORDER BY s.fecha_solicitud DESC";
+    
+        $stmt = $this->conn->prepare($sql);
+        
+        if (!empty($params)) {
+            $stmt->bind_param($types, ...$params);
+        }
+        
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        return $result->fetch_all(MYSQLI_ASSOC);
+    }
+
 }
