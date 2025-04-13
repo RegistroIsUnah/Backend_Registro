@@ -40,68 +40,124 @@
         }
     }
 
-        /**
-     * Crea un nuevo laboratorio si no hay conflictos en el horario ni aula.
+    /**
+     * Crea un nuevo laboratorio
+     *
+     * @param array $data Datos del laboratorio a crear:
+     *                    - clase_id (int) ID de la clase
+     *                    - codigo_laboratorio (string) Código del laboratorio
+     *                    - periodo_academico_id (int) ID del período
+     *                    - hora_inicio (string) Hora de inicio
+     *                    - hora_fin (string) Hora de fin
+     *                    - aula_id (int) ID del aula
+     *                    - cupos (int) Número de cupos
+     *                    - dias (array) IDs de días de la semana
+     * 
+     * @return void Envía respuesta JSON con el resultado
      */
-    public function crearLaboratorio() {
-        // Recoger datos del formulario (o JSON)
-        $data = json_decode(file_get_contents('php://input'), true);
-
-        if (empty($data)) {
-            http_response_code(400);
-            echo json_encode(['error' => 'Datos no proporcionados']);
-            return;
+    public function crearLaboratorio($data) {
+        // Validar campos requeridos
+        $required_fields = ['clase_id', 'codigo_laboratorio', 'periodo_academico_id', 
+                          'hora_inicio', 'hora_fin', 'aula_id', 'cupos', 'dias'];
+        
+        foreach ($required_fields as $field) {
+            if (!isset($data[$field]) || empty($data[$field])) {
+                http_response_code(400);
+                echo json_encode(['error' => "Falta el campo requerido: $field"]);
+                exit;
+            }
         }
 
-        $clase_id = $data['clase_id'];
-        $periodo_academico_id = $data['periodo_academico_id'];
-        $hora_inicio = $data['hora_inicio'];
-        $hora_fin = $data['hora_fin'];
-        $aula_id = $data['aula_id'];
-        $cupos = $data['cupos'];
-        $codigo_laboratorio = date('Hi', strtotime($hora_inicio)); // Código del laboratorio basado en la hora de inicio
+        // Validar formato de días (debe ser array)
+        if (!is_array($data['dias']) || empty($data['dias'])) {
+            http_response_code(400);
+            echo json_encode(['error' => "El campo 'dias' debe ser un array no vacío"]);
+            exit;
+        }
 
         try {
-            // Crear el laboratorio
-            $laboratorio_id = $this->modelo->crearLaboratorio($clase_id, $codigo_laboratorio, $periodo_academico_id, $hora_inicio, $hora_fin, $aula_id, $cupos);
-            
-            http_response_code(200);
-            echo json_encode(['message' => 'Laboratorio creado exitosamente', 'laboratorio_id' => $laboratorio_id]);
+            $laboratorio_id = $this->modelo->crearLaboratorio(
+                intval($data['clase_id']),
+                $data['codigo_laboratorio'],
+                intval($data['periodo_academico_id']),
+                $data['hora_inicio'],
+                $data['hora_fin'],
+                intval($data['aula_id']),
+                intval($data['cupos']),
+                $data['dias']
+            );
+
+            http_response_code(201);
+            echo json_encode([
+                'message' => 'Laboratorio creado exitosamente',
+                'laboratorio_id' => $laboratorio_id
+            ]);
         } catch (Exception $e) {
-            http_response_code(400);
+            // Diferenciar entre errores de validación (400) y errores de servidor (500)
+            $statusCode = strpos($e->getMessage(), 'Error preparando') !== false || 
+                         strpos($e->getMessage(), 'Error ejecutando') !== false ? 500 : 400;
+            
+            http_response_code($statusCode);
             echo json_encode(['error' => $e->getMessage()]);
         }
     }
 
     /**
-     * Modifica un laboratorio, incluyendo la actualización de la hora de inicio y el código del laboratorio.
+     * Modifica un laboratorio existente
+     *
+     * @param array $data Datos del laboratorio a modificar:
+     *                    - laboratorio_id (int) Requerido
+     *                    - aula_id (int) Opcional
+     *                    - estado (string) Opcional
+     *                    - motivo_cancelacion (string) Opcional
+     *                    - cupos (int) Opcional
+     *                    - hora_inicio (string) Opcional
+     *                    - hora_fin (string) Opcional
+     *                    - dias (array) Opcional
+     *
+     * @return void Envía respuesta JSON con el resultado
      */
-    public function modificarLaboratorio() {
-        // Recoger datos del formulario (o JSON)
-        $data = json_decode(file_get_contents('php://input'), true);
-
-        if (empty($data)) {
+    public function modificarLaboratorio($data) {
+        // Validar campo requerido
+        if (!isset($data['laboratorio_id']) || empty($data['laboratorio_id'])) {
             http_response_code(400);
-            echo json_encode(['error' => 'Datos no proporcionados']);
+            echo json_encode(['error' => 'El campo laboratorio_id es requerido']);
             return;
         }
 
-        $laboratorio_id = $data['laboratorio_id'];
-        $clase_id = $data['clase_id'] ?? null;
-        $periodo_academico_id = $data['periodo_academico_id'] ?? null;
-        $hora_inicio = $data['hora_inicio'] ?? null;
-        $hora_fin = $data['hora_fin'] ?? null;
-        $aula_id = $data['aula_id'] ?? null;
-        $cupos = $data['cupos'] ?? null;
+        // Validar motivo si se cancela
+        if (isset($data['estado']) && strtoupper($data['estado']) === 'CANCELADA' && 
+            (!isset($data['motivo_cancelacion']) || empty(trim($data['motivo_cancelacion'])))) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Se requiere motivo_cancelacion cuando el estado es CANCELADA']);
+            return;
+        }
+
+        // Validar formato de días si se proporcionan
+        if (isset($data['dias']) && !is_array($data['dias'])) {
+            http_response_code(400);
+            echo json_encode(['error' => 'El campo dias debe ser un array']);
+            return;
+        }
 
         try {
-            // Modificar el laboratorio
-            $this->modelo->modificarLaboratorio($laboratorio_id, $clase_id, null, $periodo_academico_id, $hora_inicio, $hora_fin, $aula_id, $cupos);
-            
+            $result = $this->modelo->modificarLaboratorio(
+                intval($data['laboratorio_id']),
+                isset($data['aula_id']) ? intval($data['aula_id']) : null,
+                isset($data['estado']) ? $data['estado'] : null,
+                isset($data['motivo_cancelacion']) ? $data['motivo_cancelacion'] : null,
+                isset($data['cupos']) ? intval($data['cupos']) : null,
+                isset($data['hora_inicio']) ? $data['hora_inicio'] : null,
+                isset($data['hora_fin']) ? $data['hora_fin'] : null,
+                isset($data['dias']) ? $data['dias'] : null
+            );
+
             http_response_code(200);
             echo json_encode(['message' => 'Laboratorio modificado exitosamente']);
         } catch (Exception $e) {
-            http_response_code(400);
+            // Diferenciar entre errores de validación (400) y del servidor (500)
+            $statusCode = strpos($e->getMessage(), 'Error') === false ? 400 : 500;
+            http_response_code($statusCode);
             echo json_encode(['error' => $e->getMessage()]);
         }
     }
