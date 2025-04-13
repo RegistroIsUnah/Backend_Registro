@@ -30,6 +30,8 @@
             }
         ]
     }
+    @author Jose Vargas
+    Version 1.2
  */
 
 header("Access-Control-Allow-Origin: *");

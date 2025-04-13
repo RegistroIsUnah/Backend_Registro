@@ -221,7 +221,7 @@ class SeccionController {
      * @param int $seccionId ID de la sección
      * @return void
      * @author Jose Vargas
-     * @version 1.0
+     * @version 1.2
      */
     public function seccionListaEstudiantes($seccionId) {
         header('Content-Type: application/json');

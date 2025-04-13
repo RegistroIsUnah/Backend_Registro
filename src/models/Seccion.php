@@ -266,7 +266,7 @@ class Seccion {
     * @param int $seccion_id
     * @throws Exception
     * @author Jose Vargas
-    * @version 1.0
+    * @version 1.2
     */
     public function seccionListaEstudiantes($seccion_id) {
         $sql = "SELECT 
