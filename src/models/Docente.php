@@ -204,7 +204,18 @@ class Docente {
         $row = $res->fetch_assoc();
         $estudiante_id = $row['estudiante_id'];
     
-        // 2. Insertar la calificación
+        // 2. Verificar si ya existe una calificación para ese estudiante y sección
+        $sql_check = "SELECT historial_id FROM HistorialEstudiante WHERE estudiante_id = ? AND seccion_id = ?";
+        $stmt_check = $this->conn->prepare($sql_check);
+        $stmt_check->bind_param("ii", $estudiante_id, $data['seccion_id']);
+        $stmt_check->execute();
+        $res_check = $stmt_check->get_result();
+    
+        if ($res_check->num_rows > 0) {
+            throw new Exception("Ya existe una calificación registrada para este estudiante en la sección proporcionada.", 409);
+        }
+    
+        // 3. Insertar la calificación
         $sql = "INSERT INTO HistorialEstudiante 
                 (estudiante_id, seccion_id, calificacion, observacion, fecha, estado_curso_id)
                 VALUES (?, ?, ?, ?, NOW(), ?)";
