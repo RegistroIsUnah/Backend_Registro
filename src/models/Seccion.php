@@ -273,17 +273,11 @@ class Seccion {
                     e.numero_cuenta,
                     e.nombre,
                     e.apellido,
-                    e.correo_personal,
-                    he.estado_curso_id,
-                    est.nombre AS estado,
-                    he.calificacion,
-                    he.observacion
+                    e.correo_personal
                 FROM Matricula m
                 INNER JOIN Estudiante e ON m.estudiante_id = e.estudiante_id
-		INNER JOIN HistorialEstudiante he ON m.estudiante_id = he.estudiante_id
-                INNER JOIN EstadoCurso est ON  he.estado_curso_id = est.estado_curso_id
                 WHERE m.seccion_id = ?";
-
+    
         $stmt = $this->conn->prepare($sql);
         $stmt->bind_param("i", $seccion_id);
         $stmt->execute();
