@@ -19,6 +19,8 @@
 
 header("Access-Control-Allow-Origin: *");
 header('Content-Type: application/json');
+header("Access-Control-Allow-Methods: GET, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type");
 
 if (!isset($_GET['revisor_id']) || !is_numeric($_GET['revisor_id'])) {
     http_response_code(400);

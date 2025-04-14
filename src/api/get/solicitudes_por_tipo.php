@@ -20,17 +20,19 @@
 
 header("Access-Control-Allow-Origin: *");
 header('Content-Type: application/json');
-
-require_once __DIR__ . '/../../controllers/SolicitudController.php';
-
-try {
-    $controller = new SolicitudController();
-    $controller->obtenerSolicitudesPorTipo();
-} catch (Exception $e) {
-    http_response_code(500);
-    echo json_encode([
-        'success' => false,
-        'error' => $e->getMessage()
-    ]);
-}
+header("Access-Control-Allow-Methods: GET, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type");
+ 
+ if (!isset($_GET['tipo_solicitud']) || empty(trim($_GET['tipo_solicitud']))) {
+     http_response_code(400);
+     echo json_encode(['error' => 'El parámetro tipo_solicitud es requerido']);
+     exit;
+ }
+ 
+ $tipoSolicitud = $_GET['tipo_solicitud'];
+ 
+ require_once __DIR__ . '/../../controllers/SolicitudController.php';
+ 
+ $controller = new SolicitudController();
+ $controller->obtenerSolicitudesPorTipo($tipoSolicitud);
 ?>

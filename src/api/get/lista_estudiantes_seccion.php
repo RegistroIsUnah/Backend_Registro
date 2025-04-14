@@ -30,10 +30,14 @@
             }
         ]
     }
+    @author Jose Vargas
+    Version 1.2
  */
 
 header("Access-Control-Allow-Origin: *");
 header('Content-Type: application/json');
+header("Access-Control-Allow-Methods: GET, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type");
 
 
 if (!isset($_GET['seccion_id']) || !is_numeric($_GET['seccion_id'])) {

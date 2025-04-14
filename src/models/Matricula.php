@@ -401,5 +401,125 @@ class Matricula {
             echo json_encode(['error' => $e->getMessage()]);
         }
     }    
+
+    /**
+     * Cancela la matrícula de un estudiante en Laboratorio.
+     *
+     * @param int $estudiante_id ID del estudiante.
+     * @param int $seccion_id ID de la sección.
+     * @return void
+     * @throws Exception Si ocurre un error al cancelar la matrícula.
+     */
+    public function cancelarMatriculaLaboratorio($data) {
+        if (!isset($data['estudiante_id']) || !isset($data['laboratorio_id'])) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Faltan datos: estudiante_id y laboratorio_id son requeridos']);
+            exit;
+        }
+    
+        $estudiante_id = intval($data['estudiante_id']);
+        $seccion_id = intval($data['laboratorio_id']);
+        
+        try {
+            // Paso 1: Verificar si el estudiante está matriculado en la sección
+            $sqlVerificarMatricula = "SELECT 1 FROM Matricula WHERE estudiante_id = ? AND laboratorio_id = ?";
+            $stmt = $this->conn->prepare($sqlVerificarMatricula);
+            $stmt->bind_param("ii", $estudiante_id, $seccion_id);
+            $stmt->execute();
+            $result = $stmt->get_result();
+    
+            // Si no se encuentra la matrícula, retornar error
+            if ($result->num_rows == 0) {
+                http_response_code(404); // Aquí debe ser 404, ya que es un "no encontrado"
+                echo json_encode(['error' => 'El estudiante no está matriculado en este laboratorio']);
+                exit;
+            }
+    
+            // Paso 2: Obtener el estado de matrícula "CANCELADA"
+            $sqlEstadoCancelada = "SELECT estado_matricula_id FROM EstadoMatricula WHERE nombre = 'CANCELADA'";
+            $stmt = $this->conn->prepare($sqlEstadoCancelada);
+            $stmt->execute();
+            $estadoCanceladaResult = $stmt->get_result();
+            
+            if ($estadoCanceladaResult->num_rows == 0) {
+                throw new Exception("Estado 'CANCELADA' no encontrado en la tabla EstadoMatricula");
+            }
+    
+            $estadoCancelada = $estadoCanceladaResult->fetch_assoc()['estado_matricula_id'];
+    
+            // Paso 3: Cancelar la matrícula en la sección
+            $sqlCancelarSeccion = "UPDATE Matricula SET estado_laboratorio_id = ? WHERE estudiante_id = ? AND laboratorio_id' = ?";
+            $stmt = $this->conn->prepare($sqlCancelarSeccion);
+            $stmt->bind_param("iii", $estadoCancelada, $estudiante_id, $seccion_id);
+            if (!$stmt->execute()) {
+                throw new Exception("Error al cancelar la matrícula en el laboratorio");
+            }
+    
+            http_response_code(200); // Respuesta exitosa
+        } catch (Exception $e) {
+            // Manejo de excepciones
+            http_response_code(500); // Error del servidor
+            echo json_encode(['error' => $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Obtiene todas los laboratorios matriculadas en estado 'EN_ESPERA' por el estudiante.
+     * 
+     * @param int $estudiante_id El ID del estudiante.
+     * @return array El resultado de la consulta con los laboratorios matriculadas en estado 'EN_ESPERA'.
+     */
+    public function obtenerLaboratoriosEnEspera($estudiante_id) {
+        $sql = "
+             SELECT
+                l.laboratorio_id,
+                c.codigo AS codigo,
+                c.nombre AS asignatura,
+                DATE_FORMAT(l.hora_inicio, '%H%i') AS laboratorio,
+                l.hora_inicio AS hora_inicio,
+                l.hora_fin AS hora_fin,
+                GROUP_CONCAT(ds.nombre ORDER BY ds.dia_id) AS dias_laboratorio,
+                e.nombre AS edificio_nombre,
+                a.nombre AS aula_nombre,
+                c.creditos AS creditos
+            FROM
+                Matricula m
+            JOIN
+                Laboratorio l ON m.laboratorio_id = l.laboratorio_id
+            JOIN
+                Clase c ON l.clase_id = c.clase_id
+            JOIN
+                Aula a ON l.aula_id = a.aula_id
+            JOIN
+                Edificio e ON a.edificio_id = e.edificio_id
+            LEFT JOIN
+                LaboratorioDia ld ON l.laboratorio_id = ld.laboratorio_id
+            LEFT JOIN
+                DiaSemana ds ON ld.dia_id = ds.dia_id
+            WHERE
+                m.estudiante_id = ? AND m.estado_laboratorio_id = (SELECT estado_matricula_id FROM EstadoMatricula WHERE nombre = 'EN_ESPERA')
+            GROUP BY
+                l.laboratorio_id, c.clase_id, a.nombre, e.nombre
+            ORDER BY
+                l.laboratorio_id
+        ";
+
+        // Preparar la consulta
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param("i", $estudiante_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        // Recoger todos los resultados
+        $laboratoriosEnEspera = [];
+        while ($row = $result->fetch_assoc()) {
+            $laboratoriosEnEspera[] = $row;
+        }
+
+        // Cerrar la conexión
+        $stmt->close();
+        return $laboratoriosEnEspera;
+    }
+
 }
 ?>

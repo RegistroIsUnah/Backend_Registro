@@ -32,7 +32,8 @@
 
 header("Access-Control-Allow-Origin: *");
 header('Content-Type: application/json');
-
+header("Access-Control-Allow-Methods: GET, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type");
 // Obtener el parámetro centro_id si se envía; si no, será null.
 $centro_id = isset($_GET['centro_id']) ? intval($_GET['centro_id']) : null;
 

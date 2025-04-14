@@ -16,8 +16,11 @@ require_once __DIR__ . '/../models/Solicitud.php';
 class SolicitudController {
 
     private $model;
+    private $conn;
 
     public function __construct() {
+        $database = new Database();
+        $this->conn = $database->getConnection();
         $this->model = new Solicitud();
     }
 
@@ -153,5 +156,141 @@ class SolicitudController {
             ]);
         }
     }
+
+
+    /**
+     * Endpoint para aceptar una solicitud
+     */
+    public function aceptarSolicitud() {
+        header('Content-Type: application/json');
+        $data = json_decode(file_get_contents('php://input'), true);
+
+        try {
+            // Validaciones básicas
+            if (!isset($data['solicitud_id'])) {
+                throw new Exception("Falta el ID de la solicitud");
+            }
+
+            $solicitud_id = (int)$data['solicitud_id'];
+            
+            // 1. Actualizar estado a APROBADA
+            $this->model->actualizarEstadoSolicitud(
+                $solicitud_id, 
+                'APROBADA'
+            );
+
+            /*
+            // 2. Ejecutar acciones adicionales según tipo de solicitud
+            $this->model->procesarSolicitudAprobada($solicitud_id);
+            */
+            echo json_encode([
+                'success' => true,
+                'message' => 'Solicitud aprobada exitosamente'
+            ]);
+            
+        } catch (Exception $e) {
+            http_response_code(400);
+            echo json_encode([
+                'success' => false,
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * Endpoint para rechazar una solicitud
+     */
+    public function rechazarSolicitud() {
+        header('Content-Type: application/json');
+        $data = json_decode(file_get_contents('php://input'), true);
+
+        try {
+            // Validar campos requeridos
+            $required = ['solicitud_id', 'motivo_id'];
+            foreach ($required as $field) {
+                if (!isset($data[$field]) || empty($data[$field])) {
+                    throw new Exception("Falta el campo: $field");
+                }
+            }
+
+            $solicitud_id = (int)$data['solicitud_id'];
+            $motivo_id = (int)$data['motivo_id'];
+
+            // Verificar si el motivo existe
+            $sqlCheck = "SELECT motivo_id FROM MotivoRechazoSolicitud WHERE motivo_id = ?";
+            $stmt = $this->conn->prepare($sqlCheck);
+            $stmt->bind_param("i", $motivo_id);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            
+            if ($result->num_rows === 0) {
+                throw new Exception("Motivo de rechazo no válido");
+            }
+
+            // 1. Actualizar estado a DENEGADA
+            $this->model->actualizarEstadoSolicitud(
+                $solicitud_id, 
+                'DENEGADA'
+            );
+
+            // 2. Actualizar solicitud con el motivo de rechazo
+            $sqlUpdate = "UPDATE Solicitud 
+                        SET motivo_id = ?
+                        WHERE solicitud_id = ?";
+            $stmt = $this->conn->prepare($sqlUpdate);
+            $stmt->bind_param("ii", $motivo_id, $solicitud_id);
+            
+            if (!$stmt->execute()) {
+                throw new Exception("Error al vincular motivo");
+            }
+
+            echo json_encode([
+                'success' => true,
+                'message' => 'Solicitud rechazada exitosamente'
+            ]);
+
+        } catch (Exception $e) {
+            http_response_code(400);
+            echo json_encode([
+                'success' => false,
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+
+
+    /**
+     * Búsqueda avanzada de solicitudes con múltiples filtros
+     * 
+     * @param string|null $estado
+     * @param int|null $solicitud_id
+     * @param string|null $numero_cuenta
+     * @return array
+     */
+    public function buscarSolicitudesAvanzado(
+        ?string $estado = null,
+        ?int $solicitud_id = null,
+        ?string $numero_cuenta = null
+    ): array {
+        try {
+            // Sanitizar inputs
+            $filters = [
+                'estado' => $estado ? htmlspecialchars($estado) : null,
+                'solicitud_id' => $solicitud_id,
+                'numero_cuenta' => $numero_cuenta ? htmlspecialchars($numero_cuenta) : null
+            ];
+
+            return $this->model->busquedaAvanzada(
+                $filters['estado'],
+                $filters['solicitud_id'],
+                $filters['numero_cuenta']
+            );
+
+        } catch (Exception $e) {
+            throw new Exception("Error en la búsqueda: " . $e->getMessage());
+        }
+    }
+
+
 }
 ?>

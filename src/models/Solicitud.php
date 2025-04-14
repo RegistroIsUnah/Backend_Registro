@@ -286,10 +286,243 @@ class Solicitud {
 
 
 
+     /**
+     * Actualiza el estado de una solicitud
+     */
+    public function actualizarEstadoSolicitud($solicitud_id, $estado_nombre) {
+        // Obtener ID del estado
+        $sql = "SELECT estado_solicitud_id FROM EstadoSolicitud 
+                WHERE nombre = ?";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param("s", $estado_nombre);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        if ($result->num_rows === 0) {
+            throw new Exception("Estado no válido");
+        }
+        
+        $estado_id = $result->fetch_assoc()['estado_solicitud_id'];
+        
+        // Actualizar estado
+        $sqlUpdate = "UPDATE Solicitud 
+                     SET estado_solicitud_id = ?
+                     WHERE solicitud_id = ?";
+        $stmt = $this->conn->prepare($sqlUpdate);
+        $stmt->bind_param("ii", $estado_id, $solicitud_id);
+        
+        if (!$stmt->execute()) {
+            throw new Exception("Error al actualizar estado");
+        }
+    }
+
+    /**
+     * Registra el motivo de rechazo de una solicitud
+     */
+    public function registrarMotivoRechazo($solicitud_id, $descripcion) {
+        // Insertar nuevo motivo
+        $sql = "INSERT INTO MotivoRechazoSolicitud (descripcion)
+                VALUES (?)";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param("s", $descripcion);
+        
+        if (!$stmt->execute()) {
+            throw new Exception("Error al registrar motivo");
+        }
+        
+        $motivo_id = $stmt->insert_id;
+        
+        // Vincular motivo a la solicitud
+        $sqlUpdate = "UPDATE Solicitud 
+                     SET motivo_id = ?
+                     WHERE solicitud_id = ?";
+        $stmt = $this->conn->prepare($sqlUpdate);
+        $stmt->bind_param("ii", $motivo_id, $solicitud_id);
+        
+        if (!$stmt->execute()) {
+            throw new Exception("Error al vincular motivo");
+        }
+    }
+
+    /**
+     * Ejecuta acciones adicionales al aprobar una solicitud
+     */
+    public function procesarSolicitudAprobada($solicitud_id) {
+        // Obtener tipo de solicitud
+        $sql = "SELECT tipo_solicitud_id FROM Solicitud 
+                WHERE solicitud_id = ?";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param("i", $solicitud_id);
+        $stmt->execute();
+        $tipo_solicitud_id = $stmt->get_result()->fetch_assoc()['tipo_solicitud_id'];
+        
+        // Ejecutar acción según tipo
+        switch($tipo_solicitud_id) {
+            case 1: // Cambio de Centro
+                $this->aplicarCambioCentro($solicitud_id);
+                break;
+                
+            case 3: // Cambio de Carrera
+                $this->aplicarCambioCarrera($solicitud_id);
+                break;
+        }
+    }
+
+    private function aplicarCambioCarrera($solicitud_id) {
+        try {
+            // Obtener datos de la solicitud
+            $sql = "SELECT scc.carrera_actual_id, scc.carrera_nuevo_id, 
+                    s.estudiante_id 
+                    FROM SolicitudCambioCarrera scc
+                    JOIN Solicitud s ON scc.solicitud_id = s.solicitud_id
+                    WHERE scc.solicitud_id = ?";
+            $stmt = $this->conn->prepare($sql);
+            $stmt->bind_param("i", $solicitud_id);
+            $stmt->execute();
+            $data = $stmt->get_result()->fetch_assoc();
+    
+            if (!$data) {
+                throw new Exception("Solicitud de cambio no encontrada");
+            }
+    
+            $estudiante_id = $data['estudiante_id'];
+            $carrera_actual = $data['carrera_actual_id'];
+            $carrera_nueva = $data['carrera_nuevo_id'];
+    
+            // Obtener IDs de estados
+            $estado_matriculado = $this->obtenerEstadoId('MATRICULADO', 'EstadoAspiranteCarrera');
+            $estado_inactivo = $this->obtenerEstadoId('NO APROBADO', 'EstadoAspiranteCarrera');
+    
+            // Iniciar transacción
+            $this->conn->begin_transaction();
+    
+            // 1. Desactivar carrera actual
+            $sqlUpdate = "UPDATE EstudianteCarrera 
+                         SET estado_aspirante_carrera_id = ?
+                         WHERE estudiante_id = ? 
+                         AND carrera_id = ?";
+            $stmt = $this->conn->prepare($sqlUpdate);
+            $stmt->bind_param("iii", $estado_inactivo, $estudiante_id, $carrera_actual);
+            $stmt->execute();
+    
+            // 2. Verificar filas afectadas
+            if ($stmt->affected_rows === 0) {
+                throw new Exception("El estudiante no estaba matriculado en la carrera actual");
+            }
+    
+            // 3. Insertar nueva carrera
+            $sqlInsert = "INSERT INTO EstudianteCarrera 
+                        (estudiante_id, carrera_id, estado_aspirante_carrera_id)
+                        VALUES (?, ?, ?)
+                        ON DUPLICATE KEY UPDATE 
+                        estado_aspirante_carrera_id = VALUES(estado_aspirante_carrera_id)";
+            $stmt = $this->conn->prepare($sqlInsert);
+            $stmt->bind_param("iii", $estudiante_id, $carrera_nueva, $estado_matriculado);
+            $stmt->execute();
+    
+            $this->conn->commit();
+    
+        } catch (Exception $e) {
+            $this->conn->rollback();
+            throw new Exception("Error al aplicar cambio de carrera: " . $e->getMessage());
+        }
+    }
+    
+    /**
+     * Método auxiliar para obtener IDs de estado
+     */
+    private function obtenerEstadoId($nombreEstado, $tablaEstado) {
+        $sql = "SELECT estado_aspirante_carrera_id 
+                FROM $tablaEstado 
+                WHERE nombre = ?";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param("s", $nombreEstado);
+        $stmt->execute();
+        $result = $stmt->get_result()->fetch_assoc();
+        
+        if (!$result) {
+            throw new Exception("Estado '$nombreEstado' no encontrado");
+        }
+        
+        return $result['estado_aspirante_carrera_id'];
+    }
 
 
+    
+    private function aplicarCambioCentro($solicitud_id) {
+        // Obtener datos del cambio
+        $sql = "SELECT centro_nuevo_id, estudiante_id 
+                FROM SolicitudCambioCentro 
+                JOIN Solicitud USING(solicitud_id)
+                WHERE solicitud_id = ?";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param("i", $solicitud_id);
+        $stmt->execute();
+        $data = $stmt->get_result()->fetch_assoc();
+        
+        // Actualizar centro del estudiante
+        $sqlUpdate = "UPDATE Estudiante 
+                     SET centro_id = ?
+                     WHERE estudiante_id = ?";
+        $stmt = $this->conn->prepare($sqlUpdate);
+        $stmt->bind_param("ii", $data['centro_nuevo_id'], $data['estudiante_id']);
+        $stmt->execute();
+    }
 
 
-
+    public function busquedaAvanzada($estado = null, $solicitud_id = null, $numero_cuenta = null) {
+        $sql = "SELECT 
+                    s.solicitud_id,
+                    s.fecha_solicitud,
+                    ts.nombre AS tipo_solicitud,
+                    es.nombre AS estado,
+                    s.archivo_pdf,
+                    s.motivo_id,
+                    mrs.descripcion AS motivo,
+                    s.estudiante_id,
+                    e.numero_cuenta,
+                    e.nombre AS estudiante_nombre,
+                    e.apellido AS estudiante_apellido
+                FROM Solicitud s
+                JOIN EstadoSolicitud es ON s.estado_solicitud_id = es.estado_solicitud_id
+                JOIN TipoSolicitud ts ON s.tipo_solicitud_id = ts.tipo_solicitud_id
+                LEFT JOIN MotivoRechazoSolicitud mrs ON s.motivo_id = mrs.motivo_id
+                JOIN Estudiante e ON s.estudiante_id = e.estudiante_id
+                WHERE 1=1";
+        
+        $params = [];
+        $types = '';
+        
+        if ($estado) {
+            $sql .= " AND es.nombre = ?";
+            $params[] = $estado;
+            $types .= 's';
+        }
+        
+        if ($solicitud_id) {
+            $sql .= " AND s.solicitud_id = ?";
+            $params[] = $solicitud_id;
+            $types .= 'i';
+        }
+        
+        if ($numero_cuenta) {
+            $sql .= " AND e.numero_cuenta LIKE CONCAT('%', ?, '%')";
+            $params[] = $numero_cuenta;
+            $types .= 's';
+        }
+        
+        $sql .= " ORDER BY s.fecha_solicitud DESC";
+    
+        $stmt = $this->conn->prepare($sql);
+        
+        if (!empty($params)) {
+            $stmt->bind_param($types, ...$params);
+        }
+        
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        return $result->fetch_all(MYSQLI_ASSOC);
+    }
 
 }
