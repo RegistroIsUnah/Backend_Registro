@@ -27,6 +27,8 @@
 
 header("Access-Control-Allow-Origin: *");
 header('Content-Type: text/csv; charset=utf-8');
+header("Access-Control-Allow-Methods: GET, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type");
 header('Content-Disposition: attachment; filename="aspirantes_admitidos.csv"');
 
 require_once __DIR__ . '/../../controllers/AspiranteController.php';

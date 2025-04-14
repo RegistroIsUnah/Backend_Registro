@@ -32,6 +32,8 @@
 
 header("Access-Control-Allow-Origin: *");
 header('Content-Type: application/json');
+header("Access-Control-Allow-Methods: GET, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type");
 
 // Validar que se reciba el parámetro "edificio_id"
 if (!isset($_GET['edificio_id']) || empty($_GET['edificio_id'])) {
