@@ -246,6 +246,7 @@ class Solicitud {
             SELECT 
                 s.solicitud_id,
                 s.estudiante_id,
+                e.numero_cuenta,
                 e.nombre,
                 e.apellido,
                 s.tipo_solicitud_id,

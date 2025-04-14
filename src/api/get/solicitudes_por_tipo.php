@@ -22,6 +22,7 @@ header("Access-Control-Allow-Origin: *");
 header('Content-Type: application/json');
 header("Access-Control-Allow-Methods: GET, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type");
+
  
  if (!isset($_GET['tipo_solicitud']) || empty(trim($_GET['tipo_solicitud']))) {
      http_response_code(400);
