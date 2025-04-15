@@ -5,13 +5,14 @@
  * Método: POST
  *
  * Parámetros (en form-data o JSON):
- *  - laboratorio_id (int): ID del laboratorio.
- *  - clase_id (int, opcional): ID de la clase asociada.
- *  - periodo_academico_id (int, opcional): ID del periodo académico.
- *  - hora_inicio (string, opcional): Hora de inicio del laboratorio (formato HH:MM:SS).
- *  - hora_fin (string, opcional): Hora de fin del laboratorio (formato HH:MM:SS).
- *  - aula_id (int, opcional): ID del aula donde se llevará a cabo el laboratorio.
- *  - cupos (int, opcional): Número de cupos disponibles.
+ * - laboratorio_id (int): ID del laboratorio a modificar (requerido)
+ * - aula_id (int): ID del aula (opcional)
+ * - estado (string): 'ACTIVA' o 'CANCELADA' (opcional)
+ * - motivo_cancelacion (string): Requerido si estado es 'CANCELADA'
+ * - cupos (int): Número de cupos (opcional)
+ * - hora_inicio (string): Hora de inicio en formato HH:MM:SS (opcional)
+ * - hora_fin (string): Hora de fin en formato HH:MM:SS (opcional)
+ * - dias (array): Array de IDs de días (opcional, ej: [1,3] para Lunes y Miércoles)
  * 
  * Ejemplo de URL 
  * servidor:puerto/api/post/modificar_laboratorio.php
@@ -39,6 +40,8 @@
 
 header("Access-Control-Allow-Origin: *");
 header('Content-Type: application/json');
+header("Access-Control-Allow-Methods: POST, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type");
 
 // Permitir recibir datos JSON
 $input = json_decode(file_get_contents('php://input'), true) ?: $_POST;
@@ -52,5 +55,5 @@ if (empty($input)) {
 require_once __DIR__ . '/../../controllers/LaboratorioController.php';
 
 $laboratorioController = new LaboratorioController();
-$laboratorioController->modificarLaboratorio();
+$laboratorioController->modificarLaboratorio($input);
 ?>

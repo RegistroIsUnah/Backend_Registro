@@ -1,0 +1,1620 @@
+INSERT INTO Centro (nombre) VALUES 
+('Ciudad Universitaria'),
+('Campus Tegucigalpa Norte'),
+('Campus San Pedro Sula'),
+('Campus Choluteca'),
+('Campus La Ceiba');
+
+-- Edificios para el centro "Ciudad Universitaria" (centro_id = 1)
+INSERT INTO Edificio (centro_id, nombre) VALUES 
+(1, 'Edificio A'), 
+(1, 'Edificio B'), 
+(1, 'Biblioteca Central'), 
+(1, 'Laboratorio de Ingeniería'), 
+(1, 'Auditorio Principal'), 
+(1, 'Facultad de Ciencias Médicas'), 
+(1, 'Facultad de Derecho'), 
+(1, 'Gimnasio Universitario'), 
+(1, 'Cafetería Estudiantil'), 
+(1, 'Estacionamiento Norte');
+
+-- Edificios para el centro "Campus Tegucigalpa Norte" (centro_id = 2)
+INSERT INTO Edificio (centro_id, nombre) VALUES 
+(2, 'Edificio Principal Norte'), 
+(2, 'Edificio Administrativo'), 
+(2, 'Laboratorio de Química'), 
+(2, 'Facultad de Arquitectura'), 
+(2, 'Biblioteca Regional'), 
+(2, 'Auditorio Norte'), 
+(2, 'Centro de Investigación'), 
+(2, 'Canchas Deportivas'), 
+(2, 'Comedor Universitario'), 
+(2, 'Parqueo Visitantes');
+
+-- Edificios para el centro "Campus San Pedro Sula" (centro_id = 3)
+INSERT INTO Edificio (centro_id, nombre) VALUES 
+(3, 'Edificio Central SP'), 
+(3, 'Facultad de Economía'), 
+(3, 'Laboratorio de Computación'), 
+(3, 'Biblioteca Digital'), 
+(3, 'Auditorio Sur'), 
+(3, 'Centro de Idiomas'), 
+(3, 'Área de Recreación'), 
+(3, 'Estacionamiento Este'), 
+(3, 'Cafetería Central'), 
+(3, 'Oficinas Administrativas');
+
+-- Edificios para el centro "Campus Choluteca" (centro_id = 4)
+INSERT INTO Edificio (centro_id, nombre) VALUES 
+(4, 'Edificio Principal Choluteca'), 
+(4, 'Facultad de Agronomía'), 
+(4, 'Laboratorio de Física'), 
+(4, 'Biblioteca Regional'), 
+(4, 'Auditorio Choluteca'), 
+(4, 'Centro de Innovación'), 
+(4, 'Cancha de Fútbol'), 
+(4, 'Comedor Estudiantil'), 
+(4, 'Parqueo Profesores'), 
+(4, 'Área Verde');
+
+-- Edificios para el centro "Campus La Ceiba" (centro_id = 5)
+INSERT INTO Edificio (centro_id, nombre) VALUES 
+(5, 'Edificio Central La Ceiba'), 
+(5, 'Facultad de Turismo'), 
+(5, 'Laboratorio de Biología'), 
+(5, 'Biblioteca Comunitaria'), 
+(5, 'Auditorio Principal'), 
+(5, 'Centro de Emprendimiento'), 
+(5, 'Gimnasio Techado'), 
+(5, 'Cafetería Norte'), 
+(5, 'Parqueo Visitantes'), 
+(5, 'Jardín Botánico');
+
+-- Facultades para el centro "Ciudad Universitaria" (edificio_id = 1-10)
+INSERT INTO Facultad (edificio_id, nombre) VALUES 
+(1, 'Facultad de Ciencias Médicas'),
+(2, 'Facultad de Derecho'),
+(3, 'Facultad de Ingeniería'),
+(4, 'Facultad de Ciencias'),
+(5, 'Facultad de Ciencias Sociales'),
+(6, 'Facultad de Economía'),
+(7, 'Facultad de Odontología'),
+(8, 'Facultad de Arquitectura'),
+(9, 'Facultad de Agronomía'),
+(10, 'Facultad de Humanidades');
+
+-- Facultades para el centro "Campus Tegucigalpa Norte" (edificio_id = 11-20)
+INSERT INTO Facultad (edificio_id, nombre) VALUES 
+(11, 'Facultad de Educación'),
+(12, 'Facultad de Psicología'),
+(13, 'Facultad de Química y Farmacia'),
+(14, 'Facultad de Turismo'),
+(15, 'Facultad de Administración'),
+(16, 'Facultad de Comunicación'),
+(17, 'Facultad de Ciencias Políticas'),
+(18, 'Facultad de Ciencias Espaciales'),
+(19, 'Facultad de Trabajo Social'),
+(20, 'Facultad de Enfermería');
+
+-- Facultades para el centro "Campus San Pedro Sula" (edificio_id = 21-30)
+INSERT INTO Facultad (edificio_id, nombre) VALUES 
+(21, 'Facultad de Contaduría Pública'),
+(22, 'Facultad de Informática'),
+(23, 'Facultad de Biología'),
+(24, 'Facultad de Física'),
+(25, 'Facultad de Matemáticas'),
+(26, 'Facultad de Lenguas'),
+(27, 'Facultad de Filosofía'),
+(28, 'Facultad de Arte'),
+(29, 'Facultad de Veterinaria'),
+(30, 'Facultad de Nutrición');
+
+-- Facultades para el centro "Campus Choluteca" (edificio_id = 31-40)
+INSERT INTO Facultad (edificio_id, nombre) VALUES 
+(31, 'Facultad de Pedagogía'),
+(32, 'Facultad de Geografía'),
+(33, 'Facultad de Historia'),
+(34, 'Facultad de Literatura'),
+(35, 'Facultad de Música'),
+(36, 'Facultad de Deportes'),
+(37, 'Facultad de Relaciones Internacionales'),
+(38, 'Facultad de Estadística'),
+(39, 'Facultad de Ecología'),
+(40, 'Facultad de Minería');
+
+-- Facultades para el centro "Campus La Ceiba" (edificio_id = 41-50)
+INSERT INTO Facultad (edificio_id, nombre) VALUES 
+(41, 'Facultad de Oceanografía'),
+(42, 'Facultad de Gestión Ambiental'),
+(43, 'Facultad de Marketing'),
+(44, 'Facultad de Logística'),
+(45, 'Facultad de Finanzas'),
+(46, 'Facultad de Diseño Gráfico'),
+(47, 'Facultad de Periodismo'),
+(48, 'Facultad de Antropología'),
+(49, 'Facultad de Sociología'),
+(50, 'Facultad de Emprendimiento');
+
+-- Departamentos para las facultades del centro "Ciudad Universitaria" (facultad_id = 1-10)
+INSERT INTO Departamento (facultad_id, nombre) VALUES 
+(1, 'Departamento de Medicina Interna'), (1, 'Departamento de Cirugía'),
+(2, 'Departamento de Derecho Civil'), (2, 'Departamento de Derecho Penal'),
+(3, 'Departamento de Ingeniería Civil'), (3, 'Departamento de Ingeniería Eléctrica'),
+(4, 'Departamento de Física'), (4, 'Departamento de Química'),
+(5, 'Departamento de Sociología'), (5, 'Departamento de Antropología'),
+(6, 'Departamento de Economía Política'), (6, 'Departamento de Finanzas'),
+(7, 'Departamento de Ortodoncia'), (7, 'Departamento de Periodoncia'),
+(8, 'Departamento de Diseño Arquitectónico'), (8, 'Departamento de Urbanismo'),
+(9, 'Departamento de Agronomía General'), (9, 'Departamento de Horticultura'),
+(10, 'Departamento de Filosofía'), (10, 'Departamento de Letras');
+
+-- Departamentos para las facultades del centro "Campus Tegucigalpa Norte" (facultad_id = 11-20)
+INSERT INTO Departamento (facultad_id, nombre) VALUES 
+(11, 'Departamento de Metodología Educativa'), (11, 'Departamento de Didáctica'),
+(12, 'Departamento de Psicología Clínica'), (12, 'Departamento de Psicología Social'),
+(13, 'Departamento de Farmacología'), (13, 'Departamento de Química Orgánica'),
+(14, 'Departamento de Gestión Hotelera'), (14, 'Departamento de Guionismo Turístico'),
+(15, 'Departamento de Administración Estratégica'), (15, 'Departamento de Recursos Humanos'),
+(16, 'Departamento de Periodismo Escrito'), (16, 'Departamento de Radio y TV'),
+(17, 'Departamento de Ciencia Política'), (17, 'Departamento de Relaciones Internacionales'),
+(18, 'Departamento de Astronomía'), (18, 'Departamento de Cartografía'),
+(19, 'Departamento de Desarrollo Comunitario'), (19, 'Departamento de Intervención Social'),
+(20, 'Departamento de Cuidados Intensivos'), (20, 'Departamento de Enfermería Comunitaria');
+
+-- Departamentos para las facultades del centro "Campus San Pedro Sula" (facultad_id = 21-30)
+INSERT INTO Departamento (facultad_id, nombre) VALUES 
+(21, 'Departamento de Auditoría'), (21, 'Departamento de Contabilidad Fiscal'),
+(22, 'Departamento de Programación'), (22, 'Departamento de Redes'),
+(23, 'Departamento de Biotecnología'), (23, 'Departamento de Genética'),
+(24, 'Departamento de Física Teórica'), (24, 'Departamento de Física Experimental'),
+(25, 'Departamento de Álgebra'), (25, 'Departamento de Cálculo'),
+(26, 'Departamento de Inglés'), (26, 'Departamento de Francés'),
+(27, 'Departamento de Ética'), (27, 'Departamento de Metafísica'),
+(28, 'Departamento de Pintura'), (28, 'Departamento de Escultura'),
+(29, 'Departamento de Anatomía Animal'), (29, 'Departamento de Patología Veterinaria'),
+(30, 'Departamento de Dietética'), (30, 'Departamento de Nutrición Clínica');
+
+-- Departamentos para las facultades del centro "Campus Choluteca" (facultad_id = 31-40)
+INSERT INTO Departamento (facultad_id, nombre) VALUES 
+(31, 'Departamento de Didáctica General'), (31, 'Departamento de Evaluación Educativa'),
+(32, 'Departamento de Geografía Física'), (32, 'Departamento de Geografía Humana'),
+(33, 'Departamento de Historia Antigua'), (33, 'Departamento de Historia Moderna'),
+(34, 'Departamento de Literatura Universal'), (34, 'Departamento de Literatura Hondureña'),
+(35, 'Departamento de Instrumentación'), (35, 'Departamento de Composición'),
+(36, 'Departamento de Entrenamiento Deportivo'), (36, 'Departamento de Educación Física'),
+(37, 'Departamento de Diplomacia'), (37, 'Departamento de Negociación Internacional'),
+(38, 'Departamento de Estadística Descriptiva'), (38, 'Departamento de Probabilidad'),
+(39, 'Departamento de Conservación'), (39, 'Departamento de Gestión de Recursos Naturales'),
+(40, 'Departamento de Minería Sostenible'), (40, 'Departamento de Procesamiento de Minerales');
+
+-- Departamentos para las facultades del centro "Campus La Ceiba" (facultad_id = 41-50)
+INSERT INTO Departamento (facultad_id, nombre) VALUES 
+(41, 'Departamento de Oceanografía Física'), (41, 'Departamento de Biología Marina'),
+(42, 'Departamento de Gestión de Residuos'), (42, 'Departamento de Energías Renovables'),
+(43, 'Departamento de Estrategias de Mercadeo'), (43, 'Departamento de Publicidad'),
+(44, 'Departamento de Logística Internacional'), (44, 'Departamento de Cadena de Suministro'),
+(45, 'Departamento de Banca'), (45, 'Departamento de Inversiones'),
+(46, 'Departamento de Diseño Editorial'), (46, 'Departamento de Animación Digital'),
+(47, 'Departamento de Investigación Periodística'), (47, 'Departamento de Producción Audiovisual'),
+(48, 'Departamento de Etnografía'), (48, 'Departamento de Arqueología'),
+(49, 'Departamento de Sociología Urbana'), (49, 'Departamento de Sociología Rural'),
+(50, 'Departamento de Innovación Empresarial'), (50, 'Departamento de Planificación Estratégica');
+
+-- Carreras para los departamentos del centro "Ciudad Universitaria" (dept_id = 1-20)
+INSERT INTO Carrera (dept_id, nombre) VALUES 
+(1, 'Medicina General'), (1, 'Cirugía Cardiovascular'), (1, 'Pediatría'),
+(2, 'Derecho Civil'), (2, 'Derecho Penal'), (2, 'Derecho Constitucional'),
+(3, 'Ingeniería Civil'), (3, 'Ingeniería Eléctrica'), (3, 'Ingeniería Mecánica'),
+(4, 'Física Aplicada'), (4, 'Química Analítica'), (4, 'Matemáticas Avanzadas'),
+(5, 'Sociología Urbana'), (5, 'Antropología Cultural'), (5, 'Ciencias Políticas'),
+(6, 'Economía Internacional'), (6, 'Finanzas Corporativas'), (6, 'Contabilidad Financiera'),
+(7, 'Odontología General'), (7, 'Ortodoncia'), (7, 'Periodoncia'),
+(8, 'Arquitectura Sostenible'), (8, 'Urbanismo'), (8, 'Diseño de Interiores'),
+(9, 'Agronomía General'), (9, 'Horticultura'), (9, 'Producción Animal'),
+(10, 'Filosofía Antigua'), (10, 'Letras Clásicas'), (10, 'Literatura Universal');
+
+-- Carreras para los departamentos del centro "Campus Tegucigalpa Norte" (dept_id = 21-40)
+INSERT INTO Carrera (dept_id, nombre) VALUES 
+(11, 'Educación Primaria'), (11, 'Educación Secundaria'), (11, 'Psicopedagogía'),
+(12, 'Psicología Clínica'), (12, 'Psicología Organizacional'), (12, 'Neuropsicología'),
+(13, 'Farmacia Comunitaria'), (13, 'Química Farmacéutica'), (13, 'Bioquímica Clínica'),
+(14, 'Turismo Sostenible'), (14, 'Guianza Turística'), (14, 'Gestión Hotelera'),
+(15, 'Administración de Empresas'), (15, 'Recursos Humanos'), (15, 'Marketing Estratégico'),
+(16, 'Periodismo Escrito'), (16, 'Producción Audiovisual'), (16, 'Comunicación Digital'),
+(17, 'Ciencia Política'), (17, 'Relaciones Internacionales'), (17, 'Diplomacia'),
+(18, 'Astronomía'), (18, 'Cartografía'), (18, 'Geodesia'),
+(19, 'Trabajo Social Comunitario'), (19, 'Desarrollo Social'), (19, 'Intervención Familiar'),
+(20, 'Enfermería General'), (20, 'Cuidados Intensivos'), (20, 'Salud Pública');
+
+-- Carreras para los departamentos del centro "Campus San Pedro Sula" (dept_id = 41-60)
+INSERT INTO Carrera (dept_id, nombre) VALUES 
+(21, 'Auditoría Financiera'), (21, 'Contabilidad Fiscal'), (21, 'Finanzas Públicas'),
+(22, 'Programación Avanzada'), (22, 'Redes Informáticas'), (22, 'Ciberseguridad'),
+(23, 'Biotecnología'), (23, 'Genética Molecular'), (23, 'Microbiología'),
+(24, 'Física Teórica'), (24, 'Física Experimental'), (24, 'Astrofísica'),
+(25, 'Álgebra Lineal'), (25, 'Cálculo Diferencial'), (25, 'Estadística Matemática'),
+(26, 'Inglés Técnico'), (26, 'Francés Avanzado'), (26, 'Traducción Simultánea'),
+(27, 'Ética Filosófica'), (27, 'Metafísica'), (27, 'Lógica Formal'),
+(28, 'Pintura Contemporánea'), (28, 'Escultura Moderna'), (28, 'Dibujo Artístico'),
+(29, 'Anatomía Veterinaria'), (29, 'Patología Animal'), (29, 'Zootecnia'),
+(30, 'Nutrición Clínica'), (30, 'Dietética'), (30, 'Alimentación Deportiva');
+
+-- Carreras para los departamentos del centro "Campus Choluteca" (dept_id = 61-80)
+INSERT INTO Carrera (dept_id, nombre) VALUES 
+(31, 'Didáctica General'), (31, 'Evaluación Educativa'), (31, 'Planificación Curricular'),
+(32, 'Geografía Física'), (32, 'Geografía Humana'), (32, 'Geomática'),
+(33, 'Historia Antigua'), (33, 'Historia Medieval'), (33, 'Historia Moderna'),
+(34, 'Literatura Universal'), (34, 'Literatura Hondureña'), (34, 'Escritura Creativa'),
+(35, 'Instrumentación Musical'), (35, 'Composición'), (35, 'Dirección Coral'),
+(36, 'Entrenamiento Deportivo'), (36, 'Educación Física'), (36, 'Deportes Extremos'),
+(37, 'Diplomacia Internacional'), (37, 'Negociación'), (37, 'Resolución de Conflictos'),
+(38, 'Estadística Descriptiva'), (38, 'Probabilidad'), (38, 'Análisis de Datos'),
+(39, 'Conservación Ambiental'), (39, 'Gestión de Recursos Naturales'), (39, 'Ecología'),
+(40, 'Minería Sostenible'), (40, 'Procesamiento de Minerales'), (40, 'Geología Aplicada');
+
+-- Carreras para los departamentos del centro "Campus La Ceiba" (dept_id = 81-100)
+INSERT INTO Carrera (dept_id, nombre) VALUES 
+(41, 'Oceanografía Física'), (41, 'Biología Marina'), (41, 'Monitoreo Marino Costero'),
+(42, 'Gestión de Residuos'), (42, 'Energías Renovables'), (42, 'Desarrollo Sostenible'),
+(43, 'Marketing Estratégico'), (43, 'Publicidad'), (43, 'Branding'),
+(44, 'Logística Internacional'), (44, 'Cadena de Suministro'), (44, 'Transporte Terrestre'),
+(45, 'Banca'), (45, 'Inversiones'), (45, 'Mercados Financieros'),
+(46, 'Diseño Editorial'), (46, 'Animación Digital'), (46, 'Diseño Gráfico'),
+(47, 'Investigación Periodística'), (47, 'Producción Audiovisual'), (47, 'Comunicación Estratégica'),
+(48, 'Etnografía'), (48, 'Arqueología'), (48, 'Antropología Cultural'),
+(49, 'Sociología Urbana'), (49, 'Sociología Rural'), (49, 'Desarrollo Comunitario'),
+(50, 'Innovación Empresarial'), (50, 'Planificación Estratégica'), (50, 'Emprendimiento');
+
+-- Relaciones para el centro "Ciudad Universitaria" (centro_id = 1)
+INSERT INTO CentroCarrera (centro_id, carrera_id) VALUES 
+(1, 1), (1, 2), (1, 3), -- Medicina
+(1, 4), (1, 5), (1, 6), -- Derecho
+(1, 7), (1, 8), (1, 9); -- Ingeniería
+
+-- Relaciones para el centro "Campus Tegucigalpa Norte" (centro_id = 2)
+INSERT INTO CentroCarrera (centro_id, carrera_id) VALUES 
+(2, 10), (2, 11), (2, 12), -- Ciencias Sociales
+(2, 13), (2, 14), (2, 15), -- Economía
+(2, 16), (2, 17), (2, 18); -- Odontología
+
+-- Relaciones para el centro "Campus San Pedro Sula" (centro_id = 3)
+INSERT INTO CentroCarrera (centro_id, carrera_id) VALUES 
+(3, 19), (3, 20), (3, 21), -- Arquitectura
+(3, 22), (3, 23), (3, 24), -- Agronomía
+(3, 25), (3, 26), (3, 27); -- Humanidades
+
+-- Relaciones para el centro "Campus Choluteca" (centro_id = 4)
+INSERT INTO CentroCarrera (centro_id, carrera_id) VALUES 
+(4, 28), (4, 29), (4, 30), -- Pedagogía
+(4, 31), (4, 32), (4, 33), -- Geografía
+(4, 34), (4, 35), (4, 36); -- Historia
+
+-- Relaciones para el centro "Campus La Ceiba" (centro_id = 5)
+INSERT INTO CentroCarrera (centro_id, carrera_id) VALUES 
+(5, 37), (5, 38), (5, 39), -- Oceanografía
+(5, 40), (5, 41), (5, 42), -- Gestión Ambiental
+(5, 43), (5, 44), (5, 45); -- Marketing
+
+INSERT INTO Clase (dept_id, codigo, nombre, creditos, tiene_laboratorio) VALUES 
+(1, 'CL101', 'Anatomía Humana', 5, TRUE), 
+(1, 'CL102', 'Fisiología Básica', 4, FALSE), 
+(1, 'CL103', 'Bioquímica Médica', 5, FALSE), 
+(1, 'CL104', 'Microbiología Clínica', 3, FALSE),
+
+(2, 'CL201', 'Derecho Constitucional', 4, FALSE), 
+(2, 'CL202', 'Derecho Penal I', 3, FALSE), 
+(2, 'CL203', 'Derecho Civil I', 4, FALSE), 
+(2, 'CL204', 'Derecho Laboral', 3, FALSE),
+
+(3, 'CL301', 'Cálculo Estructural', 5, TRUE), 
+(3, 'CL302', 'Mecánica de Materiales', 4, FALSE), 
+(3, 'CL303', 'Hidráulica Aplicada', 3, FALSE), 
+(3, 'CL304', 'Topografía Avanzada', 4, FALSE),
+
+(4, 'CL401', 'Física General', 4, TRUE), 
+(4, 'CL402', 'Termodinámica', 3, FALSE), 
+(4, 'CL403', 'Electromagnetismo', 4, FALSE), 
+(4, 'CL404', 'Óptica Moderna', 3, FALSE),
+
+(5, 'CL501', 'Sociología General', 3, FALSE), 
+(5, 'CL502', 'Antropología Cultural', 3, FALSE), 
+(5, 'CL503', 'Teoría Política', 4, FALSE), 
+(5, 'CL504', 'Metodología de Investigación', 3, FALSE),
+
+(6, 'CL601', 'Economía Internacional', 4, FALSE), 
+(6, 'CL602', 'Finanzas Corporativas', 3, FALSE), 
+(6, 'CL603', 'Contabilidad Financiera', 4, FALSE), 
+(6, 'CL604', 'Mercados Financieros', 3, FALSE),
+
+(7, 'CL701', 'Odontología General', 4, TRUE), 
+(7, 'CL702', 'Ortodoncia', 3, FALSE), 
+(7, 'CL703', 'Periodoncia', 4, FALSE), 
+(7, 'CL704', 'Cirugía Dental', 3, FALSE),
+
+(8, 'CL801', 'Arquitectura Sostenible', 4, FALSE), 
+(8, 'CL802', 'Urbanismo', 3, FALSE), 
+(8, 'CL803', 'Diseño de Interiores', 4, FALSE), 
+(8, 'CL804', 'Historia de la Arquitectura', 3, FALSE),
+
+(9, 'CL901', 'Agronomía General', 4, FALSE), 
+(9, 'CL902', 'Horticultura', 3, FALSE), 
+(9, 'CL903', 'Producción Animal', 4, FALSE), 
+(9, 'CL904', 'Manejo de Suelos', 3, FALSE),
+
+(10, 'CL1001', 'Filosofía Antigua', 3, FALSE), 
+(10, 'CL1002', 'Letras Clásicas', 4, FALSE), 
+(10, 'CL1003', 'Literatura Universal', 3, FALSE), 
+(10, 'CL1004', 'Escritura Creativa', 3, FALSE);
+
+INSERT INTO Clase (dept_id, codigo, nombre, creditos, tiene_laboratorio) VALUES 
+(11, 'CL1101', 'Educación Primaria', 3, FALSE), 
+(11, 'CL1102', 'Educación Secundaria', 4, FALSE), 
+(11, 'CL1103', 'Psicopedagogía', 3, FALSE), 
+(11, 'CL1104', 'Didáctica General', 3, FALSE),
+
+(12, 'CL1201', 'Psicología Clínica', 4, FALSE), 
+(12, 'CL1202', 'Psicología Organizacional', 3, FALSE), 
+(12, 'CL1203', 'Neuropsicología', 4, FALSE), 
+(12, 'CL1204', 'Psicología Social', 3, FALSE),
+
+(13, 'CL1301', 'Farmacia Comunitaria', 4, TRUE), 
+(13, 'CL1302', 'Química Farmacéutica', 3, FALSE), 
+(13, 'CL1303', 'Bioquímica Clínica', 4, FALSE), 
+(13, 'CL1304', 'Farmacología', 3, FALSE),
+
+(14, 'CL1401', 'Turismo Sostenible', 4, FALSE), 
+(14, 'CL1402', 'Guianza Turística', 3, FALSE), 
+(14, 'CL1403', 'Gestión Hotelera', 4, FALSE), 
+(14, 'CL1404', 'Marketing Turístico', 3, FALSE),
+
+(15, 'CL1501', 'Administración de Empresas', 4, FALSE), 
+(15, 'CL1502', 'Recursos Humanos', 3, FALSE), 
+(15, 'CL1503', 'Marketing Estratégico', 4, FALSE), 
+(15, 'CL1504', 'Finanzas Corporativas', 3, FALSE),
+
+(16, 'CL1601', 'Periodismo Escrito', 4, FALSE), 
+(16, 'CL1602', 'Producción Audiovisual', 3, FALSE), 
+(16, 'CL1603', 'Comunicación Digital', 4, FALSE), 
+(16, 'CL1604', 'Redacción Periodística', 3, FALSE),
+
+(17, 'CL1701', 'Ciencia Política', 4, FALSE), 
+(17, 'CL1702', 'Relaciones Internacionales', 3, FALSE), 
+(17, 'CL1703', 'Diplomacia', 4, FALSE), 
+(17, 'CL1704', 'Política Exterior', 3, FALSE),
+
+(18, 'CL1801', 'Astronomía', 4, TRUE), 
+(18, 'CL1802', 'Cartografía', 3, FALSE), 
+(18, 'CL1803', 'Geodesia', 4, FALSE), 
+(18, 'CL1804', 'Sistema Solar', 3, FALSE),
+
+(19, 'CL1901', 'Trabajo Social Comunitario', 4, FALSE), 
+(19, 'CL1902', 'Desarrollo Social', 3, FALSE), 
+(19, 'CL1903', 'Intervención Familiar', 4, FALSE), 
+(19, 'CL1904', 'Política Social', 3, FALSE),
+
+(20, 'CL2001', 'Enfermería General', 4, TRUE), 
+(20, 'CL2002', 'Cuidados Intensivos', 3, FALSE), 
+(20, 'CL2003', 'Salud Pública', 4, FALSE), 
+(20, 'CL2004', 'Enfermería Comunitaria', 3, FALSE);
+
+INSERT INTO Clase (dept_id, codigo, nombre, creditos, tiene_laboratorio) VALUES 
+(21, 'CL2101', 'Auditoría Financiera', 4, FALSE), 
+(21, 'CL2102', 'Contabilidad Fiscal', 3, FALSE), 
+(21, 'CL2103', 'Finanzas Públicas', 4, FALSE), 
+(21, 'CL2104', 'Impuestos Internacionales', 3, FALSE),
+
+(22, 'CL2201', 'Programación Avanzada', 4, TRUE), 
+(22, 'CL2202', 'Redes Informáticas', 3, FALSE), 
+(22, 'CL2203', 'Ciberseguridad', 4, FALSE), 
+(22, 'CL2204', 'Desarrollo Web', 3, FALSE),
+
+(23, 'CL2301', 'Biotecnología', 4, TRUE), 
+(23, 'CL2302', 'Genética Molecular', 3, FALSE), 
+(23, 'CL2303', 'Microbiología', 4, FALSE), 
+(23, 'CL2304', 'Bioinformática', 3, FALSE),
+
+(24, 'CL2401', 'Física Teórica', 4, FALSE), 
+(24, 'CL2402', 'Física Experimental', 3, FALSE), 
+(24, 'CL2403', 'Astrofísica', 4, FALSE), 
+(24, 'CL2404', 'Mecánica Cuántica', 3, FALSE),
+
+(25, 'CL2501', 'Álgebra Lineal', 4, FALSE), 
+(25, 'CL2502', 'Cálculo Diferencial', 3, FALSE), 
+(25, 'CL2503', 'Estadística Matemática', 4, FALSE), 
+(25, 'CL2504', 'Geometría Analítica', 3, FALSE),
+
+(26, 'CL2601', 'Inglés Técnico', 4, FALSE), 
+(26, 'CL2602', 'Francés Avanzado', 3, FALSE), 
+(26, 'CL2603', 'Traducción Simultánea', 4, FALSE), 
+(26, 'CL2604', 'Lingüística Aplicada', 3, FALSE),
+
+(27, 'CL2701', 'Ética Filosófica', 4, FALSE), 
+(27, 'CL2702', 'Metafísica', 3, FALSE), 
+(27, 'CL2703', 'Lógica Formal', 4, FALSE), 
+(27, 'CL2704', 'Filosofía Moderna', 3, FALSE),
+
+(28, 'CL2801', 'Pintura Contemporánea', 4, FALSE), 
+(28, 'CL2802', 'Escultura Moderna', 3, FALSE), 
+(28, 'CL2803', 'Dibujo Artístico', 4, FALSE), 
+(28, 'CL2804', 'Historia del Arte', 3, FALSE),
+
+(29, 'CL2901', 'Anatomía Veterinaria', 4, TRUE), 
+(29, 'CL2902', 'Patología Animal', 3, FALSE), 
+(29, 'CL2903', 'Zootecnia', 4, FALSE), 
+(29, 'CL2904', 'Producción Ganadera', 3, FALSE),
+
+(30, 'CL3001', 'Nutrición Clínica', 4, FALSE), 
+(30, 'CL3002', 'Dietética', 3, FALSE), 
+(30, 'CL3003', 'Alimentación Deportiva', 4, FALSE), 
+(30, 'CL3004', 'Nutrición Infantil', 3, FALSE);
+
+INSERT INTO Clase (dept_id, codigo, nombre, creditos, tiene_laboratorio) VALUES 
+(31, 'CL3101', 'Didáctica General', 3, FALSE), 
+(31, 'CL3102', 'Evaluación Educativa', 4, FALSE), 
+(31, 'CL3103', 'Planificación Curricular', 3, FALSE), 
+(31, 'CL3104', 'Psicopedagogía', 3, FALSE),
+
+(32, 'CL3201', 'Geografía Física', 4, FALSE), 
+(32, 'CL3202', 'Geografía Humana', 3, FALSE), 
+(32, 'CL3203', 'Geomática', 4, FALSE), 
+(32, 'CL3204', 'Cartografía Digital', 3, FALSE),
+
+(33, 'CL3301', 'Historia Antigua', 4, FALSE), 
+(33, 'CL3302', 'Historia Medieval', 3, FALSE), 
+(33, 'CL3303', 'Historia Moderna', 4, FALSE), 
+(33, 'CL3304', 'Historia Contemporánea', 3, FALSE),
+
+(34, 'CL3401', 'Literatura Universal', 4, FALSE), 
+(34, 'CL3402', 'Literatura Hondureña', 3, FALSE), 
+(34, 'CL3403', 'Escritura Creativa', 4, FALSE), 
+(34, 'CL3404', 'Análisis Literario', 3, FALSE),
+
+(35, 'CL3501', 'Instrumentación Musical', 4, TRUE), 
+(35, 'CL3502', 'Composición', 3, FALSE), 
+(35, 'CL3503', 'Dirección Coral', 4, FALSE), 
+(35, 'CL3504', 'Historia de la Música', 3, FALSE),
+
+(36, 'CL3601', 'Entrenamiento Deportivo', 4, FALSE), 
+(36, 'CL3602', 'Educación Física', 3, FALSE), 
+(36, 'CL3603', 'Deportes Extremos', 4, FALSE), 
+(36, 'CL3604', 'Fisiología del Ejercicio', 3, TRUE),
+
+(37, 'CL3701', 'Diplomacia Internacional', 4, FALSE), 
+(37, 'CL3702', 'Negociación', 3, FALSE), 
+(37, 'CL3703', 'Resolución de Conflictos', 4, FALSE), 
+(37, 'CL3704', 'Política Exterior', 3, FALSE),
+
+(38, 'CL3801', 'Estadística Descriptiva', 4, FALSE), 
+(38, 'CL3802', 'Probabilidad', 3, FALSE), 
+(38, 'CL3803', 'Análisis de Datos', 4, FALSE), 
+(38, 'CL3804', 'Modelos Estadísticos', 3, TRUE),
+
+(39, 'CL3901', 'Conservación Ambiental', 4, FALSE), 
+(39, 'CL3902', 'Gestión de Recursos Naturales', 3, FALSE), 
+(39, 'CL3903', 'Ecología', 4, FALSE), 
+(39, 'CL3904', 'Impacto Ambiental', 3, TRUE),
+
+(40, 'CL4001', 'Minería Sostenible', 4, FALSE), 
+(40, 'CL4002', 'Procesamiento de Minerales', 3, FALSE), 
+(40, 'CL4003', 'Geología Aplicada', 4, FALSE), 
+(40, 'CL4004', 'Exploración Minera', 3, TRUE);
+
+INSERT INTO Clase (dept_id, codigo, nombre, creditos, tiene_laboratorio) VALUES 
+(41, 'CL4101', 'Oceanografía Física', 4, TRUE), 
+(41, 'CL4102', 'Biología Marina', 3, FALSE), 
+(41, 'CL4103', 'Monitoreo Marino Costero', 4, FALSE), 
+(41, 'CL4104', 'Ecosistemas Marinos', 3, FALSE),
+
+(42, 'CL4201', 'Gestión de Residuos', 4, FALSE), 
+(42, 'CL4202', 'Energías Renovables', 3, FALSE), 
+(42, 'CL4203', 'Desarrollo Sostenible', 4, FALSE), 
+(42, 'CL4204', 'Impacto Ambiental', 3, TRUE),
+
+(43, 'CL4301', 'Marketing Estratégico', 4, FALSE), 
+(43, 'CL4302', 'Publicidad', 3, FALSE), 
+(43, 'CL4303', 'Branding', 4, FALSE), 
+(43, 'CL4304', 'Comunicación Corporativa', 3, FALSE),
+
+(44, 'CL4401', 'Logística Internacional', 4, FALSE), 
+(44, 'CL4402', 'Cadena de Suministro', 3, FALSE), 
+(44, 'CL4403', 'Transporte Terrestre', 4, FALSE), 
+(44, 'CL4404', 'Almacenes y Distribución', 3, FALSE),
+
+(45, 'CL4501', 'Banca', 4, FALSE), 
+(45, 'CL4502', 'Inversiones', 3, FALSE), 
+(45, 'CL4503', 'Mercados Financieros', 4, FALSE), 
+(45, 'CL4504', 'Análisis de Riesgos', 3, FALSE),
+
+(46, 'CL4601', 'Diseño Editorial', 4, FALSE), 
+(46, 'CL4602', 'Animación Digital', 3, FALSE), 
+(46, 'CL4603', 'Diseño Gráfico', 4, FALSE), 
+(46, 'CL4604', 'Producción Visual', 3, FALSE),
+
+(47, 'CL4701', 'Investigación Periodística', 4, FALSE), 
+(47, 'CL4702', 'Producción Audiovisual', 3, FALSE), 
+(47, 'CL4703', 'Comunicación Estratégica', 4, FALSE), 
+(47, 'CL4704', 'Redacción Avanzada', 3, FALSE),
+
+(48, 'CL4801', 'Etnografía', 4, FALSE), 
+(48, 'CL4802', 'Arqueología', 3, FALSE), 
+(48, 'CL4803', 'Antropología Cultural', 4, FALSE), 
+(48, 'CL4804', 'Historia Antigua', 3, FALSE),
+
+(49, 'CL4901', 'Sociología Urbana', 4, FALSE), 
+(49, 'CL4902', 'Sociología Rural', 3, FALSE), 
+(49, 'CL4903', 'Desarrollo Comunitario', 4, FALSE), 
+(49, 'CL4904', 'Política Social', 3, FALSE),
+
+(50, 'CL5001', 'Innovación Empresarial', 4, FALSE), 
+(50, 'CL5002', 'Planificación Estratégica', 3, FALSE), 
+(50, 'CL5003', 'Emprendimiento', 4, FALSE), 
+(50, 'CL5004', 'Modelos de Negocio', 3, FALSE);
+
+INSERT INTO Clase (dept_id, codigo, nombre, creditos, tiene_laboratorio) VALUES 
+(51, 'CL5101', 'Didáctica General', 3, FALSE), 
+(51, 'CL5102', 'Evaluación Educativa', 4, FALSE), 
+(51, 'CL5103', 'Planificación Curricular', 3, FALSE), 
+(51, 'CL5104', 'Psicopedagogía', 3, FALSE),
+
+(52, 'CL5201', 'Geografía Física', 4, FALSE), 
+(52, 'CL5202', 'Geografía Humana', 3, FALSE), 
+(52, 'CL5203', 'Geomática', 4, FALSE), 
+(52, 'CL5204', 'Cartografía Digital', 3, FALSE),
+
+(53, 'CL5301', 'Historia Antigua', 4, FALSE), 
+(53, 'CL5302', 'Historia Medieval', 3, FALSE), 
+(53, 'CL5303', 'Historia Moderna', 4, FALSE), 
+(53, 'CL5304', 'Historia Contemporánea', 3, FALSE),
+
+(54, 'CL5401', 'Literatura Universal', 4, FALSE), 
+(54, 'CL5402', 'Literatura Hondureña', 3, FALSE), 
+(54, 'CL5403', 'Escritura Creativa', 4, FALSE), 
+(54, 'CL5404', 'Análisis Literario', 3, FALSE),
+
+(55, 'CL5501', 'Instrumentación Musical', 4, TRUE), 
+(55, 'CL5502', 'Composición', 3, FALSE), 
+(55, 'CL5503', 'Dirección Coral', 4, FALSE), 
+(55, 'CL5504', 'Historia de la Música', 3, FALSE),
+
+(56, 'CL5601', 'Entrenamiento Deportivo', 4, FALSE), 
+(56, 'CL5602', 'Educación Física', 3, FALSE), 
+(56, 'CL5603', 'Deportes Extremos', 4, FALSE), 
+(56, 'CL5604', 'Fisiología del Ejercicio', 3, TRUE),
+
+(57, 'CL5701', 'Diplomacia Internacional', 4, FALSE), 
+(57, 'CL5702', 'Negociación', 3, FALSE), 
+(57, 'CL5703', 'Resolución de Conflictos', 4, FALSE), 
+(57, 'CL5704', 'Política Exterior', 3, FALSE),
+
+(58, 'CL5801', 'Estadística Descriptiva', 4, FALSE), 
+(58, 'CL5802', 'Probabilidad', 3, FALSE), 
+(58, 'CL5803', 'Análisis de Datos', 4, FALSE), 
+(58, 'CL5804', 'Modelos Estadísticos', 3, TRUE),
+
+(59, 'CL5901', 'Conservación Ambiental', 4, FALSE), 
+(59, 'CL5902', 'Gestión de Recursos Naturales', 3, FALSE), 
+(59, 'CL5903', 'Ecología', 4, FALSE), 
+(59, 'CL5904', 'Impacto Ambiental', 3, TRUE),
+
+(60, 'CL6001', 'Minería Sostenible', 4, FALSE), 
+(60, 'CL6002', 'Procesamiento de Minerales', 3, FALSE), 
+(60, 'CL6003', 'Geología Aplicada', 4, FALSE), 
+(60, 'CL6004', 'Exploración Minera', 3, TRUE);
+
+INSERT INTO Clase (dept_id, codigo, nombre, creditos, tiene_laboratorio) VALUES 
+(61, 'CL6101', 'Oceanografía Física', 4, TRUE), 
+(61, 'CL6102', 'Biología Marina', 3, FALSE), 
+(61, 'CL6103', 'Monitoreo Marino Costero', 4, FALSE), 
+(61, 'CL6104', 'Ecosistemas Marinos', 3, FALSE),
+
+(62, 'CL6201', 'Gestión de Residuos', 4, FALSE), 
+(62, 'CL6202', 'Energías Renovables', 3, FALSE), 
+(62, 'CL6203', 'Desarrollo Sostenible', 4, FALSE), 
+(62, 'CL6204', 'Impacto Ambiental', 3, TRUE),
+
+(63, 'CL6301', 'Marketing Estratégico', 4, FALSE), 
+(63, 'CL6302', 'Publicidad', 3, FALSE), 
+(63, 'CL6303', 'Branding', 4, FALSE), 
+(63, 'CL6304', 'Comunicación Corporativa', 3, FALSE),
+
+(64, 'CL6401', 'Logística Internacional', 4, FALSE), 
+(64, 'CL6402', 'Cadena de Suministro', 3, FALSE), 
+(64, 'CL6403', 'Transporte Terrestre', 4, FALSE), 
+(64, 'CL6404', 'Almacenes y Distribución', 3, FALSE),
+
+(65, 'CL6501', 'Banca', 4, FALSE), 
+(65, 'CL6502', 'Inversiones', 3, FALSE), 
+(65, 'CL6503', 'Mercados Financieros', 4, FALSE), 
+(65, 'CL6504', 'Análisis de Riesgos', 3, FALSE),
+
+(66, 'CL6601', 'Diseño Editorial', 4, FALSE), 
+(66, 'CL6602', 'Animación Digital', 3, FALSE), 
+(66, 'CL6603', 'Diseño Gráfico', 4, FALSE), 
+(66, 'CL6604', 'Producción Visual', 3, FALSE),
+
+(67, 'CL6701', 'Investigación Periodística', 4, FALSE), 
+(67, 'CL6702', 'Producción Audiovisual', 3, FALSE), 
+(67, 'CL6703', 'Comunicación Estratégica', 4, FALSE), 
+(67, 'CL6704', 'Redacción Avanzada', 3, FALSE),
+
+(68, 'CL6801', 'Etnografía', 4, FALSE), 
+(68, 'CL6802', 'Arqueología', 3, FALSE), 
+(68, 'CL6803', 'Antropología Cultural', 4, FALSE), 
+(68, 'CL6804', 'Historia Antigua', 3, FALSE),
+
+(69, 'CL6901', 'Sociología Urbana', 4, FALSE), 
+(69, 'CL6902', 'Sociología Rural', 3, FALSE), 
+(69, 'CL6903', 'Desarrollo Comunitario', 4, FALSE), 
+(69, 'CL6904', 'Política Social', 3, FALSE),
+
+(70, 'CL7001', 'Innovación Empresarial', 4, FALSE), 
+(70, 'CL7002', 'Planificación Estratégica', 3, FALSE), 
+(70, 'CL7003', 'Emprendimiento', 4, FALSE), 
+(70, 'CL7004', 'Modelos de Negocio', 3, FALSE);
+
+INSERT INTO Clase (dept_id, codigo, nombre, creditos, tiene_laboratorio) VALUES 
+(71, 'CL7101', 'Oceanografía Física', 4, TRUE), 
+(71, 'CL7102', 'Biología Marina', 3, FALSE), 
+(71, 'CL7103', 'Monitoreo Marino Costero', 4, FALSE), 
+(71, 'CL7104', 'Ecosistemas Marinos', 3, FALSE),
+
+(72, 'CL7201', 'Gestión de Residuos', 4, FALSE), 
+(72, 'CL7202', 'Energías Renovables', 3, FALSE), 
+(72, 'CL7203', 'Desarrollo Sostenible', 4, FALSE), 
+(72, 'CL7204', 'Impacto Ambiental', 3, TRUE),
+
+(73, 'CL7301', 'Marketing Estratégico', 4, FALSE), 
+(73, 'CL7302', 'Publicidad', 3, FALSE), 
+(73, 'CL7303', 'Branding', 4, FALSE), 
+(73, 'CL7304', 'Comunicación Corporativa', 3, FALSE),
+
+(74, 'CL7401', 'Logística Internacional', 4, FALSE), 
+(74, 'CL7402', 'Cadena de Suministro', 3, FALSE), 
+(74, 'CL7403', 'Transporte Terrestre', 4, FALSE), 
+(74, 'CL7404', 'Almacenes y Distribución', 3, FALSE),
+
+(75, 'CL7501', 'Banca', 4, FALSE), 
+(75, 'CL7502', 'Inversiones', 3, FALSE), 
+(75, 'CL7503', 'Mercados Financieros', 4, FALSE), 
+(75, 'CL7504', 'Análisis de Riesgos', 3, FALSE),
+
+(76, 'CL7601', 'Diseño Editorial', 4, FALSE), 
+(76, 'CL7602', 'Animación Digital', 3, FALSE), 
+(76, 'CL7603', 'Diseño Gráfico', 4, FALSE), 
+(76, 'CL7604', 'Producción Visual', 3, FALSE),
+
+(77, 'CL7701', 'Investigación Periodística', 4, FALSE), 
+(77, 'CL7702', 'Producción Audiovisual', 3, FALSE), 
+(77, 'CL7703', 'Comunicación Estratégica', 4, FALSE), 
+(77, 'CL7704', 'Redacción Avanzada', 3, FALSE),
+
+(78, 'CL7801', 'Etnografía', 4, FALSE), 
+(78, 'CL7802', 'Arqueología', 3, FALSE), 
+(78, 'CL7803', 'Antropología Cultural', 4, FALSE), 
+(78, 'CL7804', 'Historia Antigua', 3, FALSE),
+
+(79, 'CL7901', 'Sociología Urbana', 4, FALSE), 
+(79, 'CL7902', 'Sociología Rural', 3, FALSE), 
+(79, 'CL7903', 'Desarrollo Comunitario', 4, FALSE), 
+(79, 'CL7904', 'Política Social', 3, FALSE),
+
+(80, 'CL8001', 'Innovación Empresarial', 4, FALSE), 
+(80, 'CL8002', 'Planificación Estratégica', 3, FALSE), 
+(80, 'CL8003', 'Emprendimiento', 4, FALSE), 
+(80, 'CL8004', 'Modelos de Negocio', 3, FALSE);
+
+-- Carrera 1
+INSERT INTO ClaseCarrera (clase_id, carrera_id) VALUES 
+(1, 1), (2, 1), (3, 1), (4, 1);
+
+-- Carrera 2
+INSERT INTO ClaseCarrera (clase_id, carrera_id) VALUES 
+(5, 2), (6, 2), (7, 2), (8, 2);
+
+-- Carrera 3
+INSERT INTO ClaseCarrera (clase_id, carrera_id) VALUES 
+(9, 3), (10, 3), (11, 3), (12, 3);
+
+-- Carrera 4
+INSERT INTO ClaseCarrera (clase_id, carrera_id) VALUES 
+(13, 4), (14, 4), (15, 4), (16, 4);
+
+-- Carrera 5
+INSERT INTO ClaseCarrera (clase_id, carrera_id) VALUES 
+(17, 5), (18, 5), (19, 5), (20, 5);
+
+-- Carrera 6
+INSERT INTO ClaseCarrera (clase_id, carrera_id) VALUES 
+(21, 6), (22, 6), (23, 6), (24, 6);
+
+-- Carrera 7
+INSERT INTO ClaseCarrera (clase_id, carrera_id) VALUES 
+(25, 7), (26, 7), (27, 7), (28, 7);
+
+-- Carrera 8
+INSERT INTO ClaseCarrera (clase_id, carrera_id) VALUES 
+(29, 8), (30, 8), (31, 8), (32, 8);
+
+-- Carrera 9
+INSERT INTO ClaseCarrera (clase_id, carrera_id) VALUES 
+(33, 9), (34, 9), (35, 9), (36, 9);
+
+-- Carrera 10
+INSERT INTO ClaseCarrera (clase_id, carrera_id) VALUES 
+(37, 10), (38, 10), (39, 10), (40, 10);
+
+-- Carrera 11
+INSERT INTO ClaseCarrera (clase_id, carrera_id) VALUES 
+(41, 11), (42, 11), (43, 11), (44, 11);
+
+-- Carrera 12
+INSERT INTO ClaseCarrera (clase_id, carrera_id) VALUES 
+(45, 12), (46, 12), (47, 12), (48, 12);
+
+-- Carrera 13
+INSERT INTO ClaseCarrera (clase_id, carrera_id) VALUES 
+(49, 13), (50, 13), (51, 13), (52, 13);
+
+-- Carrera 14
+INSERT INTO ClaseCarrera (clase_id, carrera_id) VALUES 
+(53, 14), (54, 14), (55, 14), (56, 14);
+
+-- Carrera 15
+INSERT INTO ClaseCarrera (clase_id, carrera_id) VALUES 
+(57, 15), (58, 15), (59, 15), (60, 15);
+
+-- Carrera 16
+INSERT INTO ClaseCarrera (clase_id, carrera_id) VALUES 
+(61, 16), (62, 16), (63, 16), (64, 16);
+
+-- Carrera 17
+INSERT INTO ClaseCarrera (clase_id, carrera_id) VALUES 
+(65, 17), (66, 17), (67, 17), (68, 17);
+
+-- Carrera 18
+INSERT INTO ClaseCarrera (clase_id, carrera_id) VALUES 
+(69, 18), (70, 18), (71, 18), (72, 18);
+
+-- Carrera 19
+INSERT INTO ClaseCarrera (clase_id, carrera_id) VALUES 
+(73, 19), (74, 19), (75, 19), (76, 19);
+
+-- Carrera 20
+INSERT INTO ClaseCarrera (clase_id, carrera_id) VALUES 
+(77, 20), (78, 20), (79, 20), (80, 20);
+
+-- Carrera 21
+INSERT INTO ClaseCarrera (clase_id, carrera_id) VALUES 
+(81, 21), (82, 21), (83, 21), (84, 21);
+
+-- Carrera 22
+INSERT INTO ClaseCarrera (clase_id, carrera_id) VALUES 
+(85, 22), (86, 22), (87, 22), (88, 22);
+
+-- Carrera 23
+INSERT INTO ClaseCarrera (clase_id, carrera_id) VALUES 
+(89, 23), (90, 23), (91, 23), (92, 23);
+
+-- Carrera 24
+INSERT INTO ClaseCarrera (clase_id, carrera_id) VALUES 
+(93, 24), (94, 24), (95, 24), (96, 24);
+
+-- Carrera 25
+INSERT INTO ClaseCarrera (clase_id, carrera_id) VALUES 
+(97, 25), (98, 25), (99, 25), (100, 25);
+
+-- Carrera 26
+INSERT INTO ClaseCarrera (clase_id, carrera_id) VALUES 
+(101, 26), (102, 26), (103, 26), (104, 26);
+
+-- Carrera 27
+INSERT INTO ClaseCarrera (clase_id, carrera_id) VALUES 
+(105, 27), (106, 27), (107, 27), (108, 27);
+
+-- Carrera 28
+INSERT INTO ClaseCarrera (clase_id, carrera_id) VALUES 
+(109, 28), (110, 28), (111, 28), (112, 28);
+
+-- Carrera 29
+INSERT INTO ClaseCarrera (clase_id, carrera_id) VALUES 
+(113, 29), (114, 29), (115, 29), (116, 29);
+
+-- Carrera 30
+INSERT INTO ClaseCarrera (clase_id, carrera_id) VALUES 
+(117, 30), (118, 30), (119, 30), (120, 30);
+
+-- Carrera 31
+INSERT INTO ClaseCarrera (clase_id, carrera_id) VALUES 
+(121, 31), (122, 31), (123, 31), (124, 31);
+
+-- Carrera 32
+INSERT INTO ClaseCarrera (clase_id, carrera_id) VALUES 
+(125, 32), (126, 32), (127, 32), (128, 32);
+
+-- Carrera 33
+INSERT INTO ClaseCarrera (clase_id, carrera_id) VALUES 
+(129, 33), (130, 33), (131, 33), (132, 33);
+
+-- Carrera 34
+INSERT INTO ClaseCarrera (clase_id, carrera_id) VALUES 
+(133, 34), (134, 34), (135, 34), (136, 34);
+
+-- Carrera 35
+INSERT INTO ClaseCarrera (clase_id, carrera_id) VALUES 
+(137, 35), (138, 35), (139, 35), (140, 35);
+
+-- Carrera 36
+INSERT INTO ClaseCarrera (clase_id, carrera_id) VALUES 
+(141, 36), (142, 36), (143, 36), (144, 36);
+
+-- Carrera 37
+INSERT INTO ClaseCarrera (clase_id, carrera_id) VALUES 
+(145, 37), (146, 37), (147, 37), (148, 37);
+
+-- Carrera 38
+INSERT INTO ClaseCarrera (clase_id, carrera_id) VALUES 
+(149, 38), (150, 38), (151, 38), (152, 38);
+
+-- Carrera 39
+INSERT INTO ClaseCarrera (clase_id, carrera_id) VALUES 
+(153, 39), (154, 39), (155, 39), (156, 39);
+
+-- Carrera 40
+INSERT INTO ClaseCarrera (clase_id, carrera_id) VALUES 
+(157, 40), (158, 40), (159, 40), (160, 40);
+
+-- Carrera 41
+INSERT INTO ClaseCarrera (clase_id, carrera_id) VALUES 
+(161, 41), (162, 41), (163, 41), (164, 41);
+
+-- Carrera 42
+INSERT INTO ClaseCarrera (clase_id, carrera_id) VALUES 
+(165, 42), (166, 42), (167, 42), (168, 42);
+
+-- Carrera 43
+INSERT INTO ClaseCarrera (clase_id, carrera_id) VALUES 
+(169, 43), (170, 43), (171, 43), (172, 43);
+
+-- Carrera 44
+INSERT INTO ClaseCarrera (clase_id, carrera_id) VALUES 
+(173, 44), (174, 44), (175, 44), (176, 44);
+
+-- Carrera 45
+INSERT INTO ClaseCarrera (clase_id, carrera_id) VALUES 
+(177, 45), (178, 45), (179, 45), (180, 45);
+
+-- Carrera 46
+INSERT INTO ClaseCarrera (clase_id, carrera_id) VALUES 
+(181, 46), (182, 46), (183, 46), (184, 46);
+
+-- Carrera 47
+INSERT INTO ClaseCarrera (clase_id, carrera_id) VALUES 
+(185, 47), (186, 47), (187, 47), (188, 47);
+
+-- Carrera 48
+INSERT INTO ClaseCarrera (clase_id, carrera_id) VALUES 
+(189, 48), (190, 48), (191, 48), (192, 48);
+
+-- Carrera 49
+INSERT INTO ClaseCarrera (clase_id, carrera_id) VALUES 
+(193, 49), (194, 49), (195, 49), (196, 49);
+
+-- Carrera 50
+INSERT INTO ClaseCarrera (clase_id, carrera_id) VALUES 
+(197, 50), (198, 50), (199, 50), (200, 50);
+
+-- Carrera 51
+INSERT INTO ClaseCarrera (clase_id, carrera_id) VALUES 
+(201, 51), (202, 51), (203, 51), (204, 51);
+
+-- Carrera 52
+INSERT INTO ClaseCarrera (clase_id, carrera_id) VALUES 
+(205, 52), (206, 52), (207, 52), (208, 52);
+
+-- Carrera 53
+INSERT INTO ClaseCarrera (clase_id, carrera_id) VALUES 
+(209, 53), (210, 53), (211, 53), (212, 53);
+
+-- Carrera 54
+INSERT INTO ClaseCarrera (clase_id, carrera_id) VALUES 
+(213, 54), (214, 54), (215, 54), (216, 54);
+
+-- Carrera 55
+INSERT INTO ClaseCarrera (clase_id, carrera_id) VALUES 
+(217, 55), (218, 55), (219, 55), (220, 55);
+
+-- Carrera 56
+INSERT INTO ClaseCarrera (clase_id, carrera_id) VALUES 
+(221, 56), (222, 56), (223, 56), (224, 56);
+
+-- Carrera 57
+INSERT INTO ClaseCarrera (clase_id, carrera_id) VALUES 
+(225, 57), (226, 57), (227, 57), (228, 57);
+
+-- Carrera 58
+INSERT INTO ClaseCarrera (clase_id, carrera_id) VALUES 
+(229, 58), (230, 58), (231, 58), (232, 58);
+
+-- Carrera 59
+INSERT INTO ClaseCarrera (clase_id, carrera_id) VALUES 
+(233, 59), (234, 59), (235, 59), (236, 59);
+
+-- Carrera 60
+INSERT INTO ClaseCarrera (clase_id, carrera_id) VALUES 
+(237, 60), (238, 60), (239, 60), (240, 60);
+
+INSERT INTO Aula (edificio_id, nombre, capacidad) VALUES 
+(1, '101', 40), (1, '102', 50), (1, '103', 60),
+(2, '104', 45), (2, '105', 55), (2, '106', 65),
+(3, '107', 35), (3, '108', 45), (3, '109', 70),
+(4, '110', 30), (4, '111', 50), (4, '112', 75),
+(5, '113', 40), (5, '114', 60), (5, '115', 80),
+(6, '116', 35), (6, '117', 55), (6, '118', 85),
+(7, '119', 45), (7, '120', 65), (7, '121', 90),
+(8, '122', 50), (8, '123', 70), (8, '124', 95),
+(9, '125', 30), (9, '126', 40), (9, '127', 100),
+(10, '128', 45), (10, '129', 55), (10, '130', 70);
+
+INSERT INTO Aula (edificio_id, nombre, capacidad) VALUES 
+(11, '131', 50), (11, '132', 60), (11, '133', 70),
+(12, '134', 40), (12, '135', 50), (12, '136', 65),
+(13, '137', 35), (13, '138', 45), (13, '139', 75),
+(14, '140', 30), (14, '141', 50), (14, '142', 80),
+(15, '143', 40), (15, '144', 60), (15, '145', 85),
+(16, '146', 35), (16, '147', 55), (16, '148', 90),
+(17, '149', 45), (17, '150', 65), (17, '151', 95),
+(18, '152', 50), (18, '153', 70), (18, '154', 100),
+(19, '155', 30), (19, '156', 40), (19, '157', 70),
+(20, '158', 45), (20, '159', 55), (20, '160', 75);
+
+INSERT INTO Aula (edificio_id, nombre, capacidad) VALUES 
+(21, '161', 50), (21, '162', 60), (21, '163', 70),
+(22, '164', 40), (22, '165', 50), (22, '166', 65),
+(23, '167', 35), (23, '168', 45), (23, '169', 75),
+(24, '170', 30), (24, '171', 50), (24, '172', 80),
+(25, '173', 40), (25, '174', 60), (25, '175', 85),
+(26, '176', 35), (26, '177', 55), (26, '178', 90),
+(27, '179', 45), (27, '180', 65), (27, '181', 95),
+(28, '182', 50), (28, '183', 70), (28, '184', 100),
+(29, '185', 30), (29, '186', 40), (29, '187', 70),
+(30, '188', 45), (30, '189', 55), (30, '190', 75);
+
+INSERT INTO Aula (edificio_id, nombre, capacidad) VALUES 
+(31, '191', 50), (31, '192', 60), (31, '193', 70),
+(32, '194', 40), (32, '195', 50), (32, '196', 65),
+(33, '197', 35), (33, '198', 45), (33, '199', 75),
+(34, '200', 30), (34, '201', 50), (34, '202', 80),
+(35, '203', 40), (35, '204', 60), (35, '205', 85),
+(36, '206', 35), (36, '207', 55), (36, '208', 90),
+(37, '209', 45), (37, '210', 65), (37, '211', 95),
+(38, '212', 50), (38, '213', 70), (38, '214', 100),
+(39, '215', 30), (39, '216', 40), (39, '217', 70),
+(40, '218', 45), (40, '219', 55), (40, '220', 75);
+
+INSERT INTO Aula (edificio_id, nombre, capacidad) VALUES 
+(41, '221', 50), (41, '222', 60), (41, '223', 70),
+(42, '224', 40), (42, '225', 50), (42, '226', 65),
+(43, '227', 35), (43, '228', 45), (43, '229', 75),
+(44, '230', 30), (44, '231', 50), (44, '232', 80),
+(45, '233', 40), (45, '234', 60), (45, '235', 85),
+(46, '236', 35), (46, '237', 55), (46, '238', 90),
+(47, '239', 45), (47, '240', 65), (47, '241', 95),
+(48, '242', 50), (48, '243', 70), (48, '244', 100),
+(49, '245', 30), (49, '246', 40), (49, '247', 70),
+(50, '248', 45), (50, '249', 55), (50, '250', 75);
+
+INSERT INTO TipoExamen (nombre, nota_minima) VALUES 
+('Examen Final', 70.00),
+('Parcial Escrito', 65.00),
+('Examen Oral', 68.00),
+('Prueba de Admisión', 75.00),
+('Examen de Libro Abierto', 62.00),
+('Examen de Opción Múltiple', 70.00),
+('Prueba Práctica', 63.00),
+('Simulacro de Examen', 66.00),
+('Evaluación Diagnóstica', 64.00),
+('Examen de Conocimientos Generales', 72.00),
+('Examen de Competencias Específicas', 69.00),
+('Prueba de Suficiencia', 67.00),
+('Examen Clínico', 68.50),
+('Examen de Laboratorio', 71.00),
+('Prueba de Desarrollo', 65.50),
+('Examen de Temas Selectos', 70.50),
+('Prueba de Habilidades Cognitivas', 66.50),
+('Examen de Ciencias Experimentales', 73.00),
+('Prueba de Matemáticas Avanzadas', 69.50),
+('Examen de Idiomas', 64.50),
+('Prueba de Historia Universal', 67.50),
+('Examen de Literatura', 68.00),
+('Prueba de Arte y Cultura', 65.00),
+('Examen de Derecho Constitucional', 71.50),
+('Prueba de Física Aplicada', 66.00);
+
+-- Carrera 1-20: Asignar 2 exámenes a cada una
+INSERT INTO CarreraExamen (carrera_id, tipo_examen_id) VALUES 
+(1, 1), (1, 2), 
+(2, 3), (2, 4), 
+(3, 5), (3, 6), 
+(4, 7), (4, 8), 
+(5, 9), (5, 10), 
+(6, 11), (6, 12), 
+(7, 13), (7, 14), 
+(8, 15), (8, 16), 
+(9, 17), (9, 18), 
+(10, 19), (10, 20), 
+(11, 21), (11, 22), 
+(12, 23), (12, 24), 
+(13, 25), (13, 1), 
+(14, 2), (14, 3), 
+(15, 4), (15, 5), 
+(16, 6), (16, 7), 
+(17, 8), (17, 9), 
+(18, 10), (18, 11), 
+(19, 12), (19, 13), 
+(20, 14), (20, 15);
+
+-- Carrera 21-40: Asignar 2 exámenes a cada una
+INSERT INTO CarreraExamen (carrera_id, tipo_examen_id) VALUES 
+(21, 16), (21, 17), 
+(22, 18), (22, 19), 
+(23, 20), (23, 21), 
+(24, 22), (24, 23), 
+(25, 24), (25, 25), 
+(26, 1), (26, 2), 
+(27, 3), (27, 4), 
+(28, 5), (28, 6), 
+(29, 7), (29, 8), 
+(30, 9), (30, 10), 
+(31, 11), (31, 12), 
+(32, 13), (32, 14), 
+(33, 15), (33, 16), 
+(34, 17), (34, 18), 
+(35, 19), (35, 20), 
+(36, 21), (36, 22), 
+(37, 23), (37, 24), 
+(38, 25), (38, 1), 
+(39, 2), (39, 3), 
+(40, 4), (40, 5);
+
+-- Carrera 41-60: Asignar 1 examen a cada una
+INSERT INTO CarreraExamen (carrera_id, tipo_examen_id) VALUES 
+(41, 6), 
+(42, 7), 
+(43, 8), 
+(44, 9), 
+(45, 10), 
+(46, 11), 
+(47, 12), 
+(48, 13), 
+(49, 14), 
+(50, 15), 
+(51, 16), 
+(52, 17), 
+(53, 18), 
+(54, 19), 
+(55, 20), 
+(56, 21), 
+(57, 22), 
+(58, 23), 
+(59, 24), 
+(60, 25);
+
+INSERT INTO Tag (tag_nombre) VALUES 
+('Ciencia'),
+('Tecnología'),
+('Ingeniería'),
+('Matemáticas'),
+('Literatura'),
+('Historia'),
+('Filosofía'),
+('Arte'),
+('Medicina'),
+('Psicología'),
+('Derecho'),
+('Economía'),
+('Política'),
+('Educación'),
+('Biología'),
+('Química'),
+('Física'),
+('Programación'),
+('Lenguajes'),
+('Idiomas'),
+('Novela'),
+('Ensayo'),
+('Poesía'),
+('Autoayuda'),
+('Desarrollo Personal'),
+('Emprendimiento'),
+('Sociología'),
+('Antropología'),
+('Ecología'),
+('Geografía'),
+('Turismo');
+
+INSERT INTO TipoRechazoSolicitudAspirante (nombre) VALUES 
+('Foto no visible o borrosa'),
+('Foto no cumple con los requisitos de fondo blanco'),
+('Foto en formato incorrecto (no JPG/PNG)'),
+('Documento de identificación ilegible'),
+('Documento de identificación vencido'),
+('Documento de identificación no corresponde al aspirante'),
+('Certificado de estudios ilegible'),
+('Certificado de estudios incompleto'),
+('Certificado de estudios en formato incorrecto'),
+('Nombres mal escritos en el formulario'),
+('Apellidos mal escritos en el formulario'),
+('Datos personales incompletos'),
+('Fecha de nacimiento incorrecta'),
+('Número de identificación incorrecto'),
+('Firma digital no válida'),
+('Firma física ilegible'),
+('Foto del certificado no corresponde al documento original'),
+('Certificado de estudios no oficial'),
+('Documento de identificación sin sello oficial'),
+('Foto con accesorios que obstruyen el rostro'),
+('Foto con iluminación inadecuada'),
+('Foto tomada desde un ángulo incorrecto'),
+('Formato de archivo no compatible para documentos'),
+('Tamaño de archivo excede el límite permitido'),
+('Documento escaneado con sombras o reflejos'),
+('Errores ortográficos en el nombre del documento');
+
+INSERT INTO MotivoRechazoSolicitud (descripcion) VALUES 
+('Cambio de centro no autorizado por falta de cupo'),
+('Solicitud de cambio de centro fuera de fecha límite'),
+('Cancelación de clases no justificada'),
+('Pago de reposición pendiente'),
+('Documentación incompleta para cambio de centro'),
+('Clases ya iniciadas, cambio no permitido'),
+('Solicitud duplicada para el mismo trámite'),
+('Error en los datos personales al solicitar cambio de centro'),
+('Falta de requisitos académicos para cambio de centro'),
+('Periodo académico cerrado para cambios'),
+('Pago de reposición rechazado por falta de fondos'),
+('Certificado médico no válido para cancelación de clases'),
+('Falta de aprobación del coordinador para cambio de centro'),
+('Clases no disponibles en el nuevo centro solicitado'),
+('Solicitud de cambio de centro sin justificación válida'),
+('Cancelación de clases por baja asistencia previa'),
+('Pago de reposición rechazado por error en el monto'),
+('Solicitud de cambio de centro con errores en el formulario'),
+('Cancelación de clases por falta de documentación'),
+('Pago de reposición no realizado dentro del plazo'),
+('Cambio de centro rechazado por incompatibilidad académica'),
+('Solicitud de cambio de centro sin autorización del tutor'),
+('Cancelación de clases por exceso de ausencias'),
+('Pago de reposición rechazado por falta de referencia'),
+('Cambio de centro no permitido por reglas institucionales'),
+('Solicitud de cambio de centro con documentos vencidos'),
+('Cancelación de clases por falta de pago previo'),
+('Pago de reposición rechazado por formato incorrecto'),
+('Cambio de centro no permitido por periodo vacacional'),
+('Cancelación de clases por error en la solicitud');
+
+INSERT INTO PreguntaEvaluacion (texto) VALUES 
+('¿El docente explica los temas de manera clara y comprensible?'),
+('¿El docente utiliza ejemplos prácticos para facilitar la comprensión de los temas?'),
+('¿El docente demuestra dominio del contenido que enseña?'),
+('¿El docente fomenta la participación activa de los estudiantes en clase?'),
+('¿El docente responde adecuadamente a las preguntas de los estudiantes?'),
+('¿El docente llega puntualmente a clase y cumple con el horario establecido?'),
+('¿El docente utiliza materiales adecuados y actualizados para la clase?'),
+('¿El docente promueve un ambiente de respeto y colaboración en el aula?'),
+('¿El docente asigna tareas y actividades que refuerzan los temas vistos en clase?'),
+('¿El docente proporciona retroalimentación oportuna sobre los trabajos entregados?'),
+('¿El docente adapta su metodología de enseñanza a las necesidades de los estudiantes?'),
+('¿El docente motiva a los estudiantes a profundizar en los temas fuera de clase?'),
+('¿El docente muestra interés genuino por el aprendizaje de los estudiantes?'),
+('¿El docente utiliza tecnología de manera efectiva para mejorar la clase?'),
+('¿El docente organiza bien el tiempo durante la clase para cubrir todos los temas?'),
+('¿El docente mantiene una actitud profesional y respetuosa en todo momento?'),
+('¿El docente ajusta el nivel de dificultad de los temas según el grupo?'),
+('¿El docente proporciona recursos adicionales para reforzar el aprendizaje?'),
+('¿El docente evalúa de manera justa y objetiva el desempeño de los estudiantes?'),
+('¿El docente planifica bien las clases y sigue un cronograma claro?'),
+('¿El docente genera un ambiente dinámico e interesante en el aula?'),
+('¿El docente está disponible para resolver dudas fuera del horario de clase?'),
+('¿El docente fomenta el pensamiento crítico y la reflexión en los estudiantes?'),
+('¿El docente utiliza métodos innovadores para enseñar los temas?'),
+('¿El docente respeta las opiniones y perspectivas de los estudiantes?'),
+('¿El docente maneja adecuadamente las interrupciones o conflictos en clase?'),
+('¿El docente tiene buen manejo del tiempo y no extiende innecesariamente la clase?'),
+('¿El docente promueve el trabajo en equipo entre los estudiantes?'),
+('¿El docente utiliza un lenguaje claro y apropiado para el nivel del curso?'),
+('¿El docente se asegura de que todos los estudiantes comprendan antes de avanzar al siguiente tema?');
+
+
+-- Carrera 1: Clases (1, 2, 3, 4)
+INSERT INTO ClaseRequisito (clase_id, prerequisito_clase_id) VALUES 
+(2, 1); -- Para cursar la clase 2, se necesita haber aprobado la clase 1
+
+-- Carrera 2: Clases (5, 6, 7, 8)
+INSERT INTO ClaseRequisito (clase_id, prerequisito_clase_id) VALUES 
+(6, 5); -- Para cursar la clase 6, se necesita haber aprobado la clase 5
+
+-- Carrera 3: Clases (9, 10, 11, 12)
+INSERT INTO ClaseRequisito (clase_id, prerequisito_clase_id) VALUES 
+(10, 9); -- Para cursar la clase 10, se necesita haber aprobado la clase 9
+
+-- Carrera 4: Clases (13, 14, 15, 16)
+INSERT INTO ClaseRequisito (clase_id, prerequisito_clase_id) VALUES 
+(14, 13); -- Para cursar la clase 14, se necesita haber aprobado la clase 13
+
+-- Carrera 5: Clases (17, 18, 19, 20)
+INSERT INTO ClaseRequisito (clase_id, prerequisito_clase_id) VALUES 
+(18, 17); -- Para cursar la clase 18, se necesita haber aprobado la clase 17
+
+-- Carrera 6: Clases (21, 22, 23, 24)
+INSERT INTO ClaseRequisito (clase_id, prerequisito_clase_id) VALUES 
+(22, 21); -- Para cursar la clase 22, se necesita haber aprobado la clase 21
+
+-- Carrera 7: Clases (25, 26, 27, 28)
+INSERT INTO ClaseRequisito (clase_id, prerequisito_clase_id) VALUES 
+(26, 25); -- Para cursar la clase 26, se necesita haber aprobado la clase 25
+
+-- Carrera 8: Clases (29, 30, 31, 32)
+INSERT INTO ClaseRequisito (clase_id, prerequisito_clase_id) VALUES 
+(30, 29); -- Para cursar la clase 30, se necesita haber aprobado la clase 29
+
+-- Carrera 9: Clases (33, 34, 35, 36)
+INSERT INTO ClaseRequisito (clase_id, prerequisito_clase_id) VALUES 
+(34, 33); -- Para cursar la clase 34, se necesita haber aprobado la clase 33
+
+-- Carrera 10: Clases (37, 38, 39, 40)
+INSERT INTO ClaseRequisito (clase_id, prerequisito_clase_id) VALUES 
+(38, 37); -- Para cursar la clase 38, se necesita haber aprobado la clase 37
+
+
+-- Carrera 11: Clases (41, 42, 43, 44)
+INSERT INTO ClaseRequisito (clase_id, prerequisito_clase_id) VALUES 
+(42, 41);
+
+-- Carrera 12: Clases (45, 46, 47, 48)
+INSERT INTO ClaseRequisito (clase_id, prerequisito_clase_id) VALUES 
+(46, 45);
+
+-- Carrera 13: Clases (49, 50, 51, 52)
+INSERT INTO ClaseRequisito (clase_id, prerequisito_clase_id) VALUES 
+(50, 49);
+
+-- Carrera 14: Clases (53, 54, 55, 56)
+INSERT INTO ClaseRequisito (clase_id, prerequisito_clase_id) VALUES 
+(54, 53);
+
+-- Carrera 15: Clases (57, 58, 59, 60)
+INSERT INTO ClaseRequisito (clase_id, prerequisito_clase_id) VALUES 
+(58, 57);
+
+-- Carrera 16: Clases (61, 62, 63, 64)
+INSERT INTO ClaseRequisito (clase_id, prerequisito_clase_id) VALUES 
+(62, 61);
+
+-- Carrera 17: Clases (65, 66, 67, 68)
+INSERT INTO ClaseRequisito (clase_id, prerequisito_clase_id) VALUES 
+(66, 65);
+
+-- Carrera 18: Clases (69, 70, 71, 72)
+INSERT INTO ClaseRequisito (clase_id, prerequisito_clase_id) VALUES 
+(70, 69);
+
+-- Carrera 19: Clases (73, 74, 75, 76)
+INSERT INTO ClaseRequisito (clase_id, prerequisito_clase_id) VALUES 
+(74, 73);
+
+-- Carrera 20: Clases (77, 78, 79, 80)
+INSERT INTO ClaseRequisito (clase_id, prerequisito_clase_id) VALUES 
+(78, 77);
+
+-- Carrera 21: Clases (81, 82, 83, 84)
+INSERT INTO ClaseRequisito (clase_id, prerequisito_clase_id) VALUES 
+(82, 81);
+
+-- Carrera 22: Clases (85, 86, 87, 88)
+INSERT INTO ClaseRequisito (clase_id, prerequisito_clase_id) VALUES 
+(86, 85);
+
+-- Carrera 23: Clases (89, 90, 91, 92)
+INSERT INTO ClaseRequisito (clase_id, prerequisito_clase_id) VALUES 
+(90, 89);
+
+-- Carrera 24: Clases (93, 94, 95, 96)
+INSERT INTO ClaseRequisito (clase_id, prerequisito_clase_id) VALUES 
+(94, 93);
+
+-- Carrera 25: Clases (97, 98, 99, 100)
+INSERT INTO ClaseRequisito (clase_id, prerequisito_clase_id) VALUES 
+(98, 97);
+
+-- Carrera 26: Clases (101, 102, 103, 104)
+INSERT INTO ClaseRequisito (clase_id, prerequisito_clase_id) VALUES 
+(102, 101);
+
+-- Carrera 27: Clases (105, 106, 107, 108)
+INSERT INTO ClaseRequisito (clase_id, prerequisito_clase_id) VALUES 
+(106, 105);
+
+-- Carrera 28: Clases (109, 110, 111, 112)
+INSERT INTO ClaseRequisito (clase_id, prerequisito_clase_id) VALUES 
+(110, 109);
+
+-- Carrera 29: Clases (113, 114, 115, 116)
+INSERT INTO ClaseRequisito (clase_id, prerequisito_clase_id) VALUES 
+(114, 113);
+
+-- Carrera 30: Clases (117, 118, 119, 120)
+INSERT INTO ClaseRequisito (clase_id, prerequisito_clase_id) VALUES 
+(118, 117);
+
+-- Carrera 31: Clases (121, 122, 123, 124)
+INSERT INTO ClaseRequisito (clase_id, prerequisito_clase_id) VALUES 
+(122, 121);
+
+-- Carrera 32: Clases (125, 126, 127, 128)
+INSERT INTO ClaseRequisito (clase_id, prerequisito_clase_id) VALUES 
+(126, 125);
+
+-- Carrera 33: Clases (129, 130, 131, 132)
+INSERT INTO ClaseRequisito (clase_id, prerequisito_clase_id) VALUES 
+(130, 129);
+
+-- Carrera 34: Clases (133, 134, 135, 136)
+INSERT INTO ClaseRequisito (clase_id, prerequisito_clase_id) VALUES 
+(134, 133);
+
+-- Carrera 35: Clases (137, 138, 139, 140)
+INSERT INTO ClaseRequisito (clase_id, prerequisito_clase_id) VALUES 
+(138, 137);
+
+-- Carrera 36: Clases (141, 142, 143, 144)
+INSERT INTO ClaseRequisito (clase_id, prerequisito_clase_id) VALUES 
+(142, 141);
+
+-- Carrera 37: Clases (145, 146, 147, 148)
+INSERT INTO ClaseRequisito (clase_id, prerequisito_clase_id) VALUES 
+(146, 145);
+
+-- Carrera 38: Clases (149, 150, 151, 152)
+INSERT INTO ClaseRequisito (clase_id, prerequisito_clase_id) VALUES 
+(150, 149);
+
+-- Carrera 39: Clases (153, 154, 155, 156)
+INSERT INTO ClaseRequisito (clase_id, prerequisito_clase_id) VALUES 
+(154, 153);
+
+-- Carrera 40: Clases (157, 158, 159, 160)
+INSERT INTO ClaseRequisito (clase_id, prerequisito_clase_id) VALUES 
+(158, 157);
+
+-- Carrera 41: Clases (161, 162, 163, 164)
+INSERT INTO ClaseRequisito (clase_id, prerequisito_clase_id) VALUES 
+(162, 161);
+
+-- Carrera 42: Clases (165, 166, 167, 168)
+INSERT INTO ClaseRequisito (clase_id, prerequisito_clase_id) VALUES 
+(166, 165);
+
+-- Carrera 43: Clases (169, 170, 171, 172)
+INSERT INTO ClaseRequisito (clase_id, prerequisito_clase_id) VALUES 
+(170, 169);
+
+-- Carrera 44: Clases (173, 174, 175, 176)
+INSERT INTO ClaseRequisito (clase_id, prerequisito_clase_id) VALUES 
+(174, 173);
+
+-- Carrera 45: Clases (177, 178, 179, 180)
+INSERT INTO ClaseRequisito (clase_id, prerequisito_clase_id) VALUES 
+(178, 177);
+
+-- Carrera 46: Clases (181, 182, 183, 184)
+INSERT INTO ClaseRequisito (clase_id, prerequisito_clase_id) VALUES 
+(182, 181);
+
+-- Carrera 47: Clases (185, 186, 187, 188)
+INSERT INTO ClaseRequisito (clase_id, prerequisito_clase_id) VALUES 
+(186, 185);
+
+-- Carrera 48: Clases (189, 190, 191, 192)
+INSERT INTO ClaseRequisito (clase_id, prerequisito_clase_id) VALUES 
+(190, 189);
+
+-- Carrera 49: Clases (193, 194, 195, 196)
+INSERT INTO ClaseRequisito (clase_id, prerequisito_clase_id) VALUES 
+(194, 193);
+
+-- Carrera 50: Clases (197, 198, 199, 200)
+INSERT INTO ClaseRequisito (clase_id, prerequisito_clase_id) VALUES 
+(198, 197);
+
+-- Carrera 51: Clases (201, 202, 203, 204)
+INSERT INTO ClaseRequisito (clase_id, prerequisito_clase_id) VALUES 
+(202, 201);
+
+-- Carrera 52: Clases (205, 206, 207, 208)
+INSERT INTO ClaseRequisito (clase_id, prerequisito_clase_id) VALUES 
+(206, 205);
+
+-- Carrera 53: Clases (209, 210, 211, 212)
+INSERT INTO ClaseRequisito (clase_id, prerequisito_clase_id) VALUES 
+(210, 209);
+
+-- Carrera 54: Clases (213, 214, 215, 216)
+INSERT INTO ClaseRequisito (clase_id, prerequisito_clase_id) VALUES 
+(214, 213);
+
+-- Carrera 55: Clases (217, 218, 219, 220)
+INSERT INTO ClaseRequisito (clase_id, prerequisito_clase_id) VALUES 
+(218, 217);
+
+-- Carrera 56: Clases (221, 222, 223, 224)
+INSERT INTO ClaseRequisito (clase_id, prerequisito_clase_id) VALUES 
+(222, 221);
+
+-- Carrera 57: Clases (225, 226, 227, 228)
+INSERT INTO ClaseRequisito (clase_id, prerequisito_clase_id) VALUES 
+(226, 225);
+
+-- Carrera 58: Clases (229, 230, 231, 232)
+INSERT INTO ClaseRequisito (clase_id, prerequisito_clase_id) VALUES 
+(230, 229);
+
+-- Carrera 59: Clases (233, 234, 235, 236)
+INSERT INTO ClaseRequisito (clase_id, prerequisito_clase_id) VALUES 
+(234, 233);
+
+-- Carrera 60: Clases (237, 238, 239, 240)
+INSERT INTO ClaseRequisito (clase_id, prerequisito_clase_id) VALUES 
+(238, 237);
+
+
+INSERT INTO EstadoMatricula (nombre) VALUES 
+('MATRICULADO'),
+('EN_ESPERA'),
+('CANCELADA');
+
+INSERT INTO EstadoSolicitud (nombre) VALUES 
+('PENDIENTE'),
+('APROBADA'),
+('DENEGADA');
+
+INSERT INTO TipoSolicitud (nombre) VALUES 
+('CAMBIO_CENTRO'),
+('CANCELACION_EXCEPCIONAL'),
+('CAMBIO_CARRERA'),
+('PAGO_REPOSICION');
+
+INSERT INTO EstadoEvaluacion (nombre) VALUES 
+('Pendiente'),
+('Completado'),
+('Cancelado'),
+('En Revisión'),
+('Finalizado');
+
+INSERT INTO EstadoCorreo (nombre, descripcion) VALUES 
+('PENDIENTE', 'Correo pendiente de envío'),
+('ENVIADO', 'Correo enviado exitosamente'),
+('FALLIDO', 'Falló el envío del correo');
+
+INSERT INTO EstadoCurso (nombre) VALUES 
+('ABANDONADA'),
+('REPROBADA'),
+('APROBADA'),
+('CANCELADA');
+
+INSERT INTO EstadoLibro (nombre) VALUES 
+('ACTIVO'),
+('INACTIVO');
+
+INSERT INTO TipoProcesoExcepcional (nombre) VALUES 
+('PAGO_REPOSICION'),
+('CANCELACION_EXCEPCIONAL'),
+('CAMBIO_CARRERA');
+
+INSERT INTO TipoProcesoMatricula (nombre) VALUES 
+('MATRICULA'),
+('ADICIONES_CANCELACIONES');
+
+INSERT INTO DiaSemana (nombre) VALUES 
+('Lunes'),
+('Martes'),
+('Miércoles'),
+('Jueves'),
+('Viernes'),
+('Sabado');
+
+NSERT INTO EstadoSeccion (nombre) VALUES 
+('ACTIVA'),
+('INACTIVA'),
+('CANCELADA');
+
+INSERT INTO ResultadoExamenTipo (nombre) VALUES 
+('APROBO'),
+('NO_APROBO'),
+('PENDIENTE');
+
+INSERT INTO EstadoSolicitudRevisor (nombre) VALUES 
+('PENDIENTE'),
+('APROVADO'),
+('RECHAZADO');
+
+INSERT INTO EstadoAspiranteCarrera (nombre) VALUES 
+('APROBADO'),
+('NO APROBADO'),
+('RECHAZADO'),
+('EN REVISION'),
+('MATRICULADO');
+
+INSERT INTO TipoDocumento (nombre) VALUES 
+('CEDULA'),
+('PASAPORTE'),
+('LICENCIA'),
+('DNI'),
+('TARJETA_DE_IDENTIDAD');
+
+INSERT INTO EstadoAspirante (nombre) VALUES 
+('PENDIENTE'),
+('ADMITIDO'),
+('RECHAZADO'),
+('CORREGIDO_PENDIENTE'),
+('CANCELADO');
+
+INSERT INTO EstadoPasswordResetRequest (nombre) VALUES 
+('PENDIENTE'),
+('APROBADO'),
+('RECHAZADO'),
+('EXPIRADO'),
+('COMPLETADO');
+
+INSERT INTO Rol (nombre) VALUES 
+('Estudiante'),
+('Docente'),
+('Jefe de departamento'),
+('Coordinador'),
+('Revisor'),
+('Administrador');
+
+INSERT INTO NumeroPeriodo (nombre) VALUES 
+('PRIMERO'),
+('SEGUNDO'),
+('TERCERO'),
+('CUARTO'),
+('QUINTO');
+
+INSERT INTO EstadoProceso (nombre) VALUES 
+('ACTIVO'),
+('INACTIVO'),
+('PENDIENTE'),
+('FINALIZADO'),
+('CANCELADO');
+
+
+
+
+
+-- KENCY
+
+INSERT INTO UsuarioRol (usuario_id, rol_id) VALUES
+(6, 1); -- ana como estudiante
+
+
+INSERT INTO Estudiante (usuario_id, numero_cuenta, identidad, nombre, apellido, correo_personal, telefono, direccion, centro_id, indice_global, indice_periodo) VALUES 
+(6, 201456878222, '123456543', 'Ana', 'Lopez', 'ana.lopez@example.com', '555-1234', 'Calle 123, Ciudad', 1, 8.5, 8.9);
+
+INSERT INTO FotosEstudiante (ruta_foto, estudiante_id) VALUES 
+('fotos/ana_lopez.jpg', 3);
+
+INSERT INTO Revisor (estudiante_id, fecha_aprobacion, usuario_id) VALUES 
+(3, '2023-10-01', 6);
+
+INSERT INTO AplicanteRevisor (estudiante_id, carrera_id, fecha_solicitud, estado_solicitud_revisor_id) VALUES 
+(3, 3, '2023-10-01', 1);
+
+
+UPDATE RevisionAspirante 
+SET revisor_usuario_id = 6 
+WHERE aspirante_id = 5;
+
+-- FIN KENCY
+
+
+

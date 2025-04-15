@@ -273,7 +273,7 @@ CREATE TABLE RevisionAspirante (
 
 CREATE TABLE TipoRechazoSolicitudAspirante(
     tipo_rechazo_id INT AUTO_INCREMENT PRIMARY KEY,
-    nombre VARCHAR(30) NOT NULL
+    nombre VARCHAR(100) NOT NULL
 ) ENGINE=InnoDB;
 
 CREATE TABLE MotivoRechazoAspirante (

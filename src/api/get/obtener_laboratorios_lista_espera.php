@@ -1,9 +1,9 @@
 <?php
 /**
- * API para obtener las clases matriculadas de un estudiante.
+ * API para obtener los laboratorios matriculadas en estado 'EN_ESPERA' de un estudiante.
  *
  * Ejemplo de URL:
- * servidor:puerto/api/get/obtener_clases_matriculadas.php?estudiante_id=123
+ * servidor:puerto/api/get/clases_en_espera.php?estudiante_id=123
  *
  * Responde en formato JSON.
  *
@@ -29,5 +29,5 @@ $estudiante_id = (int) $_GET['estudiante_id'];
 require_once __DIR__ . '/../../controllers/MatriculaController.php';
 
 $controller = new MatriculaController();
-$controller->obtenerClasesMatriculadas($estudiante_id);
+$controller->obtenerLaboratoriosEnEspera($estudiante_id);
 ?>

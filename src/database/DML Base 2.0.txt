@@ -349,7 +349,6 @@ INSERT INTO Libro (titulo, editorial, libro_url, fecha_publicacion, descripcion,
 ('Ingles Básico', 'Editorial Ingles', 'http://example.com/libro3', '2021-03-10', 'Libro de Ingles', '1234', 1),
 ('Administracion ', 'Editorial Admin', 'http://example.com/libro4', '2018-07-20', 'Libro de Administracion', '1111-11', 1),
 ('Estadistica', 'Editorial Estadistica', 'http://example.com/libro5', '2022-09-05', 'Libro de Estadistica', 'X-3', 1);
-
 INSERT INTO Tag (tag_nombre) VALUES 
 ('Matemáticas'),
 ('Electronica'),

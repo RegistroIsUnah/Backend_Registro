@@ -19,7 +19,7 @@
  *   "hora_inicio": "08:00:00",
  *   "hora_fin": "10:00:00",
  *   "cupos": 30,
- *   "dias": "Lunes,Miércoles"
+ *   "dias": "1,2,3"
  * }
  *
  * Respuestas HTTP:
@@ -35,15 +35,30 @@
 
  header("Access-Control-Allow-Origin: *");
  header('Content-Type: application/json');
-
+ header("Access-Control-Allow-Methods: POST, OPTIONS");
+ header("Access-Control-Allow-Headers: Content-Type");
+ 
  if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
      http_response_code(405);
      echo json_encode(['error' => 'Método no permitido']);
      exit;
  }
  
- // Si usas form-data, los datos de texto vendrán en $_POST y el archivo en $_FILES.
- if (empty($_POST)) {
+ // Obtener datos de entrada (soporta tanto form-data como JSON)
+ $inputData = [];
+ if (!empty($_POST)) {
+     $inputData = $_POST;
+ } else {
+     $json = file_get_contents('php://input');
+     $inputData = json_decode($json, true);
+     if (json_last_error() !== JSON_ERROR_NONE) {
+         http_response_code(400);
+         echo json_encode(['error' => 'JSON inválido']);
+         exit;
+     }
+ }
+ 
+ if (empty($inputData)) {
      http_response_code(400);
      echo json_encode(['error' => 'No se recibieron datos']);
      exit;
@@ -52,5 +67,5 @@
  require_once __DIR__ . '/../../controllers/SeccionController.php';
  
  $seccionController = new SeccionController();
- $seccionController->crearSeccion($_POST, $_FILES);
+ $seccionController->crearSeccion($inputData, $_FILES);
  ?>

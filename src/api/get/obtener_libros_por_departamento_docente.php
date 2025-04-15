@@ -20,6 +20,8 @@
 
 header("Access-Control-Allow-Origin: *");
 header('Content-Type: application/json');
+header("Access-Control-Allow-Methods: GET, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type");
 
 if (!isset($_GET['departamentoId']) || !is_numeric($_GET['departamentoId'])) {
     http_response_code(400);

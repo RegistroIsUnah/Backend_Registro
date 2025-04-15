@@ -23,7 +23,9 @@
  */
 
 header("Access-Control-Allow-Origin: *");
-header("Content-Type: application/json");
+header('Content-Type: application/json');
+header("Access-Control-Allow-Methods: GET, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type");
 
 require_once __DIR__ . '/../../controllers/DocenteController.php';
 
@@ -37,8 +39,7 @@ try {
     $deptId = (int)$_GET['dept_id'];
     $controller = new DocenteController();
     $resultado = $controller->listarDocentesPorDepartamento($deptId);
-
-    echo json_encode(['success' => true, 'docentes' => $resultado]);
+    
 
 } catch (Exception $e) {
     http_response_code(500);

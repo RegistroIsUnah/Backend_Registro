@@ -9,7 +9,7 @@
  *  - seccion_id: ID de la sección a cancelar.
  * 
  * Ejemplo de URL:
- *  servidor:puerto/api/post/cancelar_seccion_laboratorio.php
+ *  servidor:puerto/api/delete/cancelar_seccion_laboratorio.php
  * 
  * Ejemplo envio
  * 
@@ -29,6 +29,8 @@
 
 header("Access-Control-Allow-Origin: *");
 header('Content-Type: application/json');
+header("Access-Control-Allow-Methods: POST, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type");
 
 // Recibimos los datos en formato JSON
 $data = json_decode(file_get_contents('php://input'), true);

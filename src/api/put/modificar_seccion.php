@@ -9,14 +9,16 @@
  * 
  * Métodos soportados:
  *  POST
- *
+ * 
  * Ejemplo de JSON de entrada:
  * {
- *   "seccion_id": 15,
- *   "docente_id": 3,           // Opcional
- *   "aula_id": 5,              // Opcional
- *   "estado": "CANCELADA",     // Opcional; se espera 'ACTIVA' o 'CANCELADA'
- *   "motivo_cancelacion": "Cancelada por indisponibilidad" // Requerido si estado es 'CANCELADA'
+ *   "seccion_id": 15,                     // Requerido
+ *   "docente_id": 3,                      // Opcional
+ *   "aula_id": 5,                         // Opcional
+ *   "estado": "CANCELADA",                // Opcional; 'ACTIVA' o 'CANCELADA'
+ *   "motivo_cancelacion": "Razón...",     // Requerido si estado es 'CANCELADA'
+ *   "cupos": 30,                          // Opcional
+ *   "video_url": "https://..."            // Opcional
  * }
  *
  * Respuestas HTTP:
@@ -30,8 +32,10 @@
  * 
  */
 
-header("Access-Control-Allow-Origin: *");
-header('Content-Type: application/json');
+ header("Access-Control-Allow-Origin: *");
+ header('Content-Type: application/json');
+ header("Access-Control-Allow-Methods: POST, OPTIONS");
+ header("Access-Control-Allow-Headers: Content-Type");
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
