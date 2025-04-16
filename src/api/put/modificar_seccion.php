@@ -18,7 +18,10 @@
  *   "estado": "CANCELADA",                // Opcional; 'ACTIVA' o 'CANCELADA'
  *   "motivo_cancelacion": "Razón...",     // Requerido si estado es 'CANCELADA'
  *   "cupos": 30,                          // Opcional
- *   "video_url": "https://..."            // Opcional
+ *   "video_url": "https://...",           // Opcional
+ *   "hora_inicio": "08:00:00",            // Opcional (formato HH:MM:SS)
+ *   "hora_fin": "10:00:00",               // Opcional (formato HH:MM:SS)
+ *   "dias": "1,3,5"                       // Opcional (números de días separados por comas, ej: 1=Lunes)
  * }
  *
  * Respuestas HTTP:
@@ -32,10 +35,30 @@
  * 
  */
 
- header("Access-Control-Allow-Origin: *");
- header('Content-Type: application/json');
- header("Access-Control-Allow-Methods: POST, OPTIONS");
- header("Access-Control-Allow-Headers: Content-Type");
+ $allowedOrigins = [
+    'https://www.registroisunah.xyz',
+    'https://registroisunah.xyz'
+];
+
+$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+
+if (in_array($origin, $allowedOrigins)) {
+    header("Access-Control-Allow-Origin: $origin");
+} else {
+    header("Access-Control-Allow-Origin: https://www.registroisunah.xyz");
+}
+
+header('Content-Type: application/json');
+header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
+header("Access-Control-Max-Age: 3600");
+header("Access-Control-Allow-Credentials: true");
+
+// Manejar solicitud OPTIONS para CORS preflight
+if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
+    http_response_code(200);
+    exit();
+}
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);

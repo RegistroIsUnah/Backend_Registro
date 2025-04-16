@@ -155,6 +155,9 @@ class SeccionController {
         $motivo_cancelacion = isset($data['motivo_cancelacion']) && $data['motivo_cancelacion'] !== "" ? $data['motivo_cancelacion'] : null;
         $cupos = isset($data['cupos']) && $data['cupos'] !== "" ? intval($data['cupos']) : null;
         $video_url = isset($data['video_url']) && $data['video_url'] !== "" ? $data['video_url'] : null;
+        $hora_inicio = isset($data['hora_inicio']) && $data['hora_inicio'] !== "" ? $data['hora_inicio'] : null;
+        $hora_fin = isset($data['hora_fin']) && $data['hora_fin'] !== "" ? $data['hora_fin'] : null;
+        $dias = isset($data['dias']) && $data['dias'] !== "" ? $data['dias'] : null;
     
         try {
             // Instanciar el modelo Seccion y llamar a la función para modificar la sección
@@ -166,7 +169,10 @@ class SeccionController {
                 $estado,
                 $motivo_cancelacion,
                 $cupos,
-                $video_url
+                $video_url,
+                $hora_inicio,
+                $hora_fin,
+                $dias
             );
         } catch (Exception $e) {
             http_response_code(500);
