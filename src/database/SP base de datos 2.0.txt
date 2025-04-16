@@ -313,6 +313,7 @@ DELIMITER ;
 
 
 
+
 DELIMITER //
 
 CREATE PROCEDURE SP_modificarSeccion(
@@ -347,8 +348,12 @@ BEGIN
     DECLARE v_creditos INT;
     DECLARE v_duracion DECIMAL(5,2);
     DECLARE v_estado_proceso VARCHAR(30);
+    DECLARE v_cambios_horario BOOLEAN DEFAULT FALSE;
+    DECLARE v_cambios_dias BOOLEAN DEFAULT FALSE;
+    DECLARE v_cambios_aula BOOLEAN DEFAULT FALSE;
+    DECLARE v_cambios_docente BOOLEAN DEFAULT FALSE;
     
-    -- Validar parámetros obligatorios
+    -- Validar parámetro obligatorio
     IF p_seccion_id IS NULL THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El ID de la sección no puede estar vacío';
     END IF;
@@ -382,8 +387,14 @@ BEGIN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El período académico no está activo';
     END IF;
 
+    -- Determinar qué campos se están modificando
+    SET v_cambios_horario = (p_hora_inicio IS NOT NULL OR p_hora_fin IS NOT NULL);
+    SET v_cambios_dias = (p_dias IS NOT NULL AND p_dias != '');
+    SET v_cambios_aula = (p_aula_id IS NOT NULL);
+    SET v_cambios_docente = (p_docente_id IS NOT NULL);
+
     -- Determinar qué días usar (los nuevos o los actuales)
-    IF p_dias IS NOT NULL AND p_dias != '' THEN
+    IF v_cambios_dias THEN
         SET v_new_dias = p_dias;
     ELSE
         SET v_new_dias = v_current_dias;
@@ -396,12 +407,20 @@ BEGIN
     SET v_new_aula_id = COALESCE(p_aula_id, v_current_aula_id);
     
     -- Determinar valores a usar para validaciones
-    SET v_current_hora_inicio = COALESCE(p_hora_inicio, v_current_hora_inicio);
-    SET v_current_hora_fin = COALESCE(p_hora_fin, v_current_hora_fin);
-    SET v_current_docente_id = COALESCE(p_docente_id, v_current_docente_id);
+    IF p_hora_inicio IS NOT NULL THEN
+        SET v_current_hora_inicio = p_hora_inicio;
+    END IF;
+    
+    IF p_hora_fin IS NOT NULL THEN
+        SET v_current_hora_fin = p_hora_fin;
+    END IF;
+    
+    IF p_docente_id IS NOT NULL THEN
+        SET v_current_docente_id = p_docente_id;
+    END IF;
 
-    -- Validar que la hora de inicio sea menor a la de fin
-    IF v_current_hora_inicio >= v_current_hora_fin THEN
+    -- Validar que la hora de inicio sea menor a la de fin (solo si se modifican horas)
+    IF v_cambios_horario AND v_current_hora_inicio >= v_current_hora_fin THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'La hora de inicio debe ser menor a la hora de fin';
     END IF;
 
@@ -411,25 +430,27 @@ BEGIN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Clase no encontrada';
     END IF;
 
-    -- Calcular duración en horas
-    SET v_duracion = (TIME_TO_SEC(v_current_hora_fin) - TIME_TO_SEC(v_current_hora_inicio)) / 3600;
+    -- Validaciones académicas basadas en créditos, días y duración (solo si se modifican días u horas)
+    IF v_cambios_dias OR v_cambios_horario THEN
+        -- Calcular duración en horas
+        SET v_duracion = (TIME_TO_SEC(v_current_hora_fin) - TIME_TO_SEC(v_current_hora_inicio)) / 3600;
 
-    -- Validaciones académicas basadas en créditos, días y duración
-    IF v_num_dias > 1 THEN
-        IF v_num_dias <> v_creditos THEN
-            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El número de días no coincide con los créditos de la clase';
-        END IF;
-        IF ABS(v_duracion - 1) > 0.01 THEN
-            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Para secciones en varios días, cada sesión debe durar 1 hora';
-        END IF;
-    ELSEIF v_num_dias = 1 THEN
-        IF ABS(v_duracion - v_creditos) > 0.01 THEN
-            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Para secciones en un solo día, la duración total debe ser igual a los créditos de la clase';
+        IF v_num_dias > 1 THEN
+            IF v_num_dias <> v_creditos THEN
+                SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El número de días no coincide con los créditos de la clase';
+            END IF;
+            IF ABS(v_duracion - 1) > 0.01 THEN
+                SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Para secciones en varios días, cada sesión debe durar 1 hora';
+            END IF;
+        ELSEIF v_num_dias = 1 THEN
+            IF ABS(v_duracion - v_creditos) > 0.01 THEN
+                SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Para secciones en un solo día, la duración total debe ser igual a los créditos de la clase';
+            END IF;
         END IF;
     END IF;
 
     -- Validar capacidad del aula si se cambian cupos o aula
-    IF p_cupos IS NOT NULL OR p_aula_id IS NOT NULL THEN
+    IF p_cupos IS NOT NULL OR v_cambios_aula THEN
         SELECT capacidad INTO v_capacidad_aula 
         FROM Aula 
         WHERE aula_id = v_new_aula_id;
@@ -461,7 +482,7 @@ BEGIN
     END IF;
 
     -- Verificar conflictos solo si se cambia el aula, el horario o los días
-    IF p_aula_id IS NOT NULL OR p_hora_inicio IS NOT NULL OR p_hora_fin IS NOT NULL OR p_dias IS NOT NULL THEN
+    IF v_cambios_aula OR v_cambios_horario OR v_cambios_dias THEN
         SET v_counter = 1;
         WHILE v_counter <= v_num_dias DO
             SET v_day = CAST(TRIM(SUBSTRING_INDEX(SUBSTRING_INDEX(v_new_dias, ',', v_counter), ',', -1)) AS UNSIGNED);
@@ -510,7 +531,7 @@ BEGIN
     END IF;
 
     -- Verificar conflictos para el docente si se cambia horario, días o docente
-    IF p_docente_id IS NOT NULL OR p_hora_inicio IS NOT NULL OR p_hora_fin IS NOT NULL OR p_dias IS NOT NULL THEN
+    IF v_cambios_docente OR v_cambios_horario OR v_cambios_dias THEN
         SET v_counter = 1;
         WHILE v_counter <= v_num_dias DO
             SET v_day = CAST(TRIM(SUBSTRING_INDEX(SUBSTRING_INDEX(v_new_dias, ',', v_counter), ',', -1)) AS UNSIGNED);
@@ -552,12 +573,12 @@ BEGIN
         END,
         cupos = COALESCE(p_cupos, cupos),
         video_url = COALESCE(p_video_url, video_url),
-        hora_inicio = v_current_hora_inicio,
-        hora_fin = v_current_hora_fin
+        hora_inicio = CASE WHEN p_hora_inicio IS NOT NULL THEN p_hora_inicio ELSE hora_inicio END,
+        hora_fin = CASE WHEN p_hora_fin IS NOT NULL THEN p_hora_fin ELSE hora_fin END
     WHERE seccion_id = p_seccion_id;
 
     -- Actualizar días si se especificaron nuevos
-    IF p_dias IS NOT NULL AND p_dias != '' THEN
+    IF v_cambios_dias THEN
         -- Eliminar días actuales
         DELETE FROM SeccionDia WHERE seccion_id = p_seccion_id;
         
