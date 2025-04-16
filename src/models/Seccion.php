@@ -101,14 +101,14 @@ class Seccion {
      * @return string Mensaje de éxito.
      * @throws Exception Si ocurre un error durante la modificación.
      */
-    public function modificarSeccion($seccion_id, $docente_id, $aula_id, $estado, $motivo_cancelacion, $cupos, $video_url) {
-        // Llamar al procedimiento almacenado SP_modificarSeccion
-        $stmt = $this->conn->prepare("CALL SP_modificarSeccion(?, ?, ?, ?, ?, ?, ?)");
+    public function modificarSeccion($seccion_id, $docente_id, $aula_id, $estado, $motivo_cancelacion, $cupos, $video_url, $hora_inicio = null, $hora_fin = null, $dias = null) {
+        // Llamar al procedimiento almacenado SP_modificarSeccion con los nuevos parámetros
+        $stmt = $this->conn->prepare("CALL SP_modificarSeccion(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
         if (!$stmt) {
             throw new Exception("Error preparando la consulta: " . $this->conn->error);
         }
     
-        // "iiissis": 
+        // "iiississss": 
         // i = seccion_id (entero)
         // i = docente_id (entero)
         // i = aula_id (entero)
@@ -116,7 +116,20 @@ class Seccion {
         // s = motivo_cancelacion (string)
         // i = cupos (entero)
         // s = video_url (string)
-        if (!$stmt->bind_param("iiissis", $seccion_id, $docente_id, $aula_id, $estado, $motivo_cancelacion, $cupos, $video_url)) {
+        // s = hora_inicio (string en formato TIME)
+        // s = hora_fin (string en formato TIME)
+        // s = dias (string separado por comas)
+        if (!$stmt->bind_param("iiississss", 
+            $seccion_id, 
+            $docente_id, 
+            $aula_id, 
+            $estado, 
+            $motivo_cancelacion, 
+            $cupos, 
+            $video_url,
+            $hora_inicio,
+            $hora_fin,
+            $dias)) {
             throw new Exception("Error vinculando parámetros: " . $stmt->error);
         }
     

@@ -312,6 +312,7 @@ DELIMITER ;
 
 
 
+
 DELIMITER //
 
 CREATE PROCEDURE SP_modificarSeccion(
@@ -321,53 +322,117 @@ CREATE PROCEDURE SP_modificarSeccion(
     IN p_estado VARCHAR(20),
     IN p_motivo_cancelacion TEXT,
     IN p_cupos INT,
-    IN p_video_url VARCHAR(255)
+    IN p_video_url VARCHAR(255),
+    IN p_hora_inicio TIME,
+    IN p_hora_fin TIME,
+    IN p_dias VARCHAR(255) -- Cadena de días separados por comas (ej: "1,2,3")
 )
 BEGIN
     DECLARE v_estado_seccion_id INT;
     DECLARE v_capacidad_aula INT;
-    DECLARE v_hora_inicio TIME;
-    DECLARE v_hora_fin TIME;
+    DECLARE v_current_hora_inicio TIME;
+    DECLARE v_current_hora_fin TIME;
     DECLARE v_periodo_academico_id INT;
-    DECLARE v_dias_seccion VARCHAR(255);
+    DECLARE v_current_dias VARCHAR(255);
     DECLARE v_current_aula_id INT;
     DECLARE v_current_docente_id INT;
     DECLARE v_clase_id INT;
     DECLARE v_conflict_count INT DEFAULT 0;
     DECLARE v_current_estado VARCHAR(20);
+    DECLARE v_counter INT DEFAULT 1;
+    DECLARE v_day INT;
+    DECLARE v_num_dias INT;
+    DECLARE v_new_dias VARCHAR(255);
+    DECLARE v_new_aula_id INT;
+    DECLARE v_creditos INT;
+    DECLARE v_duracion DECIMAL(5,2);
+    DECLARE v_estado_proceso VARCHAR(30);
     
     -- Validar parámetros obligatorios
     IF p_seccion_id IS NULL THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El ID de la sección no puede estar vacío';
     END IF;
 
-    -- Obtener información actual de la sección para validaciones
+    -- Obtener información actual de la sección
     SELECT 
         s.hora_inicio, s.hora_fin, s.periodo_academico_id, 
         s.aula_id, s.docente_id, s.clase_id, es.nombre,
         GROUP_CONCAT(sd.dia_id ORDER BY sd.dia_id SEPARATOR ',')
     INTO 
-        v_hora_inicio, v_hora_fin, v_periodo_academico_id,
+        v_current_hora_inicio, v_current_hora_fin, v_periodo_academico_id,
         v_current_aula_id, v_current_docente_id, v_clase_id, v_current_estado,
-        v_dias_seccion
+        v_current_dias
     FROM Seccion s
     LEFT JOIN SeccionDia sd ON s.seccion_id = sd.seccion_id
     JOIN EstadoSeccion es ON s.estado_seccion_id = es.estado_seccion_id
     WHERE s.seccion_id = p_seccion_id
     GROUP BY s.seccion_id;
     
-    IF v_hora_inicio IS NULL THEN
+    IF v_current_hora_inicio IS NULL THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Sección no encontrada';
+    END IF;
+
+    -- Verificar que el período académico esté activo
+    SELECT ep.nombre INTO v_estado_proceso
+    FROM PeriodoAcademico pa
+    JOIN EstadoProceso ep ON pa.estado_proceso_id = ep.estado_proceso_id
+    WHERE pa.periodo_academico_id = v_periodo_academico_id;
+
+    IF v_estado_proceso <> 'ACTIVO' THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El período académico no está activo';
+    END IF;
+
+    -- Determinar qué días usar (los nuevos o los actuales)
+    IF p_dias IS NOT NULL AND p_dias != '' THEN
+        SET v_new_dias = p_dias;
+    ELSE
+        SET v_new_dias = v_current_dias;
+    END IF;
+    
+    -- Calcular número de días
+    SET v_num_dias = LENGTH(v_new_dias) - LENGTH(REPLACE(v_new_dias, ',', '')) + 1;
+    
+    -- Determinar qué aula usar (la nueva o la actual)
+    SET v_new_aula_id = COALESCE(p_aula_id, v_current_aula_id);
+    
+    -- Determinar valores a usar para validaciones
+    SET v_current_hora_inicio = COALESCE(p_hora_inicio, v_current_hora_inicio);
+    SET v_current_hora_fin = COALESCE(p_hora_fin, v_current_hora_fin);
+    SET v_current_docente_id = COALESCE(p_docente_id, v_current_docente_id);
+
+    -- Validar que la hora de inicio sea menor a la de fin
+    IF v_current_hora_inicio >= v_current_hora_fin THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'La hora de inicio debe ser menor a la hora de fin';
+    END IF;
+
+    -- Obtener créditos de la clase
+    SELECT creditos INTO v_creditos FROM Clase WHERE clase_id = v_clase_id;
+    IF v_creditos IS NULL THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Clase no encontrada';
+    END IF;
+
+    -- Calcular duración en horas
+    SET v_duracion = (TIME_TO_SEC(v_current_hora_fin) - TIME_TO_SEC(v_current_hora_inicio)) / 3600;
+
+    -- Validaciones académicas basadas en créditos, días y duración
+    IF v_num_dias > 1 THEN
+        IF v_num_dias <> v_creditos THEN
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El número de días no coincide con los créditos de la clase';
+        END IF;
+        IF ABS(v_duracion - 1) > 0.01 THEN
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Para secciones en varios días, cada sesión debe durar 1 hora';
+        END IF;
+    ELSEIF v_num_dias = 1 THEN
+        IF ABS(v_duracion - v_creditos) > 0.01 THEN
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Para secciones en un solo día, la duración total debe ser igual a los créditos de la clase';
+        END IF;
     END IF;
 
     -- Validar capacidad del aula si se cambian cupos o aula
     IF p_cupos IS NOT NULL OR p_aula_id IS NOT NULL THEN
-        -- Determinar qué aula verificar (la nueva o la actual)
-        SET v_current_aula_id = COALESCE(p_aula_id, v_current_aula_id);
-        
         SELECT capacidad INTO v_capacidad_aula 
         FROM Aula 
-        WHERE aula_id = v_current_aula_id;
+        WHERE aula_id = v_new_aula_id;
         
         IF v_capacidad_aula IS NULL THEN
             SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El aula especificada no existe';
@@ -375,7 +440,7 @@ BEGIN
         
         IF p_cupos IS NOT NULL AND p_cupos > v_capacidad_aula THEN
             SIGNAL SQLSTATE '45000' 
-            SET MESSAGE_TEXT ='Los cupos exceden la capacidad del aula';
+            SET MESSAGE_TEXT = 'Los cupos exceden la capacidad del aula';
         END IF;
     END IF;
 
@@ -395,76 +460,90 @@ BEGIN
         END IF;
     END IF;
 
-    -- Validar conflictos de horario si se cambia aula o docente
-    IF p_aula_id IS NOT NULL OR p_docente_id IS NOT NULL THEN
-        -- Determinar qué aula y docente verificar (los nuevos o los actuales)
-        SET v_current_aula_id = COALESCE(p_aula_id, v_current_aula_id);
-        SET v_current_docente_id = COALESCE(p_docente_id, v_current_docente_id);
-        
-        -- Verificar conflictos para el aula (si se cambia)
-        IF p_aula_id IS NOT NULL THEN
-            -- Verificar conflictos con otras secciones
+    -- Verificar conflictos solo si se cambia el aula, el horario o los días
+    IF p_aula_id IS NOT NULL OR p_hora_inicio IS NOT NULL OR p_hora_fin IS NOT NULL OR p_dias IS NOT NULL THEN
+        SET v_counter = 1;
+        WHILE v_counter <= v_num_dias DO
+            SET v_day = CAST(TRIM(SUBSTRING_INDEX(SUBSTRING_INDEX(v_new_dias, ',', v_counter), ',', -1)) AS UNSIGNED);
+
+            -- Verificar conflictos con otras secciones en el aula
             SELECT COUNT(*) INTO v_conflict_count
             FROM Seccion s
             JOIN SeccionDia sd ON s.seccion_id = sd.seccion_id
             JOIN EstadoSeccion es ON s.estado_seccion_id = es.estado_seccion_id
-            WHERE s.aula_id = v_current_aula_id
+            WHERE s.aula_id = v_new_aula_id
               AND s.seccion_id != p_seccion_id
+              AND sd.dia_id = v_day
               AND s.periodo_academico_id = v_periodo_academico_id
               AND es.nombre = 'ACTIVA'
-              AND FIND_IN_SET(sd.dia_id, v_dias_seccion) > 0
-              AND (TIME_TO_SEC(v_hora_inicio) < TIME_TO_SEC(s.hora_fin) AND 
-                   TIME_TO_SEC(v_hora_fin) > TIME_TO_SEC(s.hora_inicio));
+              AND (
+                  (TIME_TO_SEC(v_current_hora_inicio) < TIME_TO_SEC(s.hora_fin) AND 
+                  (TIME_TO_SEC(v_current_hora_fin) > TIME_TO_SEC(s.hora_inicio)
+              )));
             
             IF v_conflict_count > 0 THEN
                 SIGNAL SQLSTATE '45000' 
                 SET MESSAGE_TEXT = 'El aula tiene un conflicto de horario con otra sección activa';
             END IF;
-            
-            -- Verificar conflictos con laboratorios
+
+            -- Verificar conflictos con laboratorios en el aula
             SELECT COUNT(*) INTO v_conflict_count
             FROM Laboratorio l
             JOIN LaboratorioDia ld ON l.laboratorio_id = ld.laboratorio_id
             JOIN EstadoSeccion es ON l.estado_seccion_id = es.estado_seccion_id
-            WHERE l.aula_id = v_current_aula_id
+            WHERE l.aula_id = v_new_aula_id
+              AND ld.dia_id = v_day
               AND l.periodo_academico_id = v_periodo_academico_id
               AND es.nombre = 'ACTIVA'
-              AND FIND_IN_SET(ld.dia_id, v_dias_seccion) > 0
-              AND (TIME_TO_SEC(v_hora_inicio) < TIME_TO_SEC(l.hora_fin) AND 
-                   TIME_TO_SEC(v_hora_fin) > TIME_TO_SEC(l.hora_inicio));
+              AND (
+                  (TIME_TO_SEC(v_current_hora_inicio) < TIME_TO_SEC(l.hora_fin)) AND 
+                  (TIME_TO_SEC(v_current_hora_fin) > TIME_TO_SEC(l.hora_inicio))
+              );
             
             IF v_conflict_count > 0 THEN
                 SIGNAL SQLSTATE '45000' 
                 SET MESSAGE_TEXT = 'El aula tiene un conflicto de horario con un laboratorio activo';
             END IF;
-        END IF;
-        
-        -- Verificar conflictos para el docente (si se cambia)
-        IF p_docente_id IS NOT NULL THEN
+
+            SET v_counter = v_counter + 1;
+        END WHILE;
+    END IF;
+
+    -- Verificar conflictos para el docente si se cambia horario, días o docente
+    IF p_docente_id IS NOT NULL OR p_hora_inicio IS NOT NULL OR p_hora_fin IS NOT NULL OR p_dias IS NOT NULL THEN
+        SET v_counter = 1;
+        WHILE v_counter <= v_num_dias DO
+            SET v_day = CAST(TRIM(SUBSTRING_INDEX(SUBSTRING_INDEX(v_new_dias, ',', v_counter), ',', -1)) AS UNSIGNED);
+
+            -- Verificar conflictos para el docente
             SELECT COUNT(*) INTO v_conflict_count
             FROM Seccion s
             JOIN SeccionDia sd ON s.seccion_id = sd.seccion_id
             JOIN EstadoSeccion es ON s.estado_seccion_id = es.estado_seccion_id
             WHERE s.docente_id = v_current_docente_id
               AND s.seccion_id != p_seccion_id
+              AND sd.dia_id = v_day
               AND s.periodo_academico_id = v_periodo_academico_id
               AND es.nombre = 'ACTIVA'
-              AND FIND_IN_SET(sd.dia_id, v_dias_seccion) > 0
-              AND (TIME_TO_SEC(v_hora_inicio) < TIME_TO_SEC(s.hora_fin) AND 
-                   TIME_TO_SEC(v_hora_fin) > TIME_TO_SEC(s.hora_inicio));
+              AND (
+                  (TIME_TO_SEC(v_current_hora_inicio) < TIME_TO_SEC(s.hora_fin)) AND 
+                  (TIME_TO_SEC(v_current_hora_fin) > TIME_TO_SEC(s.hora_inicio))
+              );
             
             IF v_conflict_count > 0 THEN
                 SIGNAL SQLSTATE '45000' 
-                SET MESSAGE_TEXT = 'El docente ya tiene una sección activa en el mismo horario y días';
+                SET MESSAGE_TEXT = 'El docente ya tiene una sección activa en el mismo horario y día';
             END IF;
-        END IF;
+
+            SET v_counter = v_counter + 1;
+        END WHILE;
     END IF;
 
     -- Actualizar la sección con los nuevos valores
     UPDATE Seccion
     SET 
         docente_id = COALESCE(p_docente_id, docente_id),
-        aula_id = COALESCE(p_aula_id, aula_id),
+        aula_id = v_new_aula_id,
         estado_seccion_id = COALESCE(v_estado_seccion_id, estado_seccion_id),
         motivo_cancelacion = CASE 
             WHEN p_estado = 'CANCELADA' THEN p_motivo_cancelacion
@@ -472,67 +551,32 @@ BEGIN
             ELSE motivo_cancelacion
         END,
         cupos = COALESCE(p_cupos, cupos),
-        video_url = COALESCE(p_video_url, video_url)
+        video_url = COALESCE(p_video_url, video_url),
+        hora_inicio = v_current_hora_inicio,
+        hora_fin = v_current_hora_fin
     WHERE seccion_id = p_seccion_id;
 
+    -- Actualizar días si se especificaron nuevos
+    IF p_dias IS NOT NULL AND p_dias != '' THEN
+        -- Eliminar días actuales
+        DELETE FROM SeccionDia WHERE seccion_id = p_seccion_id;
+        
+        -- Insertar nuevos días
+        SET v_counter = 1;
+        WHILE v_counter <= v_num_dias DO
+            SET v_day = CAST(TRIM(SUBSTRING_INDEX(SUBSTRING_INDEX(p_dias, ',', v_counter), ',', -1)) AS UNSIGNED);
+            INSERT INTO SeccionDia (seccion_id, dia_id) VALUES (p_seccion_id, v_day);
+            SET v_counter = v_counter + 1;
+        END WHILE;
+    END IF;
+    
     -- Si no se actualizó ninguna fila, se lanza un error
     IF ROW_COUNT() = 0 THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'No se realizaron cambios en la sección';
     END IF;
-    
-    -- Si se está reactivando la sección, verificar que no haya conflictos
-    IF p_estado = 'ACTIVA' AND v_current_estado != 'ACTIVA' THEN
-        -- Verificar conflictos con otras secciones
-        SELECT COUNT(*) INTO v_conflict_count
-        FROM Seccion s
-        JOIN SeccionDia sd ON s.seccion_id = sd.seccion_id
-        JOIN EstadoSeccion es ON s.estado_seccion_id = es.estado_seccion_id
-        WHERE s.aula_id = COALESCE(p_aula_id, v_current_aula_id)
-          AND s.seccion_id != p_seccion_id
-          AND s.periodo_academico_id = v_periodo_academico_id
-          AND es.nombre = 'ACTIVA'
-          AND FIND_IN_SET(sd.dia_id, v_dias_seccion) > 0
-          AND (TIME_TO_SEC(v_hora_inicio) < TIME_TO_SEC(s.hora_fin) AND 
-               TIME_TO_SEC(v_hora_fin) > TIME_TO_SEC(s.hora_inicio));
-        
-        IF v_conflict_count > 0 THEN
-            -- Revertir la activación
-            UPDATE Seccion
-            SET estado_seccion_id = (SELECT estado_seccion_id FROM EstadoSeccion WHERE nombre = 'CANCELADA'),
-                motivo_cancelacion = 'Activación revertida por conflicto de horario'
-            WHERE seccion_id = p_seccion_id;
-            
-            SIGNAL SQLSTATE '45000' 
-            SET MESSAGE_TEXT = 'No se puede reactivar: conflicto de horario con otra sección activa';
-        END IF;
-        
-        -- Verificar conflictos con laboratorios
-        SELECT COUNT(*) INTO v_conflict_count
-        FROM Laboratorio l
-        JOIN LaboratorioDia ld ON l.laboratorio_id = ld.laboratorio_id
-        JOIN EstadoSeccion es ON l.estado_seccion_id = es.estado_seccion_id
-        WHERE l.aula_id = COALESCE(p_aula_id, v_current_aula_id)
-          AND l.periodo_academico_id = v_periodo_academico_id
-          AND es.nombre = 'ACTIVA'
-          AND FIND_IN_SET(ld.dia_id, v_dias_seccion) > 0
-          AND (TIME_TO_SEC(v_hora_inicio) < TIME_TO_SEC(l.hora_fin) AND 
-               TIME_TO_SEC(v_hora_fin) > TIME_TO_SEC(l.hora_inicio));
-        
-        IF v_conflict_count > 0 THEN
-            -- Revertir la activación
-            UPDATE Seccion
-            SET estado_seccion_id = (SELECT estado_seccion_id FROM EstadoSeccion WHERE nombre = 'CANCELADA'),
-                motivo_cancelacion = 'Activación revertida por conflicto con laboratorio'
-            WHERE seccion_id = p_seccion_id;
-            
-            SIGNAL SQLSTATE '45000' 
-            SET MESSAGE_TEXT = 'No se puede reactivar: conflicto de horario con laboratorio activo';
-        END IF;
-    END IF;
 END //
 
 DELIMITER ;
-
 
 
 DELIMITER //
