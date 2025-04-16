@@ -1,5 +1,5 @@
 <?php
-/**
+/*
  * API para registrar evaluaciones de docentes
  * 
  * Ejemplo de URL: 
@@ -26,7 +26,19 @@
  *
  * @package API
  * @author Jose Vargas
- * @version 1.0
+ * @version 2.0
+ * 
+ * Formato de entrada
+ {
+  "estudiante_id": 5,
+  "docente_id": 1,
+  "periodo_id": 2,
+  "respuestas": {
+    "1": "testing",
+    "2": "testing",
+    "3": "testing"
+  }
+}
  */
 header("Access-Control-Allow-Origin: *");
 header('Content-Type: application/json');
