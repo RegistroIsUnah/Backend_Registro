@@ -482,8 +482,8 @@ class Solicitud {
                     mrs.descripcion AS motivo,
                     s.estudiante_id,
                     e.numero_cuenta,
-                    e.nombre AS estudiante_nombre,
-                    e.apellido AS estudiante_apellido
+                    e.nombre AS nombre,
+                    e.apellido AS apellido
                 FROM Solicitud s
                 JOIN EstadoSolicitud es ON s.estado_solicitud_id = es.estado_solicitud_id
                 JOIN TipoSolicitud ts ON s.tipo_solicitud_id = ts.tipo_solicitud_id
