@@ -16,6 +16,11 @@ class EstudianteController {
 
     public function __construct() {
         $this->modelo = new Estudiante();
+
+        // Crear directorio si no existe
+        if (!file_exists($this->uploadDir)) {
+            mkdir($this->uploadDir, 0755, true);
+        }
     }
 
     /**
@@ -684,6 +689,177 @@ class EstudianteController {
         }
     }
 
+    private $uploadDir = __DIR__ . '/../../uploads/estudiantes_fotos/';
+    private $allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+    private $maxFileSize = 2 * 1024 * 1024; // 2MB
+    private $maxPhotosPerStudent = 3; // Límite de fotos por estudiante
 
+    
+     /**
+     * Maneja la subida de una foto de estudiante
+     */
+    public function subirFotos() {
+        header('Content-Type: application/json');
+        
+        try {
+            // Verificar método HTTP
+            if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+                throw new Exception('Método no permitido', 405);
+            }
+
+            // Verificar datos recibidos
+            $estudiante_id = $_POST['estudiante_id'] ?? null;
+            $foto = $_FILES['foto'] ?? null;
+
+            if (!$estudiante_id || !$foto) {
+                throw new Exception('Datos incompletos', 400);
+            }
+
+            // Validar estudiante
+            if (!$this->modelo->estudianteExiste($estudiante_id)) {
+                throw new Exception('Estudiante no encontrado', 404);
+            }
+
+            // Verificar límite de fotos
+            $fotosActuales = $this->modelo->obtenerFotos($estudiante_id);
+            if (count($fotosActuales) >= $this->maxPhotosPerStudent) {
+                throw new Exception('Límite de fotos alcanzado (máx. ' . $this->maxPhotosPerStudent . ')', 400);
+            }
+
+            // Validar archivo
+            if ($foto['error'] !== UPLOAD_ERR_OK) {
+                throw new Exception('Error al subir el archivo', 400);
+            }
+
+            if (!in_array($foto['type'], $this->allowedTypes)) {
+                throw new Exception('Tipo de archivo no permitido', 400);
+            }
+
+            if ($foto['size'] > $this->maxFileSize) {
+                throw new Exception('El archivo es demasiado grande (máx. 2MB)', 400);
+            }
+
+            // Generar nombre único para el archivo
+            $extension = pathinfo($foto['name'], PATHINFO_EXTENSION);
+            $filename = 'est_' . $estudiante_id . '_' . uniqid() . '.' . $extension;
+            $filepath = $this->uploadDir . $filename;
+
+            // Mover archivo subido
+            if (!move_uploaded_file($foto['tmp_name'], $filepath)) {
+                throw new Exception('Error al guardar el archivo', 500);
+            }
+
+            // Guardar en base de datos (ruta relativa)
+            $ruta_relativa = 'uploads/estudiantes_fotos/' . $filename;
+            if (!$this->modelo->guardarFoto($estudiante_id, $ruta_relativa)) {
+                // Intentar eliminar el archivo si falla la BD
+                @unlink($filepath);
+                throw new Exception('Error al guardar en base de datos', 500);
+            }
+
+            // Respuesta exitosa
+            echo json_encode([
+                'success' => true,
+                'message' => 'Foto subida correctamente',
+                'foto_url' => $ruta_relativa,
+                'fotos_actuales' => count($fotosActuales) + 1
+            ]);
+
+        } catch (Exception $e) {
+            http_response_code($e->getCode() ?: 500);
+            echo json_encode([
+                'success' => false,
+                'message' => $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * Obtiene todas las fotos de un estudiante
+     */
+    public function obtenerFotos() {
+        header('Content-Type: application/json');
+        
+        try {
+            // Verificar método HTTP
+            if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
+                throw new Exception('Método no permitido', 405);
+            }
+
+            $estudiante_id = $_GET['estudiante_id'] ?? null;
+
+            if (!$estudiante_id) {
+                throw new Exception('ID de estudiante requerido', 400);
+            }
+
+            // Validar estudiante
+            if (!$this->modelo->estudianteExiste($estudiante_id)) {
+                throw new Exception('Estudiante no encontrado', 404);
+            }
+
+            // Obtener fotos
+            $fotos = $this->modelo->obtenerFotos($estudiante_id);
+
+            echo json_encode([
+                'success' => true,
+                'fotos' => $fotos,
+                'count' => count($fotos),
+                'max_allowed' => $this->maxPhotosPerStudent
+            ]);
+
+        } catch (Exception $e) {
+            http_response_code($e->getCode() ?: 500);
+            echo json_encode([
+                'success' => false,
+                'message' => $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * Elimina una foto de un estudiante
+     */
+    public function eliminarFotos() {
+        header('Content-Type: application/json');
+        
+        try {
+            // Verificar método HTTP
+            if ($_SERVER['REQUEST_METHOD'] !== 'DELETE' && $_SERVER['REQUEST_METHOD'] !== 'POST') {
+                throw new Exception('Método no permitido', 405);
+            }
+
+            // Obtener datos del cuerpo de la petición
+            $data = json_decode(file_get_contents('php://input'), true) ?: $_POST;
+            
+            $foto_id = $data['foto_id'] ?? null;
+            $estudiante_id = $data['estudiante_id'] ?? null;
+
+            if (!$foto_id || !$estudiante_id) {
+                throw new Exception('ID de foto y estudiante requeridos', 400);
+            }
+
+            // Verificar que la foto pertenece al estudiante
+            if (!$this->modelo->fotoPerteneceAEstudiante($foto_id, $estudiante_id)) {
+                throw new Exception('La foto no pertenece al estudiante', 403);
+            }
+
+            // Eliminar foto
+            if (!$this->modelo->eliminarFoto($foto_id, $estudiante_id)) {
+                throw new Exception('Error al eliminar la foto', 500);
+            }
+
+            echo json_encode([
+                'success' => true,
+                'message' => 'Foto eliminada correctamente'
+            ]);
+
+        } catch (Exception $e) {
+            http_response_code($e->getCode() ?: 500);
+            echo json_encode([
+                'success' => false,
+                'message' => $e->getMessage()
+            ]);
+        }
+    }
 }
 ?>

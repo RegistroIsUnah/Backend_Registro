@@ -1357,5 +1357,157 @@ class Estudiante {
 
         return $result->fetch_all(MYSQLI_ASSOC);
     }
+
+    /**
+     * Guarda la información de la foto en la base de datos
+     */
+    public function guardarFoto($estudiante_id, $ruta_foto) {
+        try {
+            $query = "INSERT INTO FotosEstudiante (estudiante_id, ruta_foto) VALUES (?, ?)";
+            $stmt = $this->conn->prepare($query);
+            
+            if (!$stmt) {
+                throw new Exception("Error en preparación de consulta: " . $this->conn->error);
+            }
+
+            $stmt->bind_param("is", $estudiante_id, $ruta_foto);
+            $result = $stmt->execute();
+            $stmt->close();
+
+            return $result;
+        } catch (Exception $e) {
+            error_log("Error al guardar foto: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Obtiene todas las fotos de un estudiante
+     */
+    public function obtenerFotos($estudiante_id) {
+        try {
+            $query = "SELECT foto_id, ruta_foto FROM FotosEstudiante WHERE estudiante_id = ?";
+            $stmt = $this->conn->prepare($query);
+            
+            if (!$stmt) {
+                throw new Exception("Error en preparación de consulta: " . $this->conn->error);
+            }
+
+            $stmt->bind_param("i", $estudiante_id);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $fotos = $result->fetch_all(MYSQLI_ASSOC);
+            $stmt->close();
+
+            return $fotos;
+        } catch (Exception $e) {
+            error_log("Error al obtener fotos: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * Elimina una foto del estudiante
+     */
+    public function eliminarFoto($foto_id, $estudiante_id) {
+        try {
+            // Primero obtenemos la ruta del archivo
+            $query = "SELECT ruta_foto FROM FotosEstudiante WHERE foto_id = ? AND estudiante_id = ?";
+            $stmt = $this->conn->prepare($query);
+            
+            if (!$stmt) {
+                throw new Exception("Error en preparación de consulta: " . $this->conn->error);
+            }
+
+            $stmt->bind_param("ii", $foto_id, $estudiante_id);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $foto = $result->fetch_assoc();
+            $stmt->close();
+
+            if (!$foto) {
+                throw new Exception("Foto no encontrada");
+            }
+
+            // Eliminar de la base de datos
+            $query = "DELETE FROM FotosEstudiante WHERE foto_id = ? AND estudiante_id = ?";
+            $stmt = $this->conn->prepare($query);
+            
+            if (!$stmt) {
+                throw new Exception("Error en preparación de consulta: " . $this->conn->error);
+            }
+
+            $stmt->bind_param("ii", $foto_id, $estudiante_id);
+            $result = $stmt->execute();
+            $stmt->close();
+
+            if (!$result) {
+                throw new Exception("Error al eliminar de la base de datos");
+            }
+
+            // Eliminar archivo físico
+            $filepath = __DIR__ . '/../../' . $foto['ruta_foto'];
+            if (file_exists($filepath)) {
+                if (!unlink($filepath)) {
+                    throw new Exception("Error al eliminar el archivo físico");
+                }
+            }
+
+            return true;
+        } catch (Exception $e) {
+            error_log("Error al eliminar foto: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Verifica si un estudiante existe
+     */
+    public function estudianteExiste($estudiante_id) {
+        try {
+            $query = "SELECT estudiante_id FROM Estudiante WHERE estudiante_id = ?";
+            $stmt = $this->conn->prepare($query);
+            
+            if (!$stmt) {
+                throw new Exception("Error en preparación de consulta: " . $this->conn->error);
+            }
+
+            $stmt->bind_param("i", $estudiante_id);
+            $stmt->execute();
+            $stmt->store_result();
+            $exists = $stmt->num_rows > 0;
+            $stmt->close();
+
+            return $exists;
+        } catch (Exception $e) {
+            error_log("Error al verificar estudiante: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Verifica si una foto pertenece a un estudiante
+     */
+    public function fotoPerteneceAEstudiante($foto_id, $estudiante_id) {
+        try {
+            $query = "SELECT foto_id FROM FotosEstudiante WHERE foto_id = ? AND estudiante_id = ?";
+            $stmt = $this->conn->prepare($query);
+            
+            if (!$stmt) {
+                throw new Exception("Error en preparación de consulta: " . $this->conn->error);
+            }
+
+            $stmt->bind_param("ii", $foto_id, $estudiante_id);
+            $stmt->execute();
+            $stmt->store_result();
+            $exists = $stmt->num_rows > 0;
+            $stmt->close();
+
+            return $exists;
+        } catch (Exception $e) {
+            error_log("Error al verificar foto: " . $e->getMessage());
+            return false;
+        }
+    }
 }
 ?>
