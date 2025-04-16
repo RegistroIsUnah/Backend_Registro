@@ -184,13 +184,15 @@ class EstudianteController {
      * @param array $data Datos de la evaluación en formato array
      * @return void Retorna una respuesta JSON con el resultado
      * @author Jose Vargas
-     * @version 1.0
+     * @version 2.0
      */
     public function registrarEvaluacionDocente($data) {
         header('Content-Type: application/json');
-        
+
         try {
-            // 1. Validar sesión y rol
+
+            /*
+            //Validar sesión y rol
             session_start();
             if (!isset($_SESSION['usuario_id'])) {
                 throw new Exception('Debe iniciar sesión para realizar esta acción', 401);
@@ -199,43 +201,44 @@ class EstudianteController {
             if ($_SESSION['rol'] !== 'estudiante') {
                 throw new Exception('Solo los estudiantes pueden evaluar docentes', 403);
             }
+            */
 
-            // 2. Validar campos requeridos
-            $camposRequeridos = ['docente_id', 'periodo_id', 'respuestas'];
+
+            // 1. Validar campos requeridos
+            $camposRequeridos = ['docente_id', 'periodo_id', 'estudiante_id', 'respuestas'];
             foreach ($camposRequeridos as $campo) {
                 if (empty($data[$campo])) {
                     throw new Exception("El campo '$campo' es requerido", 400);
                 }
             }
 
-            // 3. Validar estructura de respuestas
+            // 2. Validar estructura de respuestas
             if (!is_array($data['respuestas']) || empty($data['respuestas'])) {
                 throw new Exception("Las respuestas deben ser un array no vacío", 400);
             }
 
-            // 4. Registrar evaluación
+            // 3. Registrar evaluación
             $this->modelo->registrarEvaluacionDocente(
-                $_SESSION['estudiante_id'], // Obtenido de la sesión
+                $data['estudiante_id'],
                 $data['docente_id'],
                 $data['periodo_id'],
                 $data['respuestas']
             );
 
-            // 5. Respuesta exitosa
+            // 4. Respuesta exitosa
             echo json_encode([
                 'success' => true,
                 'message' => 'Evaluación registrada correctamente',
                 'data' => [
                     'docente_id' => $data['docente_id'],
+                    'estudiante_id' => $data['estudiante_id'],
                     'preguntas_respondidas' => count($data['respuestas'])
                 ]
             ]);
 
         } catch (Exception $e) {
-            // Manejo de errores
             $statusCode = $e->getCode() >= 400 ? $e->getCode() : 500;
             http_response_code($statusCode);
-            
             echo json_encode([
                 'success' => false,
                 'error' => $e->getMessage(),
