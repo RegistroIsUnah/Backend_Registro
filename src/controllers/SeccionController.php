@@ -26,7 +26,6 @@ class SeccionController {
      */
     public function __construct()
     {
-        require_once __DIR__ . '/../models/Seccion.php';
         $this->modelo = new Seccion();
     }
 
