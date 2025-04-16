@@ -159,9 +159,8 @@ class SeccionController {
         $dias = isset($data['dias']) && $data['dias'] !== "" ? $data['dias'] : null;
     
         try {
-            // Instanciar el modelo Seccion y llamar a la función para modificar la sección
-            $seccionModel = new Seccion();
-            $mensaje = $seccionModel->modificarSeccion(
+            $model = new Seccion();
+            $mensaje = $model->modificarSeccion(
                 $seccion_id,
                 $docente_id,
                 $aula_id,
@@ -173,14 +172,30 @@ class SeccionController {
                 $hora_fin,
                 $dias
             );
-        } catch (Exception $e) {
-            http_response_code(500);
-            echo json_encode(['error' => $e->getMessage()]);
+    
+            http_response_code(200);
+            echo json_encode(['message' => $mensaje]);
+        }
+        catch (\mysqli_sql_exception $e) {
+            // SQLSTATE 45000 = SIGNAL en tu SP → error de validación de negocio
+            if ($e->getSqlState() === '45000') {
+                http_response_code(422);
+                echo json_encode(['error' => $e->getMessage()]);
+            } else {
+                // Otro código SQLSTATE → fallo interno de BD
+                error_log($e->__toString());
+                http_response_code(500);
+                echo json_encode(['error' => 'Error de base de datos interno']);
+            }
             exit;
         }
-    
-        http_response_code(200);
-        echo json_encode(['message' => $mensaje]);
+        catch (\Exception $e) {
+            // Cualquier otro fallo en PHP
+            error_log($e->__toString());
+            http_response_code(500);
+            echo json_encode(['error' => 'Error en el servidor']);
+            exit;
+        }
     }
     
 

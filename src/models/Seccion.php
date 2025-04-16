@@ -101,45 +101,52 @@ class Seccion {
      * @return string Mensaje de éxito.
      * @throws Exception Si ocurre un error durante la modificación.
      */
-    public function modificarSeccion($seccion_id, $docente_id, $aula_id, $estado, $motivo_cancelacion, $cupos, $video_url, $hora_inicio = null, $hora_fin = null, $dias = null) {
-        // Llamar al procedimiento almacenado SP_modificarSeccion con los nuevos parámetros
-        $stmt = $this->conn->prepare("CALL SP_modificarSeccion(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    public function modificarSeccion(
+        int    $seccion_id,
+        ?int   $docente_id        = null,
+        ?int   $aula_id           = null,
+        ?string $estado           = null,
+        ?string $motivo_cancelacion = null,
+        ?int   $cupos             = null,
+        ?string $video_url        = null,
+        ?string $hora_inicio      = null,
+        ?string $hora_fin         = null,
+        ?string $dias             = null
+    ) {
+        mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+    
+        $sql = "CALL SP_modificarSeccion(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        $stmt = $this->conn->prepare($sql);
         if (!$stmt) {
-            throw new Exception("Error preparando la consulta: " . $this->conn->error);
+            throw new Exception("Error preparando consulta: " . $this->conn->error);
         }
     
-        // "iiississss": 
-        // i = seccion_id (entero)
-        // i = docente_id (entero)
-        // i = aula_id (entero)
-        // s = estado (string)
-        // s = motivo_cancelacion (string)
-        // i = cupos (entero)
-        // s = video_url (string)
-        // s = hora_inicio (string en formato TIME)
-        // s = hora_fin (string en formato TIME)
-        // s = dias (string separado por comas)
-        if (!$stmt->bind_param("iiississss", 
-            $seccion_id, 
-            $docente_id, 
-            $aula_id, 
-            $estado, 
-            $motivo_cancelacion, 
-            $cupos, 
+        // bind con todos los parámetros
+        $stmt->bind_param(
+            "iiississss",
+            $seccion_id,
+            $docente_id,
+            $aula_id,
+            $estado,
+            $motivo_cancelacion,
+            $cupos,
             $video_url,
             $hora_inicio,
             $hora_fin,
-            $dias)) {
-            throw new Exception("Error vinculando parámetros: " . $stmt->error);
-        }
+            $dias
+        );
     
-        if (!$stmt->execute()) {
-            throw new Exception("Error ejecutando la consulta: " . $stmt->error);
+        try {
+            $stmt->execute();
+            // liberar posibles result sets
+            do {
+                $stmt->store_result();
+            } while ($stmt->more_results() && $stmt->next_result());
+        } finally {
+            $stmt->close();
         }
-    
-        $stmt->close();
         return "Sección modificada exitosamente";
-    }
+    }   
 
    /**
      * Obtiene las secciones de una clase con los detalles del docente, aula y edificio.
