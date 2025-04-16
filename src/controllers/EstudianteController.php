@@ -668,7 +668,8 @@ class EstudianteController {
                         'periodo_academico' => [
                             'anio' => (int)$clase['anio'],
                             'numero_periodo_id' => (int)$clase['numero_periodo_id']
-                        ]
+                        ],
+                        'calificacion' => is_null($clase['calificacion']) ? null : (float)$clase['calificacion']
                     ];
                 }, $clases)
             ];
