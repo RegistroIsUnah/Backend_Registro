@@ -227,7 +227,7 @@ class SeccionController {
      * @param int $seccionId ID de la sección
      * @return void
      * @author Jose Vargas
-     * @version 1.2
+     * @version 1.3
      */
     public function seccionListaEstudiantes($seccionId) {
         header('Content-Type: application/json');
@@ -242,13 +242,14 @@ class SeccionController {
                         'numero_cuenta' => $estudiante['numero_cuenta'],
                         'nombre' => $estudiante['nombre'],
                         'apellido' => $estudiante['apellido'],
-                        'correo_personal' => $estudiante['correo_personal']
+                        'correo_personal' => $estudiante['correo_personal'],
+                        'calificacion' => $estudiante['calificacion'] // Puede ser NULL
                     ];
                 }, $estudiantes)
             ];
             
             echo json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
-    
+
         } catch (Exception $e) {
             http_response_code($e->getCode() ?: 500);
             echo json_encode([
