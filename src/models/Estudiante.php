@@ -497,9 +497,9 @@ class Estudiante {
                 $randomNumbers .= $num;
             }
         }
-
-        // Concatenar el año con los 7 números aleatorios
-        return $year . " " . $randomNumbers;
+    
+        // Concatenar el año con los 7 números aleatorios sin espacio
+        return $year . $randomNumbers;
     }
 
     /**

@@ -2,9 +2,22 @@
 
 require_once __DIR__ . '/../models/ResetPassword.php';
 
+/**
+ * Controlador de PasswordReset
+ *
+ * Maneja la lógica de PasswordReset
+ *
+ * @package Controllers
+ * @author Ruben Diaz
+ * @version 1.0
+ * 
+ */
 class PasswordResetController {
     private $model;
 
+    /**
+     * Constructor del controlador.
+     */
     public function __construct() {
         $this->model = new ResetPassword();
     }

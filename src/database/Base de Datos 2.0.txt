@@ -642,10 +642,12 @@ CREATE TABLE EvaluacionDocente (
     periodo_academico_id INT NOT NULL,
     fecha DATETIME NOT NULL,
     estado_evaluacion_id INT NOT NULL,
+    seccion_id INT,
     FOREIGN KEY (estado_evaluacion_id) REFERENCES EstadoEvaluacion(estado_evaluacion_id),
     FOREIGN KEY (docente_id) REFERENCES Docente(docente_id),
     FOREIGN KEY (estudiante_id) REFERENCES Estudiante(estudiante_id),
-    FOREIGN KEY (periodo_academico_id) REFERENCES PeriodoAcademico(periodo_academico_id)
+    FOREIGN KEY (periodo_academico_id) REFERENCES PeriodoAcademico(periodo_academico_id),
+    FOREIGN KEY (seccion_id) REFERENCES Seccion(seccion_id)
 ) ENGINE=InnoDB;
 
 CREATE TABLE RespuestaEvaluacion (
