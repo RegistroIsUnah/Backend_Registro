@@ -495,5 +495,9 @@ SET revisor_usuario_id = 6
 WHERE aspirante_id = 5;
 
 
+INSERT INTO EstadoSolicitudContacto (nombre) VALUES 
+('Pendiente'),
+('Aceptada'),
+('Rechazada');
 
 

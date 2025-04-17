@@ -497,9 +497,9 @@ class Estudiante {
                 $randomNumbers .= $num;
             }
         }
-
-        // Concatenar el año con los 7 números aleatorios
-        return $year . " " . $randomNumbers;
+    
+        // Concatenar el año con los 7 números aleatorios sin espacio
+        return $year . $randomNumbers;
     }
 
     /**
@@ -1312,7 +1312,8 @@ class Estudiante {
                     GROUP_CONCAT(DISTINCT ld.dia_id ORDER BY ld.dia_id SEPARATOR ', ') AS lista_dia_ids_lab,
                     GROUP_CONCAT(DISTINCT dsl.nombre ORDER BY ld.dia_id SEPARATOR ', ') AS nombres_dias_lab,
                     al.nombre AS aula_lab,
-                    el.nombre AS edificio_lab
+                    el.nombre AS edificio_lab,
+                    he.calificacion
 
                 FROM Matricula m
                 INNER JOIN Seccion s ON m.seccion_id = s.seccion_id
@@ -1324,12 +1325,12 @@ class Estudiante {
                 INNER JOIN EstadoProceso ep ON pa.estado_proceso_id = ep.estado_proceso_id
                 LEFT JOIN SeccionDia sd ON s.seccion_id = sd.seccion_id
                 LEFT JOIN DiaSemana ds ON sd.dia_id = ds.dia_id
-
                 LEFT JOIN Laboratorio l ON m.laboratorio_id = l.laboratorio_id
                 LEFT JOIN LaboratorioDia ld ON l.laboratorio_id = ld.laboratorio_id
                 LEFT JOIN DiaSemana dsl ON ld.dia_id = dsl.dia_id
                 LEFT JOIN Aula al ON l.aula_id = al.aula_id
                 LEFT JOIN Edificio el ON al.edificio_id = el.edificio_id
+                LEFT JOIN HistorialEstudiante he ON m.estudiante_id = he.estudiante_id
 
                 WHERE 
                     m.estudiante_id = ?
@@ -1339,9 +1340,10 @@ class Estudiante {
                     c.clase_id, c.codigo, c.nombre, c.creditos, c.tiene_laboratorio,
                     s.seccion_id, s.hora_inicio, s.hora_fin,
                     e.nombre, a.nombre, pa.anio, pa.numero_periodo_id,
-                    d.numero_empleado, d.nombre, d.apellido, d.correo,
+                    d.docente_id, d.numero_empleado, d.nombre, d.apellido, d.correo,
                     l.laboratorio_id, l.codigo_laboratorio, l.hora_inicio, l.hora_fin,
-                    al.nombre, el.nombre
+                    al.nombre, el.nombre,
+                    he.calificacion
 
                 ORDER BY s.seccion_id, s.hora_inicio, s.hora_fin";
 
