@@ -163,25 +163,29 @@ class Seccion {
 
         // Consulta SQL para obtener las secciones con detalles del docente, aula, edificio y estado
         $query = "
-            SELECT 
+             SELECT 
                 s.seccion_id,
                 s.hora_inicio,
                 s.hora_fin,
                 s.estado_seccion_id,
-                es.nombre AS estado_seccion,  -- Obtenemos el nombre del estado
+                es.nombre AS estado_seccion,  
                 s.video_url,
                 s.motivo_cancelacion,
                 s.cupos,
                 d.nombre AS docente_nombre,
                 d.apellido AS docente_apellido,
                 a.nombre AS aula_nombre,
-                e.nombre AS edificio_nombre
+                e.nombre AS edificio_nombre,
+                pd.anio AS anio_periodo,
+                np.nombre AS periodo_nombre
             FROM Seccion s
             LEFT JOIN Docente d ON s.docente_id = d.docente_id
+            LEFT JOIN PeriodoAcademico pd ON s.periodo_academico_id = pd.periodo_academico_id
+            LEFT JOIN NumeroPeriodo np ON pd.numero_periodo_id = np.numero_periodo_id
             LEFT JOIN Aula a ON s.aula_id = a.aula_id
             LEFT JOIN Edificio e ON a.edificio_id = e.edificio_id
-            LEFT JOIN EstadoSeccion es ON s.estado_seccion_id = es.estado_seccion_id  -- Relación con EstadoSeccion
-            WHERE s.clase_id = ?
+            LEFT JOIN EstadoSeccion es ON s.estado_seccion_id = es.estado_seccion_id  
+            WHERE s.clase_id = ?;
         ";
 
         $stmt = $this->conn->prepare($query);
