@@ -286,5 +286,27 @@ class DocenteController {
         }
     }
 
+
+    public function resumenEvaluacionesPorSeccion($seccionId) {
+        header('Content-Type: application/json');
+        try {
+            if (empty($seccionId)) {
+                throw new Exception("El campo 'seccion_id' es requerido", 400);
+            }
+
+            $data = $this->modelo->obtenerResumenEvaluacionPorSeccion($seccionId);
+
+            echo json_encode([
+                'success' => true,
+                'data' => $data
+            ]);
+        } catch (Exception $e) {
+            http_response_code($e->getCode() ?: 500);
+            echo json_encode([
+                'success' => false,
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
 }
 ?>

@@ -394,5 +394,75 @@ class Docente {
     }
 
 
+
+    /**
+     * Obtiene un resumen de la evaluación por sección.
+     *
+     * @param int $seccionId ID de la sección
+     * @return array Resumen de la evaluación por sección
+     * @author Jose Vargas
+     * @version 1.0
+     * 
+     */
+    public function obtenerResumenEvaluacionPorSeccion($seccionId) {
+        $sql = "
+            SELECT 
+                ed.docente_id,
+                ed.seccion_id,
+                re.pregunta_id,
+                re.respuesta
+            FROM EvaluacionDocente ed
+            INNER JOIN RespuestaEvaluacion re ON ed.evaluacion_id = re.evaluacion_id
+            WHERE ed.seccion_id = ?
+            ORDER BY ed.docente_id, re.pregunta_id
+        ";
+    
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param("i", $seccionId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+    
+        $resumen = [];
+    
+        while ($row = $result->fetch_assoc()) {
+            $docenteId = $row['docente_id'];
+            $preguntaId = $row['pregunta_id'];
+            $respuesta = $row['respuesta'];
+    
+            if (!isset($resumen[$docenteId])) {
+                $resumen[$docenteId] = [
+                    'docente_id' => $docenteId,
+                    'seccion_id' => $row['seccion_id'],
+                    'resumen_respuestas' => []
+                ];
+            }
+    
+            $preguntas = &$resumen[$docenteId]['resumen_respuestas'];
+            $respuestaKey = "respuestas-{$preguntaId}"; // Aquí generamos la clave dinámica para cada respuesta
+    
+            $found = false;
+    
+            // Recorremos las respuestas por pregunta
+            foreach ($preguntas as &$p) {
+                if ($p['pregunta_id'] == $preguntaId) {
+                    $p[$respuestaKey][] = $respuesta; // Asignamos la respuesta a la clave dinámica
+                    $found = true;
+                    break;
+                }
+            }
+    
+            // Si no se encontró la pregunta, creamos una nueva entrada
+            if (!$found) {
+                $preguntas[] = [
+                    'pregunta_id' => $preguntaId,
+                    $respuestaKey => [$respuesta] // Usamos la clave dinámica para las respuestas
+                ];
+            }
+        }
+    
+        return array_values($resumen);
+    }
+
+
 }
 ?>
