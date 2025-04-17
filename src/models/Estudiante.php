@@ -241,8 +241,9 @@ class Estudiante {
             estudiante_id, 
             periodo_academico_id, 
             fecha, 
-            estado_evaluacion_id
-        ) VALUES (?, ?, ?, NOW(), 1)";
+            estado_evaluacion_id,
+            seccion_id
+        ) VALUES (?, ?, ?, NOW(), 1,seccion_id)";
         
         $stmt = $this->conn->prepare($sqlEvaluacion);
         $stmt->bind_param("iii", $docenteId, $estudianteId, $periodoId);

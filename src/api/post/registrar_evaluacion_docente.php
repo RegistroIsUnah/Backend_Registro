@@ -33,6 +33,7 @@
   "estudiante_id": 5,
   "docente_id": 1,
   "periodo_id": 2,
+  "seccion_id": 1,
   "respuestas": {
     "1": "testing",
     "2": "testing",
