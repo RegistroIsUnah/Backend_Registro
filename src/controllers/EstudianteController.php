@@ -210,7 +210,7 @@ class EstudianteController {
 
 
             // 1. Validar campos requeridos
-            $camposRequeridos = ['docente_id', 'periodo_id', 'estudiante_id', 'respuestas'];
+            $camposRequeridos = ['docente_id', 'periodo_id', 'estudiante_id','seccion_id', 'respuestas'];
             foreach ($camposRequeridos as $campo) {
                 if (empty($data[$campo])) {
                     throw new Exception("El campo '$campo' es requerido", 400);
@@ -227,7 +227,8 @@ class EstudianteController {
                 $data['estudiante_id'],
                 $data['docente_id'],
                 $data['periodo_id'],
-                $data['respuestas']
+                $data['respuestas'],
+                $data['seccion_id']
             );
 
             // 4. Respuesta exitosa
@@ -237,6 +238,7 @@ class EstudianteController {
                 'data' => [
                     'docente_id' => $data['docente_id'],
                     'estudiante_id' => $data['estudiante_id'],
+                    'seccion_id' => $data['seccion_id'],
                     'preguntas_respondidas' => count($data['respuestas'])
                 ]
             ]);

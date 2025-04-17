@@ -229,23 +229,23 @@ class Estudiante {
      * @param int $docenteId
      * @param int $periodoId
      * @param array $respuestas
+     * @param int $seccionId
      * @return bool
      * @throws Exception
-     * @author Jose Vargas
-     * @version 2.0
      */
-    public function registrarEvaluacionDocente($estudianteId, $docenteId, $periodoId, $respuestas) {
+    public function registrarEvaluacionDocente($estudianteId, $docenteId, $periodoId, $respuestas, $seccionId) {
         // 1. Insertar evaluación principal
         $sqlEvaluacion = "INSERT INTO EvaluacionDocente (
             docente_id, 
             estudiante_id, 
             periodo_academico_id, 
             fecha, 
-            estado_evaluacion_id
-        ) VALUES (?, ?, ?, NOW(), 1)";
-        
+            estado_evaluacion_id,
+            seccion_id
+        ) VALUES (?, ?, ?, NOW(), 1, ?)";
+
         $stmt = $this->conn->prepare($sqlEvaluacion);
-        $stmt->bind_param("iii", $docenteId, $estudianteId, $periodoId);
+        $stmt->bind_param("iiii", $docenteId, $estudianteId, $periodoId, $seccionId);
         $stmt->execute();
         $evaluacionId = $stmt->insert_id;
 
