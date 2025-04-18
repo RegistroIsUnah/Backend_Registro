@@ -73,12 +73,22 @@ class EstudianteController {
         header('Content-Type: application/json');
         
         try {
-           
             // Obtener datos del modelo
             $perfil = $this->modelo->obtenerPerfilEstudiante($estudianteId);
             
+            // Procesar las fotos
+            $fotos = [];
+            if ($perfil['fotos']) {
+                foreach (explode(', ', $perfil['fotos']) as $foto) {
+                    list($foto_id, $ruta) = explode(':', $foto);
+                    $fotos[] = [
+                        'foto_id' => (int)$foto_id,
+                        'ruta' => $ruta
+                    ];
+                }
+            }
+    
             // Formatear respuesta Actualizada
-
             $response = [
                 'success' => true,
                 'data' => [
@@ -94,12 +104,12 @@ class EstudianteController {
                         'indice_global' => (float)$perfil['indice_global'],
                         'indice_periodo' => (float)$perfil['indice_periodo'],
                         'centro' => [
-                            'centro_id' => $perfil['centro_id'],  // Nuevo campo
+                            'centro_id' => $perfil['centro_id'],
                             'nombre' => $perfil['centro']
                         ],
                         'carreras' => array_map(function($id, $nombre) {
                             return [
-                                'carrera_id' => $id,  // Nuevo campo
+                                'carrera_id' => $id,
                                 'nombre' => $nombre
                             ];
                         }, explode(', ', $perfil['carrerasid']), explode(', ', $perfil['carreras'])),
@@ -108,11 +118,10 @@ class EstudianteController {
                     'cuenta' => [
                         'username' => $perfil['username']
                     ],
-                    'fotos' => $perfil['fotos'] ? explode(', ', $perfil['fotos']) : []
+                    'fotos' => $fotos  // Ahora incluye foto_id y ruta
                 ]
             ];
             
-    
             echo json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
     
         } catch (Exception $e) {
@@ -123,7 +132,6 @@ class EstudianteController {
             ]);
         }
     }
-
     
     /**
      * Actualiza el perfil del estudiante
