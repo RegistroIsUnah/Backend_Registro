@@ -131,5 +131,69 @@ class DepartamentoController {
         }
     }
 
+    /**
+     * Obtiene estudiantes por departamento
+     * @param int $departamentoId ID del departamento
+     * @return array Resultado con estudiantes o error
+     */
+    public function obtenerEstudiantesPorDepartamento($departamentoId) {
+        if (!is_numeric($departamentoId)) {
+            return ['error' => 'ID de departamento inválido', 'code' => 400];
+        }
+    
+        $departamentoId = (int)$departamentoId;
+        $resultado = $this->model->obtenerEstudiantesPorDepartamento($departamentoId);
+    
+        if (isset($resultado['error'])) {
+            return $resultado;
+        }
+    
+        $estudiantesAgrupados = [];
+        foreach ($resultado as $registro) {
+            $idEstudiante = $registro['estudiante_id'];
+    
+            // Si el estudiante aún no se ha agregado
+            if (!isset($estudiantesAgrupados[$idEstudiante])) {
+                $estudiantesAgrupados[$idEstudiante] = [
+                    'estudiante_id' => $registro['estudiante_id'],
+                    'nombre' => $registro['estudiante_nombre'],
+                    'apellido' => $registro['estudiante_apellido'],
+                    'numero_cuenta' => $registro['numero_cuenta'],
+                    'correo_personal' => $registro['correo_personal'],
+                    // Inicializamos un array de carreras
+                    'carreras' => []
+                ];
+            }
+    
+            // Solo agregar la carrera si pertenece al departamento solicitado
+            if ($registro['departamento_id'] == $departamentoId) {
+                $estudiantesAgrupados[$idEstudiante]['carreras'][] = [
+                    'carrera_id' => $registro['carrera_id'],
+                    'carrera_nombre' => $registro['carrera_nombre']
+                ];
+            }
+        }
+    
+        // Limpiar estudiantes sin carreras en este departamento
+        foreach ($estudiantesAgrupados as $id => $estudiante) {
+            if (empty($estudiante['carreras'])) {
+                unset($estudiantesAgrupados[$id]);
+            } else {
+                // Si solo tiene una carrera, convertirla en objeto plano
+                if (count($estudiante['carreras']) == 1) {
+                    $estudiantesAgrupados[$id]['carrera_id'] = $estudiante['carreras'][0]['carrera_id'];
+                    $estudiantesAgrupados[$id]['carrera_nombre'] = $estudiante['carreras'][0]['carrera_nombre'];
+                    unset($estudiantesAgrupados[$id]['carreras']);
+                }
+            }
+        }
+    
+        return [
+            'departamento_id' => $departamentoId,
+            'departamento_nombre' => count($resultado) > 0 ? $resultado[0]['departamento_nombre'] : '',
+            'total_estudiantes' => count($estudiantesAgrupados),
+            'estudiantes' => array_values($estudiantesAgrupados)
+        ];
+    }    
 }
 ?>

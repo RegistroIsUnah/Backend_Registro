@@ -124,6 +124,46 @@ class Departamento {
         return array_values($clases); // Convertir a array indexado
     }
 
+     /**
+     * Obtiene estudiantes por departamento con sus carreras
+     * @param int $departamentoId ID del departamento
+     * @return array Resultado de la consulta
+     */
+    public function obtenerEstudiantesPorDepartamento($departamentoId) {
+        try {
+            $query = "SELECT 
+                        d.dept_id AS departamento_id,
+                        d.nombre AS departamento_nombre,
+                        c.carrera_id,
+                        c.nombre AS carrera_nombre,
+                        e.estudiante_id,
+                        e.nombre AS estudiante_nombre,
+                        e.apellido AS estudiante_apellido,
+                        e.numero_cuenta,
+                        e.correo_personal,
+                        (SELECT COUNT(*) FROM EstudianteCarrera WHERE estudiante_id = e.estudiante_id) AS total_carreras
+                      FROM Departamento d
+                      JOIN Carrera c ON d.dept_id = c.dept_id
+                      JOIN EstudianteCarrera ec ON c.carrera_id = ec.carrera_id
+                      JOIN Estudiante e ON ec.estudiante_id = e.estudiante_id
+                      WHERE d.dept_id = ?
+                      ORDER BY e.apellido, e.nombre, c.nombre";
 
+            $stmt = $this->conn->prepare($query);
+            $stmt->bind_param("i", $departamentoId);
+            $stmt->execute();
+            $result = $stmt->get_result();
+
+            $estudiantes = [];
+            while ($row = $result->fetch_assoc()) {
+                $estudiantes[] = $row;
+            }
+
+            return $estudiantes;
+        } catch (Exception $e) {
+            error_log("Error en DepartamentoModel: " . $e->getMessage());
+            return ['error' => 'Error al obtener estudiantes', 'code' => 500];
+        }
+    }
 }
 ?>
