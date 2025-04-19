@@ -97,11 +97,10 @@ class DepartamentoController {
      */
     public function obtenerClasesPorDepartamento($departamentoId, $anio, $periodo) {
         header('Content-Type: application/json');
-        
+    
         try {
             $clases = $this->model->obtenerClasesYSecciones($departamentoId, $anio, $periodo);
-            
-            // Formateo más sencillo ya que el modelo ya agrupó
+    
             return array_map(function($clase) {
                 return [
                     'clase_id' => (int)$clase['clase_id'],
@@ -115,12 +114,20 @@ class DepartamentoController {
                                 'fin' => $seccion['hora_fin']
                             ],
                             'aula' => $seccion['aula'],
-                            'docente' => $seccion['docente']
+                            'aula_id' => $seccion['aula_id'],
+                            'edificio' => $seccion['edificio'],
+                            'edificio_id' => $seccion['edificio_id'],
+                            'docente' => $seccion['docente'],
+                            'docente_id' => $seccion['docente_id'],
+                            'numero_empleado' => $seccion['numero_empleado'],
+                            'correo_docente' => $seccion['correo_docente'],
+                            'cupos_habilitados' => $seccion['cupos_habilitados'],
+                            'estudiantes_matriculados' => $seccion['estudiantes_matriculados']
                         ];
                     }, $clase['secciones'])
                 ];
             }, $clases);
-            
+    
         } catch (Exception $e) {
             http_response_code(500);
             echo json_encode([
@@ -130,6 +137,9 @@ class DepartamentoController {
             exit;
         }
     }
+    
+    
+    
 
 }
 ?>
