@@ -650,6 +650,7 @@ class EstudianteController {
                             'seccion_id' => $clase['seccion_id'],
                             'hora_inicio' => $clase['hora_inicio'],
                             'hora_fin' => $clase['hora_fin'],
+                            'video_url' => $clase['video_url'],
                             'dias' => [
                                 'lista_dia_ids' => explode(', ', $clase['lista_dia_ids']),
                                 'nombres_dias' => explode(', ', $clase['nombres_dias'])
@@ -658,6 +659,7 @@ class EstudianteController {
                                 'edificio' => $clase['edificio'],
                                 'aula' => $clase['aula']
                             ]
+                            
                         ],
                         'laboratorio' => $clase['laboratorio_id'] ? [
                             'laboratorio_id' => $clase['laboratorio_id'],
