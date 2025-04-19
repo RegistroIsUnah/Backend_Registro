@@ -1292,6 +1292,7 @@ class Estudiante {
                     s.seccion_id,
                     s.hora_inicio,
                     s.hora_fin,
+                    s.video_url,
                     GROUP_CONCAT(DISTINCT sd.dia_id ORDER BY sd.dia_id SEPARATOR ', ') AS lista_dia_ids,
                     GROUP_CONCAT(DISTINCT ds.nombre ORDER BY sd.dia_id SEPARATOR ', ') AS nombres_dias,
                     e.nombre AS edificio,
