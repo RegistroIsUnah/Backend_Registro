@@ -187,17 +187,20 @@ require_once __DIR__ . '/../models/Usuario.php';
      * @return void Responde con Json con confirmacion de cierre o con error
      */
     public function logout() {
+        
         // Iniciar la sesión si aún no está iniciada
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
         }
-
+        
+        /*
         // Validar si existe una sesión iniciada
         if (!isset($_SESSION['user_id'])) {
             http_response_code(400);
             echo json_encode(['error' => 'No hay sesión iniciada']);
             return;
         }
+        */
 
         // Destruir la sesión
         session_destroy();

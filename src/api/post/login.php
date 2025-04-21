@@ -77,12 +77,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
 
 require_once __DIR__ . '/../../controllers/AuthController.php';
 
+/*
 // Verificar método HTTP
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
     echo json_encode(['error' => 'Método no permitido']);
     exit;
 }
+*/
+
 
 // Obtener datos del JSON
 $input = json_decode(file_get_contents('php://input'), true);
